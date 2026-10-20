@@ -81,7 +81,8 @@ The CI job has an independent 15-minute limit. Shared SDK caches remain outside 
 
 ## Windows CI
 
-[Evaluation workflow](../.github/workflows/evaluation.yml) runs on windows-2022 x64 for pull requests and main pushes.
+[Evaluation workflow](../.github/workflows/evaluation.yml) runs on windows-2022 x64 for pull requests and pushes to main
+or build/** branches. Build-branch pushes also let the development fork validate this first workflow before it merges.
 Its stable check name is **Windows evaluation**. Actions are pinned to inspected commit SHAs. The job records the runner
 image version, Windows identity, SDK information, build binlog, and TRX results. The windows-evaluation artifact is retained
 for 14 days even when a later step fails. Workflow permissions are contents: read.

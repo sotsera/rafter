@@ -2,7 +2,7 @@ name: Evaluation
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'build/**']
   pull_request:
   workflow_dispatch:
 
@@ -15,9 +15,9 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 15
     env:
-      DOTNET_NOLOGO: 1
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      TESTINGPLATFORM_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
