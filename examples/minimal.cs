@@ -7,6 +7,7 @@ using Sotsera.Rafter;
 
 var command = Rafter.Command("Print a greeting.");
 
-return await command.RunAsync(
-    args,
-    context => context.WriteLine("Hello from Rafter."));
+return await command.RunAsync(args, context =>
+{
+    context.WriteLine("Hello from Rafter.");
+});

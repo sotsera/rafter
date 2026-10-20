@@ -12,9 +12,10 @@ The script's location does not determine the default root.
 ```csharp
 var command = Rafter.Command("Print a greeting.");
 
-return await command.RunAsync(
-    args,
-    context => context.WriteLine("Hello from Rafter."));
+return await command.RunAsync(args, context =>
+{
+    context.WriteLine("Hello from Rafter.");
+});
 ```
 
 The root is captured when `RunAsync` starts, rather than when `Rafter.Command(description)` is declared. Each invocation captures
