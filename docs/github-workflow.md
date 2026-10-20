@@ -52,7 +52,8 @@ The issues contain the detailed acceptance checklists. Keep design rationale and
 record execution results and scoped completion in the issues/PRs without maintaining duplicate checklists.
 Issue #4 is complete; see [skills setup](dotnet-skills-setup.md). [PR #5](https://github.com/sotsera/rafter/pull/5)
 merged on 2026-10-20 as d85ddb2f6e432d18a740eaa96c050f46fb03c551 and closed the issue. Local main is updated to
-that commit. The earlier design work remains uncommitted for #1. Installation and discovery were verified locally;
+that commit. The earlier design work is published with #1 in [PR #6](https://github.com/sotsera/rafter/pull/6).
+Installation and discovery were verified locally;
 no CI checks were configured for this PR.
 Create the later runtime issues from the [milestone outline](first-working-examples.md#proposed-github-issue-breakdown)
 as the evaluations establish the first implementation slice.

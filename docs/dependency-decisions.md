@@ -101,8 +101,10 @@ Pin the SDK in `global.json` and direct package versions centrally in `Directory
 Do not create placeholder project files or choose versions merely to fill this document. Analyzer host compatibility
 and test-runner compatibility need their own checks; the newest compiler package need not match the oldest supported host.
 
-The [GitHub workflow](github-workflow.md) is established and evaluation issues #1–#3 are published. The next action is
-[#1: the evaluation harness](https://github.com/sotsera/rafter/issues/1), followed by the parser and renderer checks.
+The [GitHub workflow](github-workflow.md) is established and evaluation issues #1–#3 are published.
+[#1: the evaluation harness](https://github.com/sotsera/rafter/issues/1) is implemented in
+[PR #6](https://github.com/sotsera/rafter/pull/6), with local and Windows CI checks passing. Parser and renderer
+compatibility evaluations remain next; neither candidate is adopted by the harness work.
 
 Readiness sequence:
 

@@ -101,6 +101,13 @@ Local verification on 2026-10-20:
 - Native MTP reported **Passed: 4, Failed: 0, Skipped: 0** (35 seconds for the initial run).
 - TRX written to artifacts/test-results/Rafter.Evaluation.Tests_net10.0_x64.trx.
 
-Windows CI verification is pending the PR run; update this section with its actual outcome before marking #1 complete.
+Windows CI on 2026-10-20: [run 39485041548](https://github.com/ghidello/rafter/actions/runs/39485041548) passed for
+implementation commit 47299dbb223a8419c28204fb236c6d4817e757a6. The downloaded TRX reports **Passed: 4, Failed: 0,
+Skipped: 0**. The retained windows-evaluation artifact includes SDK/OS/image details, the build binlog, and test output.
+Runner: Windows Server 2022 Datacenter build 20348, x64; win22 image 20261012.333.1; SDK 10.0.402;
+MSBuild 18.9.15+a8dd0577c. This run used the development fork's build-branch push event. Upstream Actions was enabled
+but did not create a run for the first workflow PR; verify the upstream main/PR triggers after this workflow merges.
+The named Windows evaluation job is verified, but it has not been configured as a required merge check.
+
 Linux, macOS, Native AOT, package consumption, runtime/analyzer behavior, and parser/renderer compatibility remain
 unexecuted gates. Issues #2 and #3 will add their own meaningful compatibility checks to this harness.
