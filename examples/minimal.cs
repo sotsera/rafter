@@ -1,4 +1,7 @@
-// Syntax draft: the new Rafter library is not implemented yet.
+#!/usr/bin/env dotnet
+#:project ../src/Sotsera.Rafter/Sotsera.Rafter.csproj
+#:property PublishAot=false
+
 // The default root is the working directory captured when RunAsync starts.
 using Sotsera.Rafter;
 

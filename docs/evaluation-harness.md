@@ -1,7 +1,8 @@
 # Evaluation harness
 
 Issue [#1](https://github.com/sotsera/rafter/issues/1) establishes the environment for the parser and renderer evaluations.
-It does not implement the Rafter runtime. The seven files in examples remain syntax drafts; reference contains historical
+That issue did not implement the runtime. Issue #9 now adds the [minimal runtime](minimal-runtime.md), referenced by
+the same test entry point. examples/minimal.cs runs; the other six examples remain drafts. Reference contains historical
 snapshots, and the HTML previews show illustrative output.
 
 ## Review using the installed skills
@@ -30,7 +31,8 @@ global.json selects SDK 10.0.402 with latestPatch and allowPrerelease=false. Thi
 Versions live in Directory.Packages.props. The xUnit v3 product uses a 4.x package version; this does not select xUnit v2
 or a different testing framework. MTP and MTP.MSBuild resolve transitively to 2.5.1. Other transitive packages include
 xUnit's runner/core/assertion packages, xunit.analyzers 2.2.0, and the MTP telemetry dependencies.
-These three test-tool references have PrivateAssets=all and the test project is not packable. There is no shipping project.
+These three test-tool references have PrivateAssets=all and the test project is not packable. The separate runtime project
+does not reference them and is also non-packable until the packaging slice.
 Issue #2 adds System.CommandLine 2.0.13 as a fourth private evaluation reference; its net8.0 asset adds no transitive
 packages. See the [parser evaluation](parser-evaluation.md) for the candidate-specific graph and checks.
 Issue #3 adds a private Spectre.Console 0.57.2 evaluation reference, resolving Spectre.Console.Ansi 0.57.2. The renderer

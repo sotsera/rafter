@@ -1,6 +1,7 @@
 # Rafter roots and paths
 
-Agreed design for the new Rafter. Implementation is pending.
+Agreed design for the new Rafter. The [minimal runtime](minimal-runtime.md) implements per-invocation root capture;
+process/path APIs and explicit roots remain pending. The captured root is currently internal to the invocation.
 
 ## Default root
 
