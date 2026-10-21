@@ -122,6 +122,9 @@ The isolated VS Code probe passed **12 live checks** across those two consumer f
 severity, with VS Code 1.142.0, C# 2.160.4, and C# Dev Kit 3.40.215. See the
 [review tooling](milestone-review.md#reproduce-and-evidence) for reproduction; the current probe includes all four rules.
 Its evidence is under `artifacts/editor-review-62a55ef62c5c40a385fdadc761df9112/`. Windows CI results are linked from the PR.
+Two upstream attempts exposed existing process-test failures. The [process-test isolation record](process-test-isolation.md)
+preserves those attempts, the controlled inheritance reproduction, and the correction to the harness. Final suite
+counts and CI results are recorded separately in the PR.
 
 Upstream references: [Roslyn package and MIT license](https://www.nuget.org/packages/Microsoft.CodeAnalysis.CSharp/4.14.0),
 [NuGet analyzer layout](https://learn.microsoft.com/en-us/nuget/guides/analyzers-conventions).

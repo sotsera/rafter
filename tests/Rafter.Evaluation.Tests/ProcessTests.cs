@@ -8,6 +8,7 @@ using RafterProcessResult = Sotsera.Rafter.ProcessResult;
 
 namespace Rafter.Evaluation.Tests;
 
+[Collection("Native process handles")]
 public sealed class ProcessTests
 {
     [Fact]
@@ -676,6 +677,7 @@ public sealed class ProcessTests
 
         public void Dispose()
         {
+            TestContext.Current.TestOutputHelper?.WriteLine("Rafter stdout:\n{0}\nRafter stderr:\n{1}", Output, Error);
             Output.Dispose();
             Error.Dispose();
         }
