@@ -47,3 +47,15 @@ launcher. Issue #23 remains open for supported interoperability design and furth
 does not establish that arbitrary mixed launchers are safe.
 
 No upstream source was copied. The implementation references above explain the observed OS behavior.
+
+## Readiness-file race found by the improved logs
+
+At commit `5f14db4`, upstream CI passed its tests while the fork failed the output-writer-failure test with an empty PID
+file. Its new captured stderr confirmed the intended `Output incomplete` outcome and stopped process; the failure
+was in the test's subsequent PID parsing. The fixture emitted output before writing its ready file, so immediate
+shutdown could interrupt that write. This is a distinct demonstrated fixture race, not evidence that the earlier
+five-second failures share that cause.
+
+The fixture now publishes its complete PID file through a same-directory rename before emitting output. Hold and
+graceful-stop modes use the same readiness publication. The output-failure test now requires the PID file and verifies
+that process exited; the previous optional check is removed. No production runtime behavior changes.

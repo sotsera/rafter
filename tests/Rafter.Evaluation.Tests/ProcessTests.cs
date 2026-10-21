@@ -415,10 +415,8 @@ public sealed class ProcessTests
             })).Should().Be(1);
             handlerCalled.Should().BeFalse();
             host.Error.ToString().Should().Contain("Output incomplete");
-            if (File.Exists(ready))
-            {
-                HasExited(int.Parse(File.ReadAllText(ready))).Should().BeTrue();
-            }
+            File.Exists(ready).Should().BeTrue("the fixture publishes its PID before emitting the failing output");
+            HasExited(int.Parse(File.ReadAllText(ready))).Should().BeTrue();
         }
         finally
         {
