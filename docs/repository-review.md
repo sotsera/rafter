@@ -82,6 +82,9 @@ Their names alone are not evidence of redundant files.
    authoring/API contracts, development, and platform limits. Give completed parser/renderer evaluations and milestone
    reports an explicit history section. Preserve source/license references, failed attempts, and links when moving
    reports. The closeout has updated the main status summaries; it has not rewritten every historical report.
+   A full local-file link check found nine unresolved occurrences inside the preserved old output notes. Their
+   `reference/output/README.md` already explains that these are partial snapshots of the old documentation tree.
+   Keep that boundary clear instead of treating those old targets as missing current-project documentation.
 5. **Review local evidence retention and optional tools.** Group renderer comparison scripts separately from current
    runtime/editor verification. Decide which captured artifacts to retain before adding a bounded cleanup command.
    Avoid tracking generated evidence or deleting preserved reference material as a way to simplify navigation.
@@ -111,4 +114,7 @@ Counts came from Git's tracked/ignored inventories, not from treating every disk
 references, linked/copied fixture items, package checks, CI definition, tools, and example directives were inspected.
 No runtime, project, workflow, skill source, or fixture source is changed by the documentation closeout. Local links
 and whitespace are checked separately; the [milestone summary](milestone-review.md) identifies the previously executed
-413-test baseline and CI runs. This review does not claim a new runtime test execution.
+413-test baseline and CI runs. The full inline-Markdown file-target inventory checked 342 links across 45 tracked
+Markdown files: the only nine unresolved occurrences were those documented archival links under `reference/output/`.
+All 177 local file targets in the seven changed documents resolved. This does not check external URLs or fragment
+anchors, and the review does not claim a new runtime test execution.
