@@ -3,7 +3,8 @@
 Reviewed on 2026-10-21 for [issue #25](https://github.com/sotsera/rafter/issues/25), after the
 [first milestone](milestone-review.md). This is a structural review of files, project references, package contents,
 fixture consumers, and CI entry points. It is not a new correctness audit of every method. Recommendations below
-are proposed; this closeout changes documentation only.
+were initially proposed. The approved sequence and navigation implementation are recorded below; test/asset moves
+and the later organization work remain separate changes.
 
 ## What is actually in the checkout
 
@@ -48,7 +49,7 @@ was changed by this review.
 | `fixtures/renderer/{full,ansi,framework}/project` | 3 | Dependency comparison and measurement consumers. |
 | `fixtures/workflow/{src,sample-tests}` | 2 | Isolated library/test workflow exercised by the build/test examples. |
 
-There is currently **no `.sln` or `.slnx`**. CI intentionally builds the main test project, which references both
+At the reviewed baseline there was **no `.sln` or `.slnx`**. CI built the main test project, which references both
 production projects and ProcessProbe. Other consumers are built in isolated workspaces by integration checks or
 explicitly by the review tools. The fixture test project is executed as an external-tool scenario; it is not missing
 from an existing solution or CI solution filter.
@@ -64,6 +65,15 @@ Their names alone are not evidence of redundant files.
 
 ## Findings and proposed order
 
+The follow-up discussion approved three delivery groups: navigation, tests/test assets
+([#28](https://github.com/sotsera/rafter/issues/28)), then documentation/tools and an evidence-retention policy
+([#29](https://github.com/sotsera/rafter/issues/29)). Navigation is implemented under
+[issue #27](https://github.com/sotsera/rafter/issues/27): root [Rafter.slnx](../Rafter.slnx) includes both production
+projects, the existing main test suite, and ProcessProbe; CI uses it for restore/build/test. The
+[documentation index](README.md) separates current guidance from evaluation history. The approved asset folder name
+is **`tests/testassets/`**, replacing the initial `tests/Fixtures/` suggestion in this review. No test/asset files
+have moved in the navigation step.
+
 1. **Make navigation explicit first.** Open the actual repository root, add a short documentation index, and introduce
    a root `Rafter.slnx` for the maintained development projects. Keep isolated consumers and comparison probes outside
    its normal build/test membership unless their role warrants inclusion. Any solution/test wiring change needs its
@@ -73,8 +83,8 @@ Their names alone are not evidence of redundant files.
    test project initially. Its name also appears in friend-assembly configuration, probe runtimeconfig paths, CI,
    and documentation, so a rename requires a coordinated change rather than a directory move alone. Fixture moves
    also affect the review tools.
-3. **Put fixture ownership next to the tests.** Prefer a clearly documented `tests/Fixtures/` tree with Runtime,
-   Processes, Workflow, HostCompatibility, and DependencyEvaluations groups. The current source-copy rules link C#
+3. **Put fixture ownership next to the tests.** Use the approved `tests/testassets/` tree grouped into consumers,
+   processes, workflows, and evaluations. The current source-copy rules link C#
    directly from fixtures and copy trees into `Fixtures/` beside the test executable. `IsolatedConsumer` then copies
    the full fixture tree for most consumers. Centralize that mapping and consider selecting only each consumer's
    required inputs. Preserve real file-app/project coverage and every comparison still exercised by tests or tools.
@@ -112,9 +122,15 @@ generated evidence. No tracked file was demonstrated to be safely removable sole
 
 Counts came from Git's tracked/ignored inventories, not from treating every disk file as maintained source. The project
 references, linked/copied fixture items, package checks, CI definition, tools, and example directives were inspected.
-No runtime, project, workflow, skill source, or fixture source is changed by the documentation closeout. Local links
-and whitespace are checked separately; the [milestone summary](milestone-review.md) identifies the previously executed
-413-test baseline and CI runs. The full inline-Markdown file-target inventory checked 342 links across 45 tracked
-Markdown files: the only nine unresolved occurrences were those documented archival links under `reference/output/`.
-All 177 local file targets in the seven changed documents resolved. This does not check external URLs or fragment
-anchors, and the review does not claim a new runtime test execution.
+The original documentation closeout changed no runtime, project, workflow, skill source, or fixture source.
+The subsequent navigation step adds the solution and changes CI's entry point; it preserves project/test/fixture
+sources. The [milestone summary](milestone-review.md) identifies the original implementation baseline and CI runs.
+The original closeout's inline-Markdown file-target inventory checked 342 links across 45 tracked Markdown files:
+the only nine unresolved occurrences were those documented archival links under `reference/output/`. All 177 local
+file targets in its seven changed documents resolved. These checks cover neither external URLs nor fragment anchors.
+
+Navigation verification on 2026-10-21 listed the exact `Rafter.slnx` and confirmed its four intended projects.
+`dotnet test --solution Rafter.slnx --configuration Release --report-trx --results-directory artifacts/test-results/navigation`
+then passed **413 tests, zero failed/skipped**. This verifies the new solution's test discovery, not just its build.
+The report is under `artifacts/test-results/navigation/`. All 79 local file targets in the four navigation documents
+resolved, and the solution project paths exist. Subsequent CI evidence is recorded in the delivery PR.

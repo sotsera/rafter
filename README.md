@@ -6,6 +6,9 @@ The **First working examples** milestone is complete for the selected Windows x6
 [completion summary](docs/milestone-review.md) for delivered capabilities, the 413-test baseline, and platform limits.
 The [repository review](docs/repository-review.md) maps the folders and records proposed organization improvements.
 
+Open [Rafter.slnx](Rafter.slnx) from this repository root to work on the runtime, analyzers, and main test suite.
+Use the [documentation index](docs/README.md) for current guides, development commands, and historical evaluations.
+
 The first [runtime slice](docs/minimal-runtime.md) runs body-only commands with validation, help, direct output,
 exception containment, and cooperative managed cancellation. Try the real [minimal example](examples/minimal.cs):
 
