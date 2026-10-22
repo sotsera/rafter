@@ -667,18 +667,30 @@ Agreed process exception boundary:
 - An already recorded `ProcessFailureAction.Fail` remains a command failure despite subsequent successful work.
   Catching another exception or handling another process failure does not clear that state.
 - Recovery does not remove Rafter's resource-ownership obligations. Process/output settlement still applies before
-  reporting completion. Invocation cancellation follows the separate policy below; timeout behavior remains unresolved.
+  reporting completion. Invocation cancellation follows the separate policy below; clean timeout recovery follows
+  the agreed per-process contract.
   Catching process exceptions does not clear invocation cancellation.
 
 Open questions:
 
-- What configurable timeout policy and additional result information are useful beyond the implemented basic result?
 - What additional executable-resolution controls, stream encodings, and other process settings should be exposed?
 - Should environment removal or starting with an empty environment be supported, and with what syntax?
 
 The command-level exception containment contract applies to the outer invocation. Process `RunAsync()` intentionally
 throws within the callback for the `Throw` action; these are separate API boundaries. The
 [Windows implementation](../guides/process-runtime.md) verifies this boundary with real processes.
+
+#### Per-process timeouts
+
+Initial scope agreed on 2026-10-22: add `.Timeout(TimeSpan)` for one process operation, with no timeout by default and
+positive configured durations. Start its deadline when the child begins execution; expiry initiates owned-scope shutdown
+and settlement, not an immediate return guarantee. An unhandled timeout fails with exit `1`, distinct from Ctrl+C;
+`OnFailure` remains limited to rejected exits. Target, invocation, and cleanup deadlines stay separate.
+[examples/process-timeout.cs](../../examples/process-timeout.cs) is implemented for [issue #42](https://github.com/sotsera/rafter/issues/42).
+The [timeout design](process-timeouts.md) records agreed scope, catchable recovery, exception details/output, and race
+rules and configuration validation. The [implementation guide](../guides/process-timeouts.md) records delivery.
+A settled `ProcessTimeoutException` can be caught for recovery without automatically recording
+failure; independent failures, invocation cancellation, and settlement uncertainty remain in force.
 
 ### Completion of owned process scopes
 

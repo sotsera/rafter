@@ -95,6 +95,6 @@ redirected runtime output** checks pass. Actual pseudoterminal help review confi
 and NO_COLOR preserving emphasis without colors. Raw reports and captures are retained under `artifacts/duration-inputs/`;
 these local results establish Windows behavior only.
 
-Configurable process/managed timeouts, new cancellation/settlement policies, clock/day-unit
-input, new authoring diagnostics, native AOT, and Linux-native process ownership remain separate work. No new runtime
+[Process timeouts](process-timeouts.md) are implemented separately. Managed timeouts, other cancellation/settlement
+policies, clock/day-unit input, new authoring diagnostics, native AOT, and Linux-native process ownership remain separate work. No new runtime
 package dependency is introduced.

@@ -14,6 +14,9 @@ surrounding whitespace, and show allowed choices in help. Numeric text, flags, a
 defaults are rejected during input or declaration validation.
 Duration options use `Option<TimeSpan>` and accept explicit units (`250ms`, `30s`, `1h30m`) with exact conversion.
 Help shows `<duration>`, accepted units, and normalized defaults. Parsing a duration does not impose an execution deadline.
+Process builders can set one positive `.Timeout(TimeSpan)` deadline covering the child and owned descendants.
+Expiry initiates shutdown and output settlement, then throws `ProcessTimeoutException`; scripts can catch a cleanly
+settled timeout for recovery. Unhandled timeouts return invocation exit `1`, separately from Ctrl+C cancellation.
 
 ```csharp
 #:package Sotsera.Rafter@0.1.0-local

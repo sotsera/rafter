@@ -57,6 +57,11 @@ The default accepted exit is zero. `OnFailure` accepts one non-null synchronous 
 Callback exceptions preserve both the rejected exit and the callback's full exception details. Launch, output, and
 cancellation failures never invoke the exit-code callback or fabricate a process result.
 
+`Timeout(TimeSpan)` configures one positive execution deadline covering the root and its owned descendants. It begins
+when the child starts executing and starts normal shutdown on expiry. A cleanly settled operation throws the catchable
+`ProcessTimeoutException`; an unhandled timeout returns invocation exit `1`. See [process timeouts](process-timeouts.md)
+for validation, recovery, cancellation arbitration, and reporting.
+
 Every body has its own operation tracker. It includes launch, output, cleanup, and the failure callback. Outstanding
 operations when the body finishes cause an invocation failure and must settle before later scheduling or final output.
 Awaited concurrent process calls, including `Task.WhenAll`, are supported. A captured context cannot start work after
@@ -77,6 +82,12 @@ provides kill-on-close protection if the owner dies. This adds one temporary pro
 parent PID is the helper's PID, not the script's. The helper adds no executable/package deployment dependency. Its
 termination wait is bounded at five seconds; failure aborts launch and closes the owning job. This launch-stage wait
 does not change the process shutdown grace or output-drain deadlines below.
+
+The target's primary thread is now created suspended too, then released after helper removal. Rafter records the
+monotonic execution start immediately before that release, excluding launch preparation from process deadlines.
+This follows the Windows [CREATE_SUSPENDED](https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags)
+and [ResumeThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread)
+contracts; the helper itself remains suspended until termination.
 
 The root's exit code and the job's active-process count are observed separately. Root exit starts cleanup of remaining
 descendants; root exit alone cannot complete the operation. Scoped Ctrl+Break is attempted for the dedicated process

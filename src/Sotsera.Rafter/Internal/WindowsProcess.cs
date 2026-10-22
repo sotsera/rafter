@@ -29,6 +29,7 @@ internal sealed class WindowsProcess : IOwnedProcess
 
     public StreamReader Output { get; }
     public StreamReader Error { get; }
+    public long ExecutionStarted { get; }
 
     public int? ExitCode
     {
@@ -56,12 +57,13 @@ internal sealed class WindowsProcess : IOwnedProcess
     }
 
     private WindowsProcess(KernelHandle job, KernelHandle process, uint group, bool console,
-        NamedPipeServerStream output, NamedPipeServerStream error)
+        NamedPipeServerStream output, NamedPipeServerStream error, long executionStarted)
     {
         _job = job;
         _process = process;
         _group = group;
         _console = console;
+        ExecutionStarted = executionStarted;
         Output = new(output, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         Error = new(error, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
     }
@@ -97,7 +99,7 @@ internal sealed class WindowsProcess : IOwnedProcess
             startup.Startup.Output = output;
             startup.Startup.Error = error;
             startup.Attributes = attributes.Pointer;
-            var flags = ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNewProcessGroup;
+            var flags = ExtendedStartupInfoPresent | CreateUnicodeEnvironment | CreateNewProcessGroup | CreateSuspended;
             if (!console)
             {
                 flags |= CreateNoWindow;
@@ -110,7 +112,10 @@ internal sealed class WindowsProcess : IOwnedProcess
             process = new(info.Process);
             using var thread = new KernelHandle(info.Thread);
             donor.Stop();
-            return new(job, process, info.ProcessId, console, stdout.TakeServer(), stderr.TakeServer());
+            // Launch preparation and donor removal are outside the child's execution deadline.
+            var started = TimeProvider.System.GetTimestamp();
+            Check(Native.ResumeThread(thread) != uint.MaxValue);
+            return new(job, process, info.ProcessId, console, stdout.TakeServer(), stderr.TakeServer(), started);
         }
         catch
         {
@@ -494,6 +499,8 @@ internal sealed class WindowsProcess : IOwnedProcess
             ref StartupInfoEx startup, out ProcessInformation info);
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool GetExitCodeProcess(KernelHandle process, out uint code);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern uint ResumeThread(KernelHandle thread);
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern uint WaitForSingleObject(KernelHandle handle, uint milliseconds);
         [DllImport("kernel32.dll", SetLastError = true)]

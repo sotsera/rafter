@@ -89,6 +89,7 @@ public sealed class PackageConsumerTests
                 .FromEnvironment("RAFTER_PACKAGE_DURATION");
             return await command.RunAsync(args, context =>
             {
+                context.Process("dotnet").Timeout(TimeSpan.MaxValue);
                 context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
                     + $"{context.GetValue(duration).Ticks} ticks.");
             });

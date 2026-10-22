@@ -145,6 +145,16 @@ internal sealed class InvocationOutput
 
     public void Exception(Exception exception, string scope)
     {
+        if (exception is ProcessTimeoutException timeout)
+        {
+            _error.Framework("  " + timeout.Message, new Style(Color.Red));
+            ProcessTimeout(timeout.Timeout, timeout.Elapsed);
+            if (timeout.ObservedExitCode is { } observed)
+            {
+                _error.Framework($"  Observed exit code: {observed}", Style.Plain);
+            }
+            return;
+        }
         if (exception is ProcessFailureException rejected)
         {
             ProcessRejected(rejected, ProcessFailureAction.Throw);
@@ -167,6 +177,10 @@ internal sealed class InvocationOutput
         if (exception is ProcessCompletionException completion)
         {
             _error.Framework("  " + completion.Message, new Style(Color.Red));
+            if (completion.Timeout is { } configured && completion.Elapsed is { } elapsed)
+            {
+                ProcessTimeout(configured, elapsed);
+            }
             if (completion.ExitCode is { } code)
             {
                 _error.Framework($"  Observed exit code: {code}", Style.Plain);
@@ -194,6 +208,20 @@ internal sealed class InvocationOutput
     }
 
     public void ProcessOutput(string text, bool error) => (error ? _error : _output).Literal(text);
+
+    public void ProcessDeadlineReached(string executable)
+    {
+        if (!_arguments.Quiet)
+        {
+            _error.Framework("  Process deadline reached | " + executable, new Style(Color.Yellow));
+        }
+    }
+
+    private void ProcessTimeout(TimeSpan timeout, TimeSpan elapsed)
+    {
+        _error.Layout(new Paragraph($"Timeout: {DurationInputs.Format(timeout)} | elapsed: {DurationInputs.Format(elapsed)}")
+            { Overflow = Overflow.Fold }, 2);
+    }
 
     public void ProcessRejected(ProcessFailureException failure, ProcessFailureAction action)
     {
