@@ -66,6 +66,7 @@ public sealed class TypedInputConsumerTests
             var text = command.Option<string>("text", "Text.");
             var count = command.Option<int>("count", "Count.");
             var flag = command.Option<bool>("flag", "Flag.");
+            var configuration = command.Option<BuildConfiguration>("configuration", "Configuration.");
             text.Required().FromEnvironment("TEXT").Aliases("t").Validate("Rule.", _ => true).Default("value");
             count.Default(1).FromEnvironment("COUNT").Validate("Rule.", _ => true).Aliases("c").Required();
             flag.Required().FromEnvironment("FLAG").Required();
@@ -75,7 +76,13 @@ public sealed class TypedInputConsumerTests
                 string invalidText = context.GetValue(text);
                 int invalidCount = context.GetValue(count);
                 bool invalidFlag = context.GetValue(flag);
+                BuildConfiguration invalidConfiguration = context.GetValue(configuration);
             });
+            enum BuildConfiguration
+            {
+                Debug,
+                Release
+            }
             """;
         await File.WriteAllTextAsync(Path.Combine(consumer.WorkingDirectory, "examples/minimal.cs"), source,
             TestContext.Current.CancellationToken);
@@ -84,7 +91,8 @@ public sealed class TypedInputConsumerTests
         var diagnostics = build.StandardOutput + build.StandardError;
         diagnostics.Should().Contain("CS8600").And.Contain("CS0266")
             .And.Contain("'Default'").And.Contain("'Required'").And.Contain("'WriteLine'");
-        // Both optional value types must fail the non-nullable assignment.
+        // Optional value types must fail the non-nullable assignment.
         diagnostics.Should().Contain("'int?' to 'int'").And.Contain("'bool?' to 'bool'");
+        diagnostics.Should().Contain("'BuildConfiguration?' to 'BuildConfiguration'");
     }
 }

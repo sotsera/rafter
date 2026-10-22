@@ -105,6 +105,13 @@ order, primary names, selected source only, and `(empty)` for empty environment 
 errors without the routine block. Use existing heading/name colors and flat runtime gutters; `(empty)` is ordinary text.
 The linked transcripts remain illustrative; the guide and delivery PR record executable verification.
 
+## Enum help design
+
+The agreed [enum-input design](enum-inputs.md#agreed-help-layout) uses `<value>` as the placeholder, the declared
+default member name, and an `Allowed:` line before environment metadata and validation rules. Choices retain declared
+spelling and declaration order; long lists wrap in the metadata gutter. This extension is implemented in the
+[enum-input runtime](../guides/enum-inputs.md), preserving existing help/verbose contracts.
+
 ## Minimal success
 
 For [minimal.cs](../../examples/minimal.cs):

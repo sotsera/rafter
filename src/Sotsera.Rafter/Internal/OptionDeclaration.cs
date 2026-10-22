@@ -92,6 +92,7 @@ internal sealed record OptionSnapshot(
     string? EnvironmentVariable)
 {
     public string[] Spellings { get; private set; } = [];
+    public EnumChoices? EnumChoices { get; private set; }
     public bool Required => RequiredCalls > 0;
     public bool HasDefault => DefaultCalls > 0;
 
@@ -127,9 +128,14 @@ internal sealed record OptionSnapshot(
         {
             diagnostics.Add($"{location}: Description must contain non-whitespace text.");
         }
-        if (ValueType != typeof(string) && ValueType != typeof(int) && ValueType != typeof(bool))
+        if (ValueType.IsEnum)
         {
-            diagnostics.Add($"{location}: Supported supplied types are string, int, and bool, without nullable value types.");
+            EnumChoices = new(ValueType);
+            EnumChoices.Validate(location, HasDefault, DefaultValue, diagnostics);
+        }
+        else if (ValueType != typeof(string) && ValueType != typeof(int) && ValueType != typeof(bool))
+        {
+            diagnostics.Add($"{location}: Supported supplied types are string, int, bool, and named enums, without nullable value types.");
         }
         if (NullAliases)
         {

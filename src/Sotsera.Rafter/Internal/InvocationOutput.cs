@@ -311,12 +311,18 @@ internal sealed class InvocationOutput
             paragraph.Append(option.Spellings[index], new Style(new Color(173, 214, 240)));
         }
         var typeHint = option.ValueType == typeof(bool) ? " [bool]"
-            : option.ValueType == typeof(int) ? " <int>" : " <string>";
+            : option.ValueType == typeof(int) ? " <int>"
+            : option.EnumChoices is not null ? " <value>" : " <string>";
         paragraph.Append(typeHint, new Style(new Color(223, 196, 255)));
         _output.Layout(paragraph, 2);
         var policy = option.Required ? "Required." : option.HasDefault
             ? $"Default: {FormatDefault(option.DefaultValue)}." : "Optional; no default.";
         _output.Layout(new Paragraph($"{option.Description} {policy}") { Overflow = Overflow.Fold }, 4);
+        if (option.EnumChoices is { } choices)
+        {
+            _output.Layout(new Paragraph($"Allowed: {string.Join(", ", choices.Names)} (case-insensitive).")
+                { Overflow = Overflow.Fold }, 4);
+        }
         if (option.ValueType == typeof(bool))
         {
             var flagHelp = option.EnvironmentVariable is null

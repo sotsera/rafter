@@ -30,6 +30,9 @@ dotnet run --file examples/validation.cs -- --minimum 3 --maximum 5
 The [environment-input API](docs/guides/environment-inputs.md) adds explicit `.FromEnvironment(...)` fallbacks and
 source diagnostics. Command-line values take priority, and `GetValue` retains the prepared value throughout a run.
 
+[Enum inputs](docs/guides/enum-inputs.md) add named choices with case-insensitive matching, named defaults, and
+allowed-values help. Try `dotnet run --file examples/enums.cs -- --configuration debug` or use `--help` to see the choices.
+
 The [target slice](docs/guides/targets.md) adds sequential targets, dependency groups, graph validation, and target-aware
 help/output. Try its callback-based [example](examples/targets.cs):
 
@@ -46,7 +49,7 @@ dotnet run --file examples/processes.cs -- --quiet
 dotnet run --file examples/dependencies.cs -- --project tests/testassets/workflows/sample-tests/BuildSample.Tests.csproj
 ```
 
-All nine examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
+All ten examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
 and an automatic namespace import. The [local package](docs/guides/local-package.md) provides the same authoring support to
 fresh file apps and regular projects; public publication and process ownership on other platforms remain separate work.
 Authoring diagnostics also catch repeated or conflicting option presence policies in supported straight-line code.

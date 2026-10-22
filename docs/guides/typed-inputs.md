@@ -6,6 +6,8 @@ and `bool`. The parser and renderer versions remain unchanged; no new dependency
 
 The later [environment-input API](environment-inputs.md) adds explicit fallbacks and source-aware diagnostics while
 preserving these typed handles and command-line rules. Historical results below describe the original input slice.
+The [enum-input API](enum-inputs.md) extends the same handles to named enum choices, with case-insensitive member
+matching, declaration validation, and allowed-values help.
 
 ## Typed handles and lookups
 

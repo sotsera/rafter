@@ -3,6 +3,7 @@
 [Issue #36](https://github.com/sotsera/rafter/issues/36) adds process-environment fallbacks to string/integer/Boolean
 options. The [environment example](../../examples/environment.cs) uses all three types, following the
 [agreed design](../design/environment-inputs.md).
+The later [enum-input API](enum-inputs.md) uses the same fallback and source contracts for named enum choices.
 
 ```csharp
 var name = command.Option<string>("name", "The person to greet.")

@@ -83,20 +83,36 @@ public sealed class PackageConsumerTests
         const string valid = """
             var command = Rafter.Command("Package consumer.");
             var name = command.Option<string>("name", "Name.").Default("Ada").FromEnvironment("RAFTER_PACKAGE_NAME");
-            return await command.RunAsync(args, context => context.WriteLine($"Hello, {context.GetValue(name)}!"));
+            var configuration = command.Option<BuildConfiguration>("configuration", "Configuration.")
+                .Default(BuildConfiguration.Release).FromEnvironment("RAFTER_PACKAGE_CONFIGURATION");
+            return await command.RunAsync(args, context =>
+            {
+                context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}.");
+            });
+            enum BuildConfiguration
+            {
+                Debug = 20,
+                Release = -1
+            }
             """;
         await File.WriteAllTextAsync(sourcePath, directives + valid, TestContext.Current.CancellationToken);
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = null;
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = null;
         await consumer.BuildAsync();
         var run = await consumer.RunAsync("--quiet");
         run.ExitCode.Should().Be(0);
-        run.StandardOutput.Should().Be("Hello, Ada!" + Environment.NewLine);
+        run.StandardOutput.Should().Be("Hello, Ada! Release." + Environment.NewLine);
         run.StandardError.Should().BeEmpty();
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = "Grace";
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = " debug ";
         var environmentRun = await consumer.RunAsync("--quiet");
         environmentRun.ExitCode.Should().Be(0);
-        environmentRun.StandardOutput.Should().Be("Hello, Grace!" + Environment.NewLine);
+        environmentRun.StandardOutput.Should().Be("Hello, Grace! Debug." + Environment.NewLine);
+        var enumOverride = await consumer.RunAsync("--quiet", "--configuration=RELEASE");
+        enumOverride.ExitCode.Should().Be(0);
+        enumOverride.StandardOutput.Should().Be("Hello, Grace! Release." + Environment.NewLine);
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = null;
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = null;
 
         // An opt-out must take effect even when it is set in the consumer body, after package .props imports.
         var projectPath = Path.Combine(consumer.WorkingDirectory, entry);
