@@ -80,6 +80,6 @@ allowed-choice text, and NO_COLOR retaining emphasis without colors. Raw reports
 and terminal captures are retained under `artifacts/enum-inputs/`; redirected evidence uses the standard evidence tree.
 
 Use the [testing guide](../development/testing.md) for the Windows and portable Linux profiles. Exact-commit CI outcomes
-belong to the delivery PR; Ubuntu verification is pending while this increment is in development.
+belong to the delivery PR; the local results above establish Windows behavior only.
 No new runtime dependencies or analyzers are introduced. Flags, duration options, configurable timeouts, native AOT,
 and Linux-native process ownership remain separate work.
