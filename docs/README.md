@@ -36,6 +36,9 @@ The [enum-input design](design/enum-inputs.md) records the agreed conversion, de
 behind the [enum-input API](guides/enum-inputs.md) and [runnable example](../examples/enums.cs).
 The [duration-input design](design/duration-inputs.md) records agreed authoring, help, conversion, and formatting rules
 behind the [duration-input API](guides/duration-inputs.md) and [runnable example](../examples/durations.cs).
+The [per-process timeout design](design/process-timeouts.md) and
+[runnable example](../examples/process-timeout.cs) implement the agreed scope, recovery, exception/output contracts,
+race arbitration, and configuration validation. See the [process timeout guide](guides/process-timeouts.md).
 
 ## Developing this repository
 

@@ -5,6 +5,7 @@ internal interface IOwnedProcess : IDisposable
 {
     StreamReader Output { get; }
     StreamReader Error { get; }
+    long ExecutionStarted { get; }
     int? ExitCode { get; }
     bool IsEmpty { get; }
     bool RequestGracefulStop();

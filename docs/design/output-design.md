@@ -120,6 +120,16 @@ The agreed [duration-input design](duration-inputs.md#agreed-help-layout) uses `
 The agreed [default formatting](duration-inputs.md#agreed-default-formatting) normalizes descending components,
 omits zero components, uses `0s` for zero and one leading minus for negative values, and retains exact precision.
 
+## Process timeout output design
+
+The agreed [per-process timeout design](process-timeouts.md#agreed-output) uses a yellow deadline-progress notice in
+normal/verbose stderr, followed by a red timeout block only if the settled exception escapes the body. The block shows
+configured timeout, elapsed time including settlement, and an observed root exit code when available. Quiet suppresses
+progress but retains unhandled errors; caught timeouts retain the agreed recovery behavior without a final framework
+error. The [process timeout implementation](../guides/process-timeouts.md) delivers this behavior. These transcripts
+are illustrative, not captured executions. The [agreed race rules](process-timeouts.md#agreed-race-handling) preserve
+an already-recorded timeout and keep termination/output uncertainty distinct.
+
 ## Minimal success
 
 For [minimal.cs](../../examples/minimal.cs):

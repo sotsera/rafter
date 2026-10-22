@@ -51,8 +51,10 @@ public sealed class ProcessObservationTests
         await output.CompleteErrorAsync();
     }
 
-    [WindowsFact]
-    public async Task Failed_force_request_cancels_pending_reads_and_keeps_kill_on_close_as_final_cleanup()
+    [WindowsTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Failed_force_request_cancels_pending_reads_and_keeps_kill_on_close_as_final_cleanup(bool timeout)
     {
         using var stdout = new StringWriter();
         using var stderr = new StringWriter();
@@ -64,7 +66,8 @@ public sealed class ProcessObservationTests
         var invocation = new ProcessInvocation(cancellation, output);
         var body = new BodyProcesses(invocation, "Observed body");
         var arguments = WindowsProcessTests.ProbeArguments("tree", ready);
-        var settings = new ProcessSettings("dotnet", arguments, root, new Dictionary<string, string>(), [0], null);
+        var settings = new ProcessSettings("dotnet", arguments, root, new Dictionary<string, string>(), [0], null,
+            timeout ? TimeSpan.FromTicks(1) : null);
         var native = WindowsProcess.Start("dotnet", arguments, root, settings.Environment);
         using var observed = new FailedForce(native);
         try
@@ -75,7 +78,11 @@ public sealed class ProcessObservationTests
             var failure = (await complete.Should().ThrowAsync<ProcessCompletionException>()).Which;
             failure.Message.Should().Contain("Termination unknown");
             failure.ExitCode.Should().Be(0);
+            failure.Timeout.Should().Be(settings.Timeout);
             invocation.Failed.Should().BeTrue();
+            output.Exception(failure, "body");
+            stderr.ToString().Should().NotContain("Process timed out");
+            stderr.ToString().Contains("Timeout: 0.0001ms").Should().Be(timeout);
             await WindowsProcessTests.UntilAsync(() => descendant.HasExited);
         }
         finally
@@ -88,6 +95,7 @@ public sealed class ProcessObservationTests
 
     private sealed class FailedForce(WindowsProcess native) : IOwnedProcess
     {
+        public long ExecutionStarted => native.ExecutionStarted;
         public StreamReader Output => native.Output;
         public StreamReader Error => native.Error;
         public int? ExitCode => native.ExitCode;
@@ -99,6 +107,7 @@ public sealed class ProcessObservationTests
 
     private sealed class FailingObservation(WindowsProcess native, bool loseJobQuery) : IOwnedProcess
     {
+        public long ExecutionStarted => native.ExecutionStarted;
         public StreamReader Output => native.Output;
         public StreamReader Error => native.Error;
         public int? ExitCode => loseJobQuery ? native.ExitCode : throw new IOException("Exit observation failed.");

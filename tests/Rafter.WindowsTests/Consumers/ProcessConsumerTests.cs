@@ -7,6 +7,32 @@ namespace Rafter.WindowsTests.Consumers;
 public sealed class ProcessConsumerTests
 {
     [WindowsFact]
+    public async Task Timeout_example_validates_inputs_and_runs_with_successful_and_expired_deadlines()
+    {
+        using var consumer = new IsolatedConsumer("file-app", TestContext.Current.TestOutputHelper!,
+            "examples/process-timeout.cs");
+        consumer.EnvironmentOverrides["RAFTER_PROCESS_TIMEOUT"] = null;
+        await consumer.BuildAsync();
+        var help = await consumer.RunAsync("--help");
+        help.ExitCode.Should().Be(0);
+        help.StandardOutput.Should().Contain("--timeout <duration>").And.Contain("Default: 10s.")
+            .And.Contain("Environment: RAFTER_PROCESS_TIMEOUT.");
+        var invalid = await consumer.RunAsync("--project", "unused.csproj", "--timeout", "0s", "--quiet");
+        invalid.ExitCode.Should().Be(2);
+        invalid.StandardError.Should().Contain("Must be greater than zero.").And.NotContain("Process |");
+        var project = "tests/testassets/workflows/src/BuildSample.csproj";
+        var success = await consumer.RunAsync("--project", project, "--timeout", "1m", "--quiet");
+        success.ExitCode.Should().Be(0, success.StandardError);
+        success.StandardOutput.Should().Contain("Build completed before its process deadline.");
+        // One tick expires before a build can finish, without assuming the machine's build duration.
+        var expired = await consumer.RunAsync("--project", project, "--timeout", "0.0001ms", "--quiet");
+        expired.ExitCode.Should().Be(1);
+        expired.StandardOutput.Should().NotContain("Build completed before its process deadline.");
+        expired.StandardError.Should().Contain("Process timed out | dotnet").And.Contain("Timeout: 0.0001ms")
+            .And.NotContain("deadline reached").And.NotContain("Exception:");
+    }
+
+    [WindowsFact]
     public async Task Actual_process_example_runs_from_an_isolated_directory()
     {
         using var consumer = new IsolatedConsumer("file-app", TestContext.Current.TestOutputHelper!, "examples/processes.cs");

@@ -63,6 +63,37 @@ public sealed class ProcessConfigurationTests
         host.Error.ToString().Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData(0L)]
+    [InlineData(-1L)]
+    [InlineData(long.MinValue)]
+    public async Task Invalid_timeout_does_not_mutate_builder_and_positive_full_range_is_valid(long ticks)
+    {
+        using var host = new ProcessHost();
+        (await host.Command.RunAsync(["--quiet"], context =>
+        {
+            var process = context.Process("must-not-launch");
+            Action invalid = () => process.Timeout(TimeSpan.FromTicks(ticks));
+            invalid.Should().Throw<ArgumentOutOfRangeException>().Which.ParamName.Should().Be("timeout");
+            process.Timeout(TimeSpan.MaxValue).Should().BeSameAs(process);
+            var alias = process;
+            Action duplicate = () => alias.Timeout(TimeSpan.MaxValue);
+            duplicate.Should().Throw<InvalidOperationException>();
+        })).Should().Be(0);
+        host.Error.ToString().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Unhandled_timeout_configuration_error_is_body_failure_before_launch()
+    {
+        using var host = new ProcessHost();
+        (await host.Command.RunAsync(["--quiet"], context =>
+        {
+            context.Process("must-not-launch").Timeout(TimeSpan.Zero);
+        })).Should().Be(1);
+        host.Error.ToString().Should().Contain("ArgumentOutOfRangeException").And.NotContain("Process |");
+    }
+
     private sealed class ProcessHost : IDisposable
     {
         private Action? _signal;

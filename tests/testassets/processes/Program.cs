@@ -87,6 +87,13 @@ public static class Program
                 }
                 await Task.Delay(Timeout.InfiniteTimeSpan);
                 return 0;
+            case "release":
+                PublishReady(args[2]);
+                while (!File.Exists(args[3]))
+                {
+                    await Task.Delay(20);
+                }
+                return 0;
             case "graceful":
                 var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
                 Console.CancelKeyPress += (_, signal) =>
@@ -99,6 +106,7 @@ public static class Program
                 await stopped.Task;
                 return 0;
             case "tree":
+            case "tree-silent":
                 using (var child = Child(runtime, "hold", args[2]))
                 {
                     var deadline = Stopwatch.StartNew();
@@ -110,7 +118,10 @@ public static class Program
                     {
                         return 90;
                     }
-                    Console.Write("parent finished");
+                    if (mode == "tree")
+                    {
+                        Console.Write("parent finished");
+                    }
                     return 0;
                 }
             default:

@@ -6,6 +6,10 @@ internal static class ProcessOperation
 {
     public static async Task<ProcessResult> RunAsync(ProcessSettings settings, BodyProcesses body)
     {
+        if (settings.Timeout is { } timeout)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
+        }
         var invocation = body.Invocation;
         var cancellation = invocation.Cancellation;
         cancellation.Token.ThrowIfCancellationRequested();
@@ -35,7 +39,8 @@ internal static class ProcessOperation
         return await CompleteAsync(settings, body, process).ConfigureAwait(false);
     }
 
-    internal static async Task<ProcessResult> CompleteAsync(ProcessSettings settings, BodyProcesses body, IOwnedProcess process)
+    internal static async Task<ProcessResult> CompleteAsync(ProcessSettings settings, BodyProcesses body,
+        IOwnedProcess process, TimeProvider? clock = null)
     {
         var invocation = body.Invocation;
         var cancellation = invocation.Cancellation;
@@ -51,6 +56,8 @@ internal static class ProcessOperation
             var stderr = Task.Run(() => PumpAsync(errorReader, text => invocation.Output.ProcessOutput(text, true),
                 readerCancellation.Token));
             var readers = Task.WhenAll(stdout, stderr);
+            var deadline = new ProcessDeadline(settings.Timeout, process.ExecutionStarted, clock ?? TimeProvider.System);
+            var deadlineNotice = Task.CompletedTask;
             var localShutdown = new ShutdownWindow();
             var graceDeadline = long.MaxValue;
             var verificationDeadline = long.MaxValue;
@@ -76,6 +83,13 @@ internal static class ProcessOperation
                     try
                     {
                         empty = process.IsEmpty;
+                        if (deadline.Observe(empty, cancellation, () => process.IsEmpty))
+                        {
+                            localShutdown.Request();
+                            // Reporting can block in a caller's writer; it must not stop lifecycle supervision.
+                            deadlineNotice = Task.Run(() => invocation.Output.ProcessDeadlineReached(settings.Executable));
+                        }
+                        empty |= deadline.ExecutionCompleted;
                     }
                     catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
                     {
@@ -140,7 +154,7 @@ internal static class ProcessOperation
                         verificationDeadline = Math.Min(verificationDeadline,
                             active.Min(window => window.VerificationDeadline));
                     }
-                    if (empty && readers.IsCompleted && exitCode.HasValue)
+                    if (empty && readers.IsCompleted && (exitCode.HasValue || deadline.Committed))
                     {
                         break;
                     }
@@ -168,19 +182,33 @@ internal static class ProcessOperation
                 {
                     outputFailure = exception;
                 }
+                try
+                {
+                    await deadlineNotice.ConfigureAwait(false);
+                }
+                catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
+                {
+                    outputFailure ??= exception;
+                }
                 if (!empty || incomplete)
                 {
                     var failure = new ProcessCompletionException(settings.Executable, exitCode, !empty,
-                        nativeFailure ?? outputFailure);
+                        nativeFailure ?? outputFailure, deadline.Committed ? settings.Timeout : null,
+                        deadline.Committed ? deadline.Elapsed : null);
                     invocation.Fail(failure);
                     throw failure;
                 }
             }
             if (outputFailure is not null)
             {
-                var failure = new ProcessCompletionException(settings.Executable, exitCode, false, outputFailure);
+                var failure = new ProcessCompletionException(settings.Executable, exitCode, false, outputFailure,
+                    deadline.Committed ? settings.Timeout : null, deadline.Committed ? deadline.Elapsed : null);
                 invocation.Fail(failure);
                 throw failure;
+            }
+            if (deadline.Committed)
+            {
+                throw new ProcessTimeoutException(settings.Executable, settings.Timeout!.Value, deadline.Elapsed, exitCode);
             }
             if (!exitCode.HasValue)
             {

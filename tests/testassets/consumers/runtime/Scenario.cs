@@ -6,6 +6,16 @@ internal static class Scenario
     {
         var scenario = args.FirstOrDefault() ?? "sync";
         var controls = args.Skip(1).ToArray();
+        if (scenario == "timeout-child")
+        {
+            Console.WriteLine("Child output before deadline.");
+            await Task.Delay(Timeout.InfiniteTimeSpan);
+            return 0;
+        }
+        if (scenario is "process-timeout" or "process-timeout-recover")
+        {
+            return await ProcessTimeoutAsync(scenario, controls);
+        }
         if (scenario == "environment")
         {
             return await EnvironmentAsync(controls);
@@ -255,6 +265,26 @@ internal static class Scenario
                 Count = actualCount,
                 Flag = actualFlag
             }));
+        });
+    }
+
+    private static async Task<int> ProcessTimeoutAsync(string scenario, string[] controls)
+    {
+        var command = Rafter.Command("Exercise a real process execution deadline.");
+        return await command.RunAsync(controls, async context =>
+        {
+            try
+            {
+                await context.Process("dotnet").Arguments(typeof(Scenario).Assembly.Location, "timeout-child")
+                    .Timeout(TimeSpan.FromSeconds(2)).RunAsync();
+            }
+            catch (ProcessTimeoutException exception) when (scenario == "process-timeout-recover")
+            {
+                context.WriteLine($"Recovered from {exception.Executable} timeout: {exception.Timeout.TotalSeconds}s.");
+                var result = await context.Process("dotnet").Arguments("--version")
+                    .Timeout(TimeSpan.MaxValue).RunAsync();
+                context.WriteLine($"Fallback: {result.Succeeded}.");
+            }
         });
     }
 

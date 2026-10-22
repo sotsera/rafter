@@ -69,5 +69,28 @@ internal sealed class InvocationCancellation : IDisposable
         }
     }
 
+    internal bool TryCommitTimeout(ProcessDeadline deadline, Func<bool> isEmpty)
+    {
+        lock (_gate)
+        {
+            if (_requested)
+            {
+                return false;
+            }
+            // Recheck ownership at commitment, under the same gate that accepts invocation cancellation.
+            if (isEmpty())
+            {
+                deadline.Complete();
+                return false;
+            }
+            if (_requested)
+            {
+                return false;
+            }
+            deadline.Commit();
+            return true;
+        }
+    }
+
     public void Dispose() => _source.Dispose();
 }

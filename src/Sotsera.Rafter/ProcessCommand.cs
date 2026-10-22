@@ -15,6 +15,7 @@ public sealed class ProcessCommand
     private string? _directory;
     private Func<ProcessResult, ProcessFailureAction>? _handler;
     private bool _hasHandler;
+    private TimeSpan? _timeout;
 
     internal ProcessCommand(BodyProcesses body, string executable, string root)
     {
@@ -112,6 +113,22 @@ public sealed class ProcessCommand
         return this;
     }
 
+    /// <summary>Sets one positive execution deadline for this child and its owned descendants.
+    /// Expiry begins shutdown; the operation still waits for process and output settlement.</summary>
+    public ProcessCommand Timeout(TimeSpan timeout)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
+        lock (_gate)
+        {
+            if (_timeout.HasValue)
+            {
+                throw new InvalidOperationException("A process timeout may only be specified once.");
+            }
+            _timeout = timeout;
+        }
+        return this;
+    }
+
     /// <summary>Starts this configuration and awaits its process scope, output, and failure handler.</summary>
     public Task<ProcessResult> RunAsync()
     {
@@ -121,7 +138,7 @@ public sealed class ProcessCommand
                 ? Path.GetFullPath(_executable, _root) : _executable;
             return _body.Run(new(executable, _arguments.ToArray(), _directory ?? _root,
                 new Dictionary<string, string>(_environment, StringComparer.OrdinalIgnoreCase),
-                _acceptedExitCodes?.ToArray() ?? [0], _handler));
+                _acceptedExitCodes?.ToArray() ?? [0], _handler, _timeout));
         }
     }
 

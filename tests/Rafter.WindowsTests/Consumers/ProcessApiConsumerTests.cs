@@ -17,5 +17,16 @@ public sealed class ProcessApiConsumerTests
         process.ExitCode.Should().Be(0);
         process.StandardOutput.Should().Contain("10.0.").And.Contain("Process result: 0:True");
         process.StandardError.Should().BeEmpty();
+
+        var timeout = await consumer.RunAsync("process-timeout", "--plain");
+        timeout.ExitCode.Should().Be(1);
+        timeout.StandardOutput.Should().Contain("Child output before deadline.");
+        timeout.StandardError.Should().Contain("Process deadline reached | dotnet")
+            .And.Contain("Process timed out | dotnet").And.Contain("Timeout: 2s | elapsed:")
+            .And.NotContain("ProcessTimeoutException:");
+        var recovered = await consumer.RunAsync("process-timeout-recover", "--quiet");
+        recovered.ExitCode.Should().Be(0);
+        recovered.StandardOutput.Should().Contain("Recovered from dotnet timeout: 2s.").And.Contain("Fallback: True.");
+        recovered.StandardError.Should().BeEmpty();
     }
 }
