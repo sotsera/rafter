@@ -71,7 +71,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Roots and paths | Partial | Partial | Partial | Partial |
 | Typed inputs | ✓ | Partial | Partial | Partial |
 | Input validation | ✓ | ✓ | ✓ | ✓ |
-| Environment inputs | ✓ | ✓ | ✓ | Partial |
+| Environment inputs | ✓ | ✓ | ✓ | ✓ |
 | Targets and dependencies | ✓ | ✓ | ✓ | ✓ |
 | Conditional execution | — | — | — | — |
 | Output and diagnostics | Partial | Partial | Partial | Partial |

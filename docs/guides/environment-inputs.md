@@ -60,3 +60,12 @@ values through the packed runtime. These overrides do not mutate the test host's
 Use the [testing guide](../development/testing.md) for Windows and portable Linux profiles. The delivery PR records
 exact-commit results and unavailable checks. New analyzers, async resolution, new option types, secret redaction,
 and Linux-native process ownership remain separate work.
+
+On 2026-10-22, local Windows verification passed all 399 unit cases, all 25 integration cases, and the Windows
+process checks with the existing headless graceful-console skip. All 23 redirected runtime review cases passed.
+Actual pseudoterminal review confirmed blue option/variable names, ordinary `(empty)` text, and NO_COLOR emphasis.
+For runtime commit `0a07c5569e2124486c67c2d261cb0ee3cf37febf`, the
+[Ubuntu CI job](https://github.com/sotsera/rafter/actions/runs/39815671192/job/119953501578) passed **400 ordinary** and
+**424 full** portable cases with **0 failures/skips** and **0 build warnings/errors**. These runs include native
+environment case matching and real empty process variables. Final PR results supersede these initial observations.
+Raw reports, the first wrapping-assertion failure, and terminal records are retained under `artifacts/environment-inputs/`.
