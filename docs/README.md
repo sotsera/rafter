@@ -20,6 +20,7 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Commands, bodies, invocation outcomes, and help | [Minimal runtime](guides/minimal-runtime.md) |
 | Options, aliases, value lookup, and validation | [Typed inputs](guides/typed-inputs.md) |
 | Environment fallbacks, empty values, precedence, and source diagnostics | [Environment inputs](guides/environment-inputs.md) |
+| Enum choices, conversion, declaration validation, and allowed-values help | [Enum inputs](guides/enum-inputs.md) |
 | Invocation roots and child paths | [Roots and paths](guides/roots-and-paths.md) |
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
@@ -30,6 +31,8 @@ The [output preview](design/output-preview.html) illustrates presentation choice
 [runtime review samples](history/runtime-review-samples.md) and linked verification records capture actual executions.
 The [environment-input design](design/environment-inputs.md) records the decisions behind the implemented
 [environment-input API](guides/environment-inputs.md) and its example.
+The [enum-input design](design/enum-inputs.md) records the agreed conversion, declaration-validation, and help rules
+behind the [enum-input API](guides/enum-inputs.md) and [runnable example](../examples/enums.cs).
 
 ## Developing this repository
 

@@ -370,6 +370,18 @@ Agreed declaration syntax and behavior:
   and `int?`. `Option<T>` is the optional declaration handle; `ValueOption<T>` is the finalized required/defaulted
   handle. See the [lookup signatures](../guides/typed-inputs.md#typed-handles-and-lookups) for the implemented initial types.
 
+#### Enum inputs
+
+Initial scope agreed on 2026-10-22: accept enum member names case-insensitively in command-line/environment input,
+reject numeric text, and defer `[Flags]` support. Preserve the existing option policies, typed lookup, source precedence,
+and validation rules. [examples/enums.cs](../../examples/enums.cs) is implemented; the [current guide](../guides/enum-inputs.md)
+records behavior and verification.
+The [enum-input design](enum-inputs.md) records these decisions and the agreed allowed-values/default help layout.
+Declaration validation rejects case-ambiguous names, shared numeric values, flags, and undefined defaults before help.
+Supplied values trim surrounding whitespace; invalid or empty values produce source-aware errors without echoing them.
+[Issue #38](https://github.com/sotsera/rafter/issues/38) tracks implementation and consumer verification.
+The broader typed-input topic stays partial because durations and other types remain pending.
+
 #### Names and aliases
 
 Agreed naming rules, with the requested extension for option aliases and explicit prefixes:

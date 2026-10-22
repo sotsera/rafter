@@ -28,13 +28,14 @@ internal static class EnvironmentInputs
                 if (text is not null)
                 {
                     sources[option.Declaration] = new(InputSourceKind.Environment, name, text.Length == 0);
-                    if (TryConvert(text, option.ValueType, out var value))
+                    if (TryConvert(text, option, out var value))
                     {
                         values[option.Declaration] = value;
                     }
                     else
                     {
-                        var expected = option.ValueType == typeof(int) ? "an integer" : "true or false";
+                        var expected = option.EnumChoices is not null ? "a declared enum member name"
+                            : option.ValueType == typeof(int) ? "an integer" : "true or false";
                         var reason = text.Length == 0 ? "is empty" : "has an invalid value";
                         diagnostics.Add($"{option.Spellings[0]}: environment variable {name} {reason}; expected {expected}.");
                     }
@@ -48,8 +49,13 @@ internal static class EnvironmentInputs
         }
     }
 
-    private static bool TryConvert(string text, Type type, out object? value)
+    private static bool TryConvert(string text, OptionSnapshot option, out object? value)
     {
+        if (option.EnumChoices is { } choices)
+        {
+            return choices.TryConvert(text, out value);
+        }
+        var type = option.ValueType;
         value = null;
         if (type == typeof(string))
         {

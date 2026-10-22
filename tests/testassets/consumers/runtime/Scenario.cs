@@ -10,6 +10,10 @@ internal static class Scenario
         {
             return await EnvironmentAsync(controls);
         }
+        if (scenario == "enums")
+        {
+            return await EnumsAsync(controls);
+        }
         if (scenario == "review-child")
         {
             Console.WriteLine("  Child [red]literal[/] output.");
@@ -147,6 +151,44 @@ internal static class Scenario
         return result;
     }
 
+    private static async Task<int> EnumsAsync(string[] arguments)
+    {
+        var variable = arguments[0];
+        var command = Rafter.Command("Resolve enum inputs.");
+        var optional = command.Option<BuildConfiguration>("optional", "Optional configuration.");
+        var original = command.Option<BuildConfiguration>("configuration", "Build configuration.")
+            .FromEnvironment(variable).Aliases("c");
+        var configuration = original.Default(BuildConfiguration.Release);
+        var required = command.Option<BuildConfiguration>("required", "Required configuration.").Required()
+            .Validate("Debug is required.", value => value == BuildConfiguration.Debug);
+        command.Validate("Prepared enum types.", inputs =>
+        {
+            BuildConfiguration? absent = inputs.GetValue(optional);
+            BuildConfiguration? retained = inputs.GetValue(original);
+            BuildConfiguration actual = inputs.GetValue(configuration);
+            BuildConfiguration supplied = inputs.GetValue(required);
+            return absent is null && retained == actual && supplied == BuildConfiguration.Debug;
+        });
+        return await command.RunAsync(arguments[1..], context =>
+        {
+            BuildConfiguration? absent = context.GetValue(optional);
+            BuildConfiguration? retained = context.GetValue(original);
+            BuildConfiguration actual = context.GetValue(configuration);
+            BuildConfiguration supplied = context.GetValue(required);
+            Environment.SetEnvironmentVariable(variable, "changed after preparation");
+            if (context.GetValue(configuration) != actual || retained != actual)
+            {
+                throw new InvalidOperationException("Prepared enum values changed during execution.");
+            }
+            context.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Optional = absent?.ToString(),
+                Configuration = actual.ToString(),
+                Required = supplied.ToString()
+            }));
+        });
+    }
+
     private static async Task<int> EnvironmentAsync(string[] arguments)
     {
         var prefix = arguments[0];
@@ -216,5 +258,11 @@ internal static class Scenario
         });
         var verify = command.Target("verify", "Review both target bodies.").DependsOn(build, test);
         return await command.RunAsync(controls, verify);
+    }
+
+    private enum BuildConfiguration
+    {
+        Debug = 20,
+        Release = -1
     }
 }

@@ -9,6 +9,9 @@ External process ownership is implemented on Windows; native AOT remains unverif
 Typed options can use `.FromEnvironment("NAME")` before or after `.Required()` / `.Default(...)`. Command-line values
 take priority over environment values, then defaults. Help shows the mapping without reading values, and verbose
 source diagnostics identify where prepared inputs came from without automatically printing their contents.
+Named enum options use the same handles and source precedence, match member names case-insensitively after trimming
+surrounding whitespace, and show allowed choices in help. Numeric text, flags, ambiguous names/values, and undefined
+defaults are rejected during input or declaration validation.
 
 ```csharp
 #:package Sotsera.Rafter@0.1.0-local

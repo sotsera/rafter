@@ -116,9 +116,20 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
             }
             else if (IsPresent(parsed) && diagnostics.Count == 0)
             {
-                value = option is System.CommandLine.Option<int> integer
-                    ? result.GetValue(integer)
-                    : result.GetValue((System.CommandLine.Option<string>)option);
+                if (declaration.EnumChoices is { } choices)
+                {
+                    var text = result.GetValue((System.CommandLine.Option<string>)option)!;
+                    if (!choices.TryConvert(text, out value))
+                    {
+                        diagnostics.Add($"{option.Name} requires a declared enum member name.");
+                    }
+                }
+                else
+                {
+                    value = option is System.CommandLine.Option<int> integer
+                        ? result.GetValue(integer)
+                        : result.GetValue((System.CommandLine.Option<string>)option);
+                }
             }
             values.Add(declaration.Declaration, value);
             sources.Add(declaration.Declaration, new(IsPresent(parsed) ? InputSourceKind.CommandLine
