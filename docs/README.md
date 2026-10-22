@@ -19,6 +19,7 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Consume the local package, automatic imports, and opt-out | [Local package](guides/local-package.md) |
 | Commands, bodies, invocation outcomes, and help | [Minimal runtime](guides/minimal-runtime.md) |
 | Options, aliases, value lookup, and validation | [Typed inputs](guides/typed-inputs.md) |
+| Environment fallbacks, empty values, precedence, and source diagnostics | [Environment inputs](guides/environment-inputs.md) |
 | Invocation roots and child paths | [Roots and paths](guides/roots-and-paths.md) |
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
@@ -27,8 +28,8 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 
 The [output preview](design/output-preview.html) illustrates presentation choices; the
 [runtime review samples](history/runtime-review-samples.md) and linked verification records capture actual executions.
-The [environment-input design](design/environment-inputs.md) records newly agreed behavior and a proposed example;
-it describes planned functionality, not an implemented runtime feature.
+The [environment-input design](design/environment-inputs.md) records the decisions behind the implemented
+[environment-input API](guides/environment-inputs.md) and its example.
 
 ## Developing this repository
 

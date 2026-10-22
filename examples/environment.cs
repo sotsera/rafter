@@ -2,8 +2,6 @@
 #:project ../src/Sotsera.Rafter/Sotsera.Rafter.csproj
 #:property PublishAot=false
 
-// Syntax draft for discussion. FromEnvironment is agreed but not implemented yet.
-// See docs/design/environment-inputs.md for agreed behavior and open syntax questions.
 var command = Rafter.Command("Read greeting inputs from the command line, environment, or defaults.");
 
 var name = command.Option<string>("name", "The person to greet; an empty name is allowed.")

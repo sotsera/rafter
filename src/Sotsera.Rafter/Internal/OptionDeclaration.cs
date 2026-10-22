@@ -11,6 +11,8 @@ internal sealed class OptionDeclaration(object gate, string name, string descrip
     private int _requiredCalls;
     private int _defaultCalls;
     private object? _defaultValue;
+    private int _environmentCalls;
+    private string? _environmentVariable;
     private bool _nullAliases;
 
     public void AddAliases(string[]? aliases)
@@ -53,12 +55,21 @@ internal sealed class OptionDeclaration(object gate, string name, string descrip
         }
     }
 
+    public void SetEnvironment(string? name)
+    {
+        lock (_gate)
+        {
+            _environmentCalls++;
+            _environmentVariable = name;
+        }
+    }
+
     public OptionSnapshot Snapshot()
     {
         lock (_gate)
         {
             return new(this, _name, _description, _valueType, [.. _aliases], [.. _rules],
-                _requiredCalls, _defaultCalls, _defaultValue, _nullAliases);
+                _requiredCalls, _defaultCalls, _defaultValue, _nullAliases, _environmentCalls, _environmentVariable);
         }
     }
 }
@@ -76,7 +87,9 @@ internal sealed record OptionSnapshot(
     int RequiredCalls,
     int DefaultCalls,
     object? DefaultValue,
-    bool NullAliases)
+    bool NullAliases,
+    int EnvironmentCalls,
+    string? EnvironmentVariable)
 {
     public string[] Spellings { get; private set; } = [];
     public bool Required => RequiredCalls > 0;
@@ -129,6 +142,16 @@ internal sealed record OptionSnapshot(
         if (HasDefault && DefaultValue is null)
         {
             diagnostics.Add($"{location}: Default must not be null.");
+        }
+        if (EnvironmentCalls > 1)
+        {
+            diagnostics.Add($"{location}: FromEnvironment may be configured only once.");
+        }
+        if (EnvironmentCalls > 0 && (string.IsNullOrWhiteSpace(EnvironmentVariable)
+            || char.IsWhiteSpace(EnvironmentVariable[0]) || char.IsWhiteSpace(EnvironmentVariable[^1])
+            || EnvironmentVariable.Any(character => character == '=' || char.IsControl(character))))
+        {
+            diagnostics.Add($"{location}: Environment names must be nonblank, without surrounding whitespace, '=' or control characters.");
         }
         foreach (var rule in Rules)
         {

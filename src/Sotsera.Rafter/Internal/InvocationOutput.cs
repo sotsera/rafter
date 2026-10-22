@@ -33,6 +33,11 @@ internal sealed class InvocationOutput
         _output.Framework(description, new Style(decoration: Decoration.Bold));
         _output.Framework("", Style.Plain);
         Section("Command options");
+        if (options.Any(option => option.EnvironmentVariable is not null))
+        {
+            _output.Layout(new Paragraph("Source order: command line, environment, default.")
+                { Overflow = Overflow.Fold }, 2);
+        }
         if (options.Length == 0)
         {
             _output.Framework("  None.", Style.Plain);
@@ -95,8 +100,39 @@ internal sealed class InvocationOutput
         _error.Framework(heading, new Style(Color.Red, decoration: Decoration.Bold));
         foreach (var diagnostic in diagnostics)
         {
-            _error.Framework("  " + diagnostic, Style.Plain);
+            _error.Layout(new Paragraph(diagnostic) { Overflow = Overflow.Fold }, 2);
         }
+    }
+
+    public void InputSources(OptionSnapshot[] options, InputValues values)
+    {
+        if (!_arguments.Verbose || options.Length == 0)
+        {
+            return;
+        }
+        _error.Framework("Input sources", new Style(decoration: Decoration.Bold));
+        foreach (var option in options)
+        {
+            var source = values.Source(option.Declaration);
+            var row = new Paragraph(option.Spellings[0], new Style(new Color(173, 214, 240)))
+                { Overflow = Overflow.Fold };
+            row.Append(": ", Style.Plain);
+            if (source.Kind == InputSourceKind.Environment)
+            {
+                row.Append("environment ", Style.Plain);
+                row.Append(source.Variable!, new Style(new Color(173, 214, 240)));
+                if (source.Empty)
+                {
+                    row.Append(" (empty)", Style.Plain);
+                }
+            }
+            else
+            {
+                row.Append(source.Description, Style.Plain);
+            }
+            _error.Layout(row, 2);
+        }
+        _error.Framework("", Style.Plain);
     }
 
     public void CancellationRequested()
@@ -283,8 +319,18 @@ internal sealed class InvocationOutput
         _output.Layout(new Paragraph($"{option.Description} {policy}") { Overflow = Overflow.Fold }, 4);
         if (option.ValueType == typeof(bool))
         {
-            _output.Layout(new Paragraph("Bare flag means true; explicit true/false allowed.")
+            var flagHelp = option.EnvironmentVariable is null
+                ? "Bare flag means true; explicit true/false allowed."
+                : "Command line: bare flag means true; explicit true/false allowed.";
+            _output.Layout(new Paragraph(flagHelp)
                 { Overflow = Overflow.Fold }, 4);
+        }
+        if (option.EnvironmentVariable is { } environment)
+        {
+            var mapping = new Paragraph("Environment: ") { Overflow = Overflow.Fold };
+            mapping.Append(environment, new Style(new Color(173, 214, 240)));
+            mapping.Append(option.ValueType == typeof(bool) ? "; requires true or false." : ".");
+            _output.Layout(mapping, 4);
         }
         if (option.Rules.Length > 0)
         {

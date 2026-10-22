@@ -168,7 +168,7 @@ public sealed class Command
             }
 
             // Honor an explicit presentation switch even when declaration validation prevents parsing.
-            var arguments = declarations.Count == 0 ? InvocationArguments.Parse(args, options)
+            var arguments = declarations.Count == 0 ? InvocationArguments.Parse(args, options, host.ReadEnvironment)
                 : new InvocationArguments(false, false, false, args?.Contains("--plain") == true, []);
             output = new InvocationOutput(host, arguments);
             if (declarations.Count > 0)
@@ -222,6 +222,7 @@ public sealed class Command
                             context.CancellationToken.ThrowIfCancellationRequested();
                             executed = true;
                             output.Start(_description, plan);
+                            output.InputSources(options, arguments.Values);
                             if (targetExecution is not null)
                             {
                                 await targetExecution.RunAsync(context, output).ConfigureAwait(false);

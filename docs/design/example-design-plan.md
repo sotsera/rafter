@@ -71,7 +71,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Roots and paths | Partial | Partial | Partial | Partial |
 | Typed inputs | ✓ | Partial | Partial | Partial |
 | Input validation | ✓ | ✓ | ✓ | ✓ |
-| Environment inputs | ✓ | ✓ | — | — |
+| Environment inputs | ✓ | ✓ | ✓ | Partial |
 | Targets and dependencies | ✓ | ✓ | ✓ | ✓ |
 | Conditional execution | — | — | — | — |
 | Output and diagnostics | Partial | Partial | Partial | Partial |
@@ -497,9 +497,10 @@ No asynchronous option syntax or implementation is selected. Revisit this note w
 
 ### Environment inputs
 
-The [environment-input design](environment-inputs.md) records behavior agreed on 2026-10-22 and the open syntax questions.
-[examples/environment.cs](../../examples/environment.cs) is a new syntax draft; `.FromEnvironment(...)` is agreed and
-not implemented. [Issue #36](https://github.com/sotsera/rafter/issues/36) scopes implementation. The reference example remains unchanged.
+The [environment-input design](environment-inputs.md) records behavior agreed on 2026-10-22.
+[examples/environment.cs](../../examples/environment.cs) now uses the implemented `.FromEnvironment(...)` API.
+[Issue #36](https://github.com/sotsera/rafter/issues/36) scopes implementation and verification, described in the
+[current guide](../guides/environment-inputs.md). The reference example remains unchanged.
 
 Agreed: command line precedes environment, then default and required/optional behavior. Empty is supplied, not missing:
 accept it for strings subject to validation, and reject it for integer/Boolean conversion without falling back. Resolve
@@ -519,7 +520,7 @@ typed values fail rather than falling back. Booleans accept only case-insensitiv
 yes/no/on/off forms. Do not interpret quotes or escapes in environment text. Help adds mapping metadata before rules
 and explains precedence once. After successful validation, verbose stderr lists every option's selected source in one
 `Input sources` block before execution, using declaration order and primary names without value contents. The selected
-design is agreed; implementation and verification remain pending. Use the linked design as the detailed decision record.
+design is implemented; use the linked guide and delivery PR for observed verification results.
 
 ### Input validation
 

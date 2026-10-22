@@ -1,7 +1,7 @@
 # Environment-backed inputs
 
-The selected behavior, syntax, and help/verbose layouts are agreed on 2026-10-22. Environment-backed option resolution
-is not implemented or verified. The [example draft](../../examples/environment.cs) adapts the scenario from the
+The selected behavior, syntax, and help/verbose layouts were agreed on 2026-10-22 and are implemented under issue #36.
+See the [usage and verification guide](../guides/environment-inputs.md). The runnable [example](../../examples/environment.cs) adapts the scenario from the
 unchanged [reference example](../../reference/examples/environment.cs) to the current command and lookup APIs.
 Implementation is scoped in [issue #36](https://github.com/sotsera/rafter/issues/36).
 
@@ -42,7 +42,7 @@ Follow the platform's process-environment lookup semantics:
 Do not retry with alternative spellings or introduce Rafter-specific case folding. Authors should use the same spelling
 when declaring and supplying variables across platforms. See
 [.NET environment lookup documentation](https://learn.microsoft.com/en-us/dotnet/api/system.environment.getenvironmentvariable).
-These are agreed rules for the planned feature, not a claim that Rafter's environment resolution is implemented.
+The real consumer checks exercise these platform rules without changing the test host's environment.
 
 ## Empty is different from missing
 
@@ -62,7 +62,7 @@ Rafter's .NET 10 baseline supports this distinction. See Microsoft's
 Shell behavior can differ: PowerShell's environment provider supports assigning an empty string starting in 7.5;
 older versions remove the variable instead. See
 [PowerShell environment variables](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-7.5).
-These platform facts are not evidence that Rafter implements environment inputs yet.
+The guide and delivery PR record Rafter's own executable verification separately from these platform facts.
 
 ## Agreed whitespace and Boolean conversion
 
@@ -89,8 +89,7 @@ Do not interpret quotes or escape sequences in environment text. A string contai
 retains them; Boolean text containing surrounding quote characters fails conversion. Shell quoting used to assign a
 variable is separate from quote characters actually stored in its value.
 
-These conversion rules are agreed for the planned environment feature; this document does not change the existing
-command-line parser or claim executable verification of environment resolution.
+These conversion rules apply to environment values; the existing command-line grammar remains unchanged.
 
 ## Agreed help and output behavior
 
@@ -208,10 +207,10 @@ because a mapping was repeated. A future analyzer may diagnose repetitions it ca
 
 The complete draft contains a required string, a validated/defaulted integer, and an optional Boolean. It uses the
 current `RunAsync(args, body)`, `GetValue`, and `WriteLine` shape, with no manual environment reads or source
-announcements in the body. The new method is agreed syntax, not an implemented API yet.
+announcements in the body. The example now runs against the implementation.
 
 ## Implementation boundary
 
-The selected design is agreed and tracked in issue #36. Runtime implementation and executable
-acceptance checks remain pending. Analyzer extensions remain a later topic. Async value resolution, secret redaction,
+The implementation is tracked in issue #36. The guide and delivery PR record executable results; the illustrative
+layouts here remain design references. Analyzer extensions remain a later topic. Async value resolution, secret redaction,
 automatic name inference, `.env` loading, and child-process environment configuration are separate topics.

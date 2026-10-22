@@ -16,13 +16,13 @@ internal sealed record InputValidation(string[] Diagnostics, Exception? Exceptio
                 {
                     continue;
                 }
-                scope = $"Validation for {option.Spellings[0]}";
+                scope = $"Validation for {values.DiagnosticName(option)}";
                 foreach (var rule in option.Rules)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     if (!rule.Predicate!(value))
                     {
-                        diagnostics.Add($"{option.Spellings[0]}: {rule.Description}");
+                        diagnostics.Add($"{values.DiagnosticName(option)}: {rule.Description}");
                     }
                 }
             }

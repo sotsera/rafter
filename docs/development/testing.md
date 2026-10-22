@@ -9,10 +9,13 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, and process configuration without child launch. | 342 | 0 |
-| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory behavior plus file-app/project/compiler/package consumers. | 1 | 21 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, and process configuration without child launch. | 399 | 0 |
+| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory behavior plus file-app/project/compiler/package consumers. | 1 | 24 |
 | [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, and process consumers. | 41 | 11 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 384 | 32 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 441 | 35 |
+
+The current counts include 57 environment-input unit cases and three real consumer cases added by issue #36.
+The migration and initial Linux observations below retain their original counts for those earlier source revisions.
 
 All three suites remain in [Rafter.slnx](../../Rafter.slnx). [Rafter.Portable.slnf](../../Rafter.Portable.slnf) selects the
 two portable projects and their production dependencies, excluding WindowsTests and ProcessProbe before their test
@@ -112,7 +115,7 @@ not their assertions. The migration inventory accounts for every original case, 
 sets are disjoint and together equal the full set. Raw source/method/case maps and reports are retained locally under
 `artifacts/test-suite-reorganization/`.
 
-Observed locally on Windows x64 / SDK 10.0.402:
+Observed during the original reorganization on Windows x64 / SDK 10.0.402, before issue #36:
 
 - Unit project: **342 passed, 0 failed/skipped**. Ordinary root: **383 passed, 0 failed, 1 console-capability skip**
   from 384 cases, about ten seconds with prebuilt assemblies on this run.

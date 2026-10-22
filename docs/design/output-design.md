@@ -93,7 +93,7 @@ presentation override, and redirected destinations remain plain independently of
 ## Environment-input sources
 
 The [environment-input design](environment-inputs.md#agreed-help-and-output-behavior) adds accepted presentation behavior
-for the planned environment-backed inputs. Help identifies the mapped variable from declarations, without reading or
+for environment-backed inputs, implemented in the [current runtime](../guides/environment-inputs.md). Help identifies the mapped variable from declarations, without reading or
 converting current environment values or running input validators; invalid environment values do not block help.
 Existing declaration and malformed-command-line checks still apply. Verbose stderr identifies the source
 actually selected and marks empty environment values. Normal and quiet stderr retain source context when reporting
@@ -103,7 +103,7 @@ rules, explains precedence once, and distinguishes Boolean command-line flags fr
 validation, verbose stderr shows one `Input sources` block before body/target execution: all options in declaration
 order, primary names, selected source only, and `(empty)` for empty environment values. Failed validation keeps grouped
 errors without the routine block. Use existing heading/name colors and flat runtime gutters; `(empty)` is ordinary text.
-The linked transcripts are illustrative, and this feature is not implemented yet.
+The linked transcripts remain illustrative; the guide and delivery PR record executable verification.
 
 ## Minimal success
 

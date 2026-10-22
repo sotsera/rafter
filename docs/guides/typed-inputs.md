@@ -4,6 +4,9 @@ Issue [#11](https://github.com/sotsera/rafter/issues/11) makes [options.cs](../.
 [validation.cs](../../examples/validation.cs) runnable against the new runtime. The initial types are `string`, `int`,
 and `bool`. The parser and renderer versions remain unchanged; no new dependency is introduced.
 
+The later [environment-input API](environment-inputs.md) adds explicit fallbacks and source-aware diagnostics while
+preserving these typed handles and command-line rules. Historical results below describe the original input slice.
+
 ## Typed handles and lookups
 
 `command.Option<T>(name, description)` returns `Option<T>`. `.Required()` and `.Default(value)` return
