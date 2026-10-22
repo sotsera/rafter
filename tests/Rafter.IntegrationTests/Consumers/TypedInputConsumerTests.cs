@@ -66,9 +66,9 @@ public sealed class TypedInputConsumerTests
             var text = command.Option<string>("text", "Text.");
             var count = command.Option<int>("count", "Count.");
             var flag = command.Option<bool>("flag", "Flag.");
-            text.Required().Aliases("t").Validate("Rule.", _ => true).Default("value");
-            count.Default(1).Validate("Rule.", _ => true).Aliases("c").Required();
-            flag.Required().Required();
+            text.Required().FromEnvironment("TEXT").Aliases("t").Validate("Rule.", _ => true).Default("value");
+            count.Default(1).FromEnvironment("COUNT").Validate("Rule.", _ => true).Aliases("c").Required();
+            flag.Required().FromEnvironment("FLAG").Required();
             command.Validate("No output API.", inputs => { inputs.WriteLine("forbidden"); return true; });
             return await command.RunAsync(args, context =>
             {

@@ -11,6 +11,8 @@ internal sealed record InvocationHost(
     int Width,
     Func<Action, IDisposable> SubscribeCancellation)
 {
+    public Func<string, string?> ReadEnvironment { get; init; } = Environment.GetEnvironmentVariable;
+
     public static InvocationHost Capture()
     {
         var root = Directory.GetCurrentDirectory();

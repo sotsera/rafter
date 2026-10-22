@@ -14,6 +14,7 @@ internal sealed class IsolatedConsumer : IDisposable
     private readonly string _entryPoint;
 
     public string WorkingDirectory { get; }
+    public Dictionary<string, string?> EnvironmentOverrides { get; } = new(StringComparer.Ordinal);
 
     public IsolatedConsumer(string kind, ITestOutputHelper output, string? entryPoint = null, bool copyWorkspace = true)
     {
@@ -94,6 +95,17 @@ internal sealed class IsolatedConsumer : IDisposable
         startInfo.Environment["DOTNET_NOLOGO"] = "1";
         startInfo.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1";
         startInfo.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+        foreach (var (name, value) in EnvironmentOverrides)
+        {
+            if (value is null)
+            {
+                startInfo.Environment.Remove(name);
+            }
+            else
+            {
+                startInfo.Environment[name] = value;
+            }
+        }
 
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Could not start the fixture's dotnet process.");

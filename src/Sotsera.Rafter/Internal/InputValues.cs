@@ -1,8 +1,21 @@
 namespace Sotsera.Rafter.Internal;
 
-internal sealed class InputValues(IReadOnlyDictionary<OptionDeclaration, object?> values)
+internal sealed class InputValues(IReadOnlyDictionary<OptionDeclaration, object?> values,
+    IReadOnlyDictionary<OptionDeclaration, InputSource>? sources = null)
 {
     private readonly IReadOnlyDictionary<OptionDeclaration, object?> _values = values;
+    private readonly IReadOnlyDictionary<OptionDeclaration, InputSource>? _sources = sources;
+
+    public InputSource Source(OptionDeclaration declaration)
+        => _sources is not null && _sources.TryGetValue(declaration, out var source)
+            ? source : new(InputSourceKind.NotSupplied);
+
+    public string DiagnosticName(OptionSnapshot option)
+    {
+        var source = Source(option.Declaration);
+        return option.Spellings[0] + (source.Kind == InputSourceKind.Environment
+            ? $" (environment {source.Variable})" : "");
+    }
 
     public T GetRequired<T>(ValueOption<T> option)
     {

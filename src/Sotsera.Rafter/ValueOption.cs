@@ -19,6 +19,13 @@ public sealed class ValueOption<T>
         return this;
     }
 
+    /// <summary>Maps a process environment fallback without changing the input's presence policy.</summary>
+    public ValueOption<T> FromEnvironment(string name)
+    {
+        Declaration.SetEnvironment(name);
+        return this;
+    }
+
     /// <summary>Adds a rule for supplied values and defaults.</summary>
     public ValueOption<T> Validate(string description, Func<T, bool> predicate)
     {

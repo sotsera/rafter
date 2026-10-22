@@ -19,6 +19,13 @@ public sealed class Option<T>
         return this;
     }
 
+    /// <summary>Maps a process environment fallback. Invalid or repeated mappings are reported by RunAsync.</summary>
+    public Option<T> FromEnvironment(string name)
+    {
+        Declaration.SetEnvironment(name);
+        return this;
+    }
+
     /// <summary>Adds a rule for supplied values. Omitted optional values skip these rules.</summary>
     public Option<T> Validate(string description, Func<T, bool> predicate)
     {

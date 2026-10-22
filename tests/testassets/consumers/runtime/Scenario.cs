@@ -6,6 +6,10 @@ internal static class Scenario
     {
         var scenario = args.FirstOrDefault() ?? "sync";
         var controls = args.Skip(1).ToArray();
+        if (scenario == "environment")
+        {
+            return await EnvironmentAsync(controls);
+        }
         if (scenario == "review-child")
         {
             Console.WriteLine("  Child [red]literal[/] output.");
@@ -141,6 +145,35 @@ internal static class Scenario
             await File.WriteAllTextAsync(resultPath, result.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
         return result;
+    }
+
+    private static async Task<int> EnvironmentAsync(string[] arguments)
+    {
+        var prefix = arguments[0];
+        var command = Rafter.Command("Resolve environment inputs.");
+        var original = command.Option<string>("name", "Name.").Aliases("n").FromEnvironment(prefix + "_NAME");
+        var name = original.Required();
+        var count = command.Option<int>("count", "Count.").Default(3).FromEnvironment(prefix + "_COUNT")
+            .Validate("Must be nonnegative.", value => value >= 0);
+        var flag = command.Option<bool>("flag", "Flag.").FromEnvironment(prefix + "_FLAG");
+        return await command.RunAsync(arguments[1..], context =>
+        {
+            string actualName = context.GetValue(name);
+            string? optionalName = context.GetValue(original);
+            int actualCount = context.GetValue(count);
+            bool? actualFlag = context.GetValue(flag);
+            Environment.SetEnvironmentVariable(prefix + "_NAME", "changed after preparation");
+            if (context.GetValue(name) != actualName || optionalName != actualName)
+            {
+                throw new InvalidOperationException("Prepared values changed during execution.");
+            }
+            context.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Name = actualName,
+                Count = actualCount,
+                Flag = actualFlag
+            }));
+        });
     }
 
     private static async Task<int> ReviewAsync(string scenario, string[] controls)

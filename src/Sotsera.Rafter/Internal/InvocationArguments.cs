@@ -8,7 +8,8 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
 {
     public InputValues Values { get; init; } = new(new Dictionary<OptionDeclaration, object?>());
 
-    public static InvocationArguments Parse(string[]? args, OptionSnapshot[] declarations)
+    public static InvocationArguments Parse(string[]? args, OptionSnapshot[] declarations,
+        Func<string, string?> readEnvironment)
     {
         if (args is null || args.Any(argument => argument is null))
         {
@@ -68,10 +69,6 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                 {
                     diagnostics.Add($"{option.Name} requires a value.");
                 }
-                if (!isHelp && declaration.Required && !IsPresent(parsed))
-                {
-                    diagnostics.Add($"{option.Name} is required.");
-                }
             }
         }
 
@@ -97,6 +94,7 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
         }
 
         var values = new Dictionary<OptionDeclaration, object?>();
+        var sources = new Dictionary<OptionDeclaration, InputSource>();
         foreach (var (option, declaration) in inputs)
         {
             var parsed = result.GetResult(option);
@@ -123,10 +121,16 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                     : result.GetValue((System.CommandLine.Option<string>)option);
             }
             values.Add(declaration.Declaration, value);
+            sources.Add(declaration.Declaration, new(IsPresent(parsed) ? InputSourceKind.CommandLine
+                : declaration.HasDefault ? InputSourceKind.Default : InputSourceKind.NotSupplied));
+        }
+        if (!isHelp && diagnostics.Count == 0)
+        {
+            EnvironmentInputs.Resolve(declarations, values, sources, readEnvironment, diagnostics);
         }
         return new(isHelp, isQuiet, isVerbose, isPlain, diagnostics.Distinct().ToArray())
         {
-            Values = new(values)
+            Values = new(values, sources)
         };
     }
 

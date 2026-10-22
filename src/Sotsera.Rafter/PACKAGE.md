@@ -3,8 +3,12 @@
 Rafter runs small C# automation scripts with descriptions, typed inputs, target dependencies, and owned child processes.
 This is a local development package for the first working examples milestone; it has not been published to NuGet.org.
 
-The current runtime targets .NET 10. Verification uses SDK 10.0.402 on Windows x64. External process ownership is
-implemented on Windows; other platforms and native AOT publishing are not yet verified.
+The runtime targets .NET 10. Verification targets SDK 10.0.402 on Windows x64 and Ubuntu 24.04 x64.
+External process ownership is implemented on Windows; native AOT remains unverified.
+
+Typed options can use `.FromEnvironment("NAME")` before or after `.Required()` / `.Default(...)`. Command-line values
+take priority over environment values, then defaults. Help shows the mapping without reading values, and verbose
+source diagnostics identify where prepared inputs came from without automatically printing their contents.
 
 ```csharp
 #:package Sotsera.Rafter@0.1.0-local
