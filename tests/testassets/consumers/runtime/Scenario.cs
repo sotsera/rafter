@@ -14,6 +14,10 @@ internal static class Scenario
         {
             return await EnumsAsync(controls);
         }
+        if (scenario == "durations")
+        {
+            return await DurationsAsync(controls);
+        }
         if (scenario == "review-child")
         {
             Console.WriteLine("  Child [red]literal[/] output.");
@@ -149,6 +153,42 @@ internal static class Scenario
             await File.WriteAllTextAsync(resultPath, result.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
         return result;
+    }
+
+    private static async Task<int> DurationsAsync(string[] arguments)
+    {
+        var variable = arguments[0];
+        var command = Rafter.Command("Resolve duration inputs.");
+        var optional = command.Option<TimeSpan>("optional", "Optional duration.");
+        var original = command.Option<TimeSpan>("duration", "Duration.").FromEnvironment(variable).Aliases("d");
+        var duration = original.Default(TimeSpan.FromSeconds(90));
+        var required = command.Option<TimeSpan>("required", "Required duration.").Required();
+        command.Validate("Prepared duration types.", inputs =>
+        {
+            TimeSpan? absent = inputs.GetValue(optional);
+            TimeSpan? retained = inputs.GetValue(original);
+            TimeSpan actual = inputs.GetValue(duration);
+            TimeSpan supplied = inputs.GetValue(required);
+            return absent is null && retained == actual && supplied == TimeSpan.FromSeconds(-130);
+        });
+        return await command.RunAsync(arguments[1..], context =>
+        {
+            TimeSpan? absent = context.GetValue(optional);
+            TimeSpan? retained = context.GetValue(original);
+            TimeSpan actual = context.GetValue(duration);
+            TimeSpan supplied = context.GetValue(required);
+            Environment.SetEnvironmentVariable(variable, "changed after preparation");
+            if (context.GetValue(duration) != actual || retained != actual)
+            {
+                throw new InvalidOperationException("Prepared durations changed during execution.");
+            }
+            context.WriteLine(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                OptionalTicks = absent?.Ticks,
+                DurationTicks = actual.Ticks,
+                RequiredTicks = supplied.Ticks
+            }));
+        });
     }
 
     private static async Task<int> EnumsAsync(string[] arguments)

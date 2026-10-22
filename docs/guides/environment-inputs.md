@@ -4,6 +4,7 @@
 options. The [environment example](../../examples/environment.cs) uses all three types, following the
 [agreed design](../design/environment-inputs.md).
 The later [enum-input API](enum-inputs.md) uses the same fallback and source contracts for named enum choices.
+The [duration-input API](duration-inputs.md) applies those contracts to exact explicit-unit `TimeSpan` values too.
 
 ```csharp
 var name = command.Option<string>("name", "The person to greet.")

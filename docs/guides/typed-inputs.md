@@ -8,6 +8,8 @@ The later [environment-input API](environment-inputs.md) adds explicit fallbacks
 preserving these typed handles and command-line rules. Historical results below describe the original input slice.
 The [enum-input API](enum-inputs.md) extends the same handles to named enum choices, with case-insensitive member
 matching, declaration validation, and allowed-values help.
+The [duration-input API](duration-inputs.md) adds exact `TimeSpan` conversion, explicit-unit compound forms, and
+canonical defaults in help while preserving these same handle and validation contracts.
 
 ## Typed handles and lookups
 

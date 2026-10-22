@@ -380,7 +380,21 @@ The [enum-input design](enum-inputs.md) records these decisions and the agreed a
 Declaration validation rejects case-ambiguous names, shared numeric values, flags, and undefined defaults before help.
 Supplied values trim surrounding whitespace; invalid or empty values produce source-aware errors without echoing them.
 [Issue #38](https://github.com/sotsera/rafter/issues/38) tracks implementation and consumer verification.
-The broader typed-input topic stays partial because durations and other types remain pending.
+The broader typed-input topic stays partial; additional input types and policies remain outside the delivered slices.
+
+#### Duration inputs
+
+Initial scope agreed on 2026-10-22: use `Option<TimeSpan>` with the existing presence policies, environment fallbacks,
+typed lookup, and prepared-value behavior. Start with explicit unit forms such as `250ms`, `30s`, `5m`, and `1h`;
+reject bare numbers. Durations may be signed; a nonnegative restriction belongs in an option validator.
+Compound forms such as `1h30m` are accepted: descending units without repetition, one sign for the whole duration,
+and a fraction only on the final component. Nonnormalized magnitudes such as `1h90m` are valid; clock notation is excluded.
+Help uses the agreed `<duration>` placeholder, compact defaults, and a units line before environment metadata and rules.
+Defaults normalize into descending components (`90s` becomes `1m30s`), omitting zero components and retaining exact precision.
+[examples/durations.cs](../../examples/durations.cs) is implemented and only prints values. The
+[duration-input design](duration-inputs.md) records the agreed authoring, help, conversion, and formatting rules;
+the [current guide](../guides/duration-inputs.md) records behavior and verification.
+[Issue #40](https://github.com/sotsera/rafter/issues/40) tracks delivery. Configurable timeouts remain a separate topic.
 
 #### Names and aliases
 

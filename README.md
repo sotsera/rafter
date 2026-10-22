@@ -33,6 +33,10 @@ source diagnostics. Command-line values take priority, and `GetValue` retains th
 [Enum inputs](docs/guides/enum-inputs.md) add named choices with case-insensitive matching, named defaults, and
 allowed-values help. Try `dotnet run --file examples/enums.cs -- --configuration debug` or use `--help` to see the choices.
 
+[Duration inputs](docs/guides/duration-inputs.md) accept explicit units and compounds such as `250ms` and `1h30m`,
+with exact conversion and compact defaults in help. The [duration example](examples/durations.cs) prints prepared
+values without starting timers or imposing execution deadlines.
+
 The [target slice](docs/guides/targets.md) adds sequential targets, dependency groups, graph validation, and target-aware
 help/output. Try its callback-based [example](examples/targets.cs):
 
@@ -49,7 +53,7 @@ dotnet run --file examples/processes.cs -- --quiet
 dotnet run --file examples/dependencies.cs -- --project tests/testassets/workflows/sample-tests/BuildSample.Tests.csproj
 ```
 
-All ten examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
+All eleven examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
 and an automatic namespace import. The [local package](docs/guides/local-package.md) provides the same authoring support to
 fresh file apps and regular projects; public publication and process ownership on other platforms remain separate work.
 Authoring diagnostics also catch repeated or conflicting option presence policies in supported straight-line code.

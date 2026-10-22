@@ -112,6 +112,14 @@ default member name, and an `Allowed:` line before environment metadata and vali
 spelling and declaration order; long lists wrap in the metadata gutter. This extension is implemented in the
 [enum-input runtime](../guides/enum-inputs.md), preserving existing help/verbose contracts.
 
+## Duration help design
+
+The agreed [duration-input design](duration-inputs.md#agreed-help-layout) uses `<duration>`, compact defaults such as
+`30s`, and a `Units: ms, s, m, h.` line before environment metadata and rules. This extension is implemented in the
+[duration-input runtime](../guides/duration-inputs.md), preserving existing help and verbose-source contracts.
+The agreed [default formatting](duration-inputs.md#agreed-default-formatting) normalizes descending components,
+omits zero components, uses `0s` for zero and one leading minus for negative values, and retains exact precision.
+
 ## Minimal success
 
 For [minimal.cs](../../examples/minimal.cs):
