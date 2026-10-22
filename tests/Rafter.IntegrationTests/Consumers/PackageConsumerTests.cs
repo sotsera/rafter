@@ -85,9 +85,12 @@ public sealed class PackageConsumerTests
             var name = command.Option<string>("name", "Name.").Default("Ada").FromEnvironment("RAFTER_PACKAGE_NAME");
             var configuration = command.Option<BuildConfiguration>("configuration", "Configuration.")
                 .Default(BuildConfiguration.Release).FromEnvironment("RAFTER_PACKAGE_CONFIGURATION");
+            var duration = command.Option<TimeSpan>("duration", "Duration.").Default(TimeSpan.FromSeconds(30))
+                .FromEnvironment("RAFTER_PACKAGE_DURATION");
             return await command.RunAsync(args, context =>
             {
-                context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}.");
+                context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
+                    + $"{context.GetValue(duration).Ticks} ticks.");
             });
             enum BuildConfiguration
             {
@@ -98,21 +101,31 @@ public sealed class PackageConsumerTests
         await File.WriteAllTextAsync(sourcePath, directives + valid, TestContext.Current.CancellationToken);
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = null;
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = null;
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = null;
         await consumer.BuildAsync();
         var run = await consumer.RunAsync("--quiet");
         run.ExitCode.Should().Be(0);
-        run.StandardOutput.Should().Be("Hello, Ada! Release." + Environment.NewLine);
+        run.StandardOutput.Should().Be("Hello, Ada! Release. 300000000 ticks." + Environment.NewLine);
         run.StandardError.Should().BeEmpty();
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = "Grace";
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = " debug ";
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = " 1H30M ";
         var environmentRun = await consumer.RunAsync("--quiet");
         environmentRun.ExitCode.Should().Be(0);
-        environmentRun.StandardOutput.Should().Be("Hello, Grace! Debug." + Environment.NewLine);
+        environmentRun.StandardOutput.Should().Be("Hello, Grace! Debug. 54000000000 ticks." + Environment.NewLine);
         var enumOverride = await consumer.RunAsync("--quiet", "--configuration=RELEASE");
         enumOverride.ExitCode.Should().Be(0);
-        enumOverride.StandardOutput.Should().Be("Hello, Grace! Release." + Environment.NewLine);
+        enumOverride.StandardOutput.Should().Be("Hello, Grace! Release. 54000000000 ticks." + Environment.NewLine);
+        var durationOverride = await consumer.RunAsync("--quiet", "--duration=0.0001ms");
+        durationOverride.ExitCode.Should().Be(0);
+        durationOverride.StandardOutput.Should().Be("Hello, Grace! Debug. 1 ticks." + Environment.NewLine);
+        var help = await consumer.RunAsync("--help");
+        help.ExitCode.Should().Be(0);
+        help.StandardOutput.Should().Contain("--duration <duration>").And.Contain("Default: 30s.")
+            .And.Contain("Units: ms, s, m, h.");
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = null;
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = null;
+        consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = null;
 
         // An opt-out must take effect even when it is set in the consumer body, after package .props imports.
         var projectPath = Path.Combine(consumer.WorkingDirectory, entry);

@@ -67,6 +67,7 @@ public sealed class TypedInputConsumerTests
             var count = command.Option<int>("count", "Count.");
             var flag = command.Option<bool>("flag", "Flag.");
             var configuration = command.Option<BuildConfiguration>("configuration", "Configuration.");
+            var duration = command.Option<TimeSpan>("duration", "Duration.");
             text.Required().FromEnvironment("TEXT").Aliases("t").Validate("Rule.", _ => true).Default("value");
             count.Default(1).FromEnvironment("COUNT").Validate("Rule.", _ => true).Aliases("c").Required();
             flag.Required().FromEnvironment("FLAG").Required();
@@ -77,6 +78,7 @@ public sealed class TypedInputConsumerTests
                 int invalidCount = context.GetValue(count);
                 bool invalidFlag = context.GetValue(flag);
                 BuildConfiguration invalidConfiguration = context.GetValue(configuration);
+                TimeSpan invalidDuration = context.GetValue(duration);
             });
             enum BuildConfiguration
             {
@@ -94,5 +96,6 @@ public sealed class TypedInputConsumerTests
         // Optional value types must fail the non-nullable assignment.
         diagnostics.Should().Contain("'int?' to 'int'").And.Contain("'bool?' to 'bool'");
         diagnostics.Should().Contain("'BuildConfiguration?' to 'BuildConfiguration'");
+        diagnostics.Should().Contain("'System.TimeSpan?' to 'System.TimeSpan'");
     }
 }

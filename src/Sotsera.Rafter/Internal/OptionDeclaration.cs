@@ -133,9 +133,11 @@ internal sealed record OptionSnapshot(
             EnumChoices = new(ValueType);
             EnumChoices.Validate(location, HasDefault, DefaultValue, diagnostics);
         }
-        else if (ValueType != typeof(string) && ValueType != typeof(int) && ValueType != typeof(bool))
+        else if (ValueType != typeof(string) && ValueType != typeof(int) && ValueType != typeof(bool)
+            && ValueType != typeof(TimeSpan))
         {
-            diagnostics.Add($"{location}: Supported supplied types are string, int, bool, and named enums, without nullable value types.");
+            diagnostics.Add($"{location}: Supported supplied types are string, int, bool, named enums, and TimeSpan, "
+                + "without nullable value types.");
         }
         if (NullAliases)
         {

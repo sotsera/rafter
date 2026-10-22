@@ -35,6 +35,7 @@ internal static class EnvironmentInputs
                     else
                     {
                         var expected = option.EnumChoices is not null ? "a declared enum member name"
+                            : option.ValueType == typeof(TimeSpan) ? "an exact duration using h, m, s, or ms in descending order"
                             : option.ValueType == typeof(int) ? "an integer" : "true or false";
                         var reason = text.Length == 0 ? "is empty" : "has an invalid value";
                         diagnostics.Add($"{option.Spellings[0]}: environment variable {name} {reason}; expected {expected}.");
@@ -57,6 +58,15 @@ internal static class EnvironmentInputs
         }
         var type = option.ValueType;
         value = null;
+        if (type == typeof(TimeSpan))
+        {
+            if (DurationInputs.TryParse(text, out var duration))
+            {
+                value = duration;
+                return true;
+            }
+            return false;
+        }
         if (type == typeof(string))
         {
             value = text;

@@ -12,6 +12,8 @@ source diagnostics identify where prepared inputs came from without automaticall
 Named enum options use the same handles and source precedence, match member names case-insensitively after trimming
 surrounding whitespace, and show allowed choices in help. Numeric text, flags, ambiguous names/values, and undefined
 defaults are rejected during input or declaration validation.
+Duration options use `Option<TimeSpan>` and accept explicit units (`250ms`, `30s`, `1h30m`) with exact conversion.
+Help shows `<duration>`, accepted units, and normalized defaults. Parsing a duration does not impose an execution deadline.
 
 ```csharp
 #:package Sotsera.Rafter@0.1.0-local

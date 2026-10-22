@@ -124,6 +124,18 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                         diagnostics.Add($"{option.Name} requires a declared enum member name.");
                     }
                 }
+                else if (declaration.ValueType == typeof(TimeSpan))
+                {
+                    var text = result.GetValue((System.CommandLine.Option<string>)option)!;
+                    if (DurationInputs.TryParse(text, out var duration))
+                    {
+                        value = duration;
+                    }
+                    else
+                    {
+                        diagnostics.Add($"{option.Name} requires an exact duration using h, m, s, or ms in descending order.");
+                    }
+                }
                 else
                 {
                     value = option is System.CommandLine.Option<int> integer

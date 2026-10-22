@@ -312,6 +312,7 @@ internal sealed class InvocationOutput
         }
         var typeHint = option.ValueType == typeof(bool) ? " [bool]"
             : option.ValueType == typeof(int) ? " <int>"
+            : option.ValueType == typeof(TimeSpan) ? " <duration>"
             : option.EnumChoices is not null ? " <value>" : " <string>";
         paragraph.Append(typeHint, new Style(new Color(223, 196, 255)));
         _output.Layout(paragraph, 2);
@@ -322,6 +323,10 @@ internal sealed class InvocationOutput
         {
             _output.Layout(new Paragraph($"Allowed: {string.Join(", ", choices.Names)} (case-insensitive).")
                 { Overflow = Overflow.Fold }, 4);
+        }
+        if (option.ValueType == typeof(TimeSpan))
+        {
+            _output.Layout(new Paragraph("Units: ms, s, m, h.") { Overflow = Overflow.Fold }, 4);
         }
         if (option.ValueType == typeof(bool))
         {
@@ -353,6 +358,7 @@ internal sealed class InvocationOutput
     {
         bool boolean => boolean ? "true" : "false",
         string text => "\"" + text + "\"",
+        TimeSpan duration => DurationInputs.Format(duration),
         _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? ""
     };
 }
