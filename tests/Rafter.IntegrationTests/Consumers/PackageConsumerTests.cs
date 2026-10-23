@@ -162,6 +162,7 @@ public sealed class PackageConsumerTests
             return await command.RunAsync(args, context =>
             {
                 _ = context.Process("must-never-launch").RunAsync();
+                _ = context.Process("must-never-launch").RunAndCaptureAsync(1024);
             });
             """;
         await File.WriteAllTextAsync(sourcePath, directives + invalid, TestContext.Current.CancellationToken);

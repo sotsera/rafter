@@ -130,6 +130,16 @@ error. The [process timeout implementation](../guides/process-timeouts.md) deliv
 are illustrative, not captured executions. The [agreed race rules](process-timeouts.md#agreed-race-handling) preserve
 an already-recorded timeout and keep termination/output uncertainty distinct.
 
+## Agreed captured-process failure output
+
+The [capture design](process-capture.md#agreed-capture-failure-presentation) specifies a yellow primary-overflow notice,
+a compact red unhandled capture-limit block, and retained partial-count metadata on captured timeout failures.
+Captured text remains explicit script/echo output. Normal cancellation retains the existing global notice/summary;
+verbose mode adds a settled per-process capture record. Secondary overflow remains metadata under the primary
+cause. These presentation rules are implemented for [issue #44](https://github.com/sotsera/rafter/issues/44); the
+[capture guide](../guides/process-capture.md) links verification scope. The linked transcripts are
+illustrative; they are not actual runtime captures or additions to the current HTML comparison.
+
 ## Minimal success
 
 For [minimal.cs](../../examples/minimal.cs):

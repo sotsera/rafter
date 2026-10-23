@@ -13,10 +13,12 @@ internal sealed class ProcessHandlerException(ProcessFailureException failure, E
 }
 
 internal sealed class ProcessCompletionException(string executable, int? exitCode, bool terminationUnknown,
-    Exception? inner = null, TimeSpan? timeout = null, TimeSpan? elapsed = null)
+    Exception? inner = null, TimeSpan? timeout = null, TimeSpan? elapsed = null,
+    ProcessCaptureSnapshot? capture = null)
     : Exception($"{(terminationUnknown ? "Termination unknown" : "Output incomplete")} | {executable}", inner)
 {
     public int? ExitCode { get; } = exitCode;
     public TimeSpan? Timeout { get; } = timeout;
     public TimeSpan? Elapsed { get; } = elapsed;
+    public ProcessCaptureSnapshot? Capture { get; } = capture;
 }

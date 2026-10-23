@@ -52,6 +52,10 @@ public sealed class AuthoringAnalyzerTests
     [InlineData("_ = context.Process(\"tool\").RunAsync().ConfigureAwait(false);")]
     [InlineData("context?.Process(\"tool\").RunAsync();")]
     [InlineData("System.Action action = () => context.Process(\"tool\").RunAsync();")]
+    [InlineData("context.Process(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("_ = context.Process(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("context.Process(\"tool\").RunAndCaptureAsync(1024).ConfigureAwait(false);")]
+    [InlineData("context?.Process(\"tool\").RunAndCaptureAsync(1024);")]
     public async Task Clearly_discarded_process_tasks_are_errors(string statement)
     {
         var source = $$"""
@@ -78,6 +82,9 @@ public sealed class AuthoringAnalyzerTests
     [InlineData("Observe(context.Process(\"tool\").RunAsync());")]
     [InlineData("Task<ProcessResult> _; _ = context.Process(\"tool\").RunAsync(); await _;")]
     [InlineData("System.Func<Task<ProcessResult>> run = () => context.Process(\"tool\").RunAsync(); await run();")]
+    [InlineData("await context.Process(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("var task = context.Process(\"tool\").RunAndCaptureAsync(1024); await task;")]
+    [InlineData("System.Func<Task<CapturedProcessResult>> run = () => context.Process(\"tool\").RunAndCaptureAsync(1024); await run();")]
     public async Task Valid_observation_and_helper_boundaries_are_not_diagnosed(string statement)
     {
         var source = $$"""

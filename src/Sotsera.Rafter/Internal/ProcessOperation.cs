@@ -11,8 +11,7 @@ internal static class ProcessOperation
             ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(timeout, TimeSpan.Zero);
         }
         var invocation = body.Invocation;
-        var cancellation = invocation.Cancellation;
-        cancellation.Token.ThrowIfCancellationRequested();
+        ThrowIfCancelled(settings, body);
         if (body.Shutdown.Started)
         {
             throw new OperationCanceledException("The owning body has finished.");
@@ -22,7 +21,7 @@ internal static class ProcessOperation
             throw new PlatformNotSupportedException("Owned process execution is currently implemented on Windows only.");
         }
         invocation.Output.ProcessStarted(settings.Executable, settings.Directory);
-        cancellation.Token.ThrowIfCancellationRequested();
+        ThrowIfCancelled(settings, body);
         if (body.Shutdown.Started)
         {
             throw new OperationCanceledException("The owning body has finished.");
@@ -51,13 +50,30 @@ internal static class ProcessOperation
             // of both pumps, then join them even if a drain deadline expires while that writer is still running.
             var outputReader = process.Output;
             var errorReader = process.Error;
-            var stdout = Task.Run(() => PumpAsync(outputReader, text => invocation.Output.ProcessOutput(text, false),
+            var stop = new ProcessStopState();
+            var capture = settings.Capture is { } captureSettings
+                ? new ProcessCapture(captureSettings, cancellation, stop, invocation.Output.ProcessOutput) : null;
+            void Write(string text, bool error)
+            {
+                if (capture is null)
+                {
+                    invocation.Output.ProcessOutput(text, error);
+                }
+                else
+                {
+                    capture.Record(text, error);
+                }
+            }
+            var stdout = Task.Run(() => PumpAsync(outputReader, text => Write(text, false),
                 readerCancellation.Token));
-            var stderr = Task.Run(() => PumpAsync(errorReader, text => invocation.Output.ProcessOutput(text, true),
+            var stderr = Task.Run(() => PumpAsync(errorReader, text => Write(text, true),
                 readerCancellation.Token));
-            var readers = Task.WhenAll(stdout, stderr);
-            var deadline = new ProcessDeadline(settings.Timeout, process.ExecutionStarted, clock ?? TimeProvider.System);
+            var pumps = Task.WhenAll(stdout, stderr);
+            var readers = capture?.CompleteOutputAsync(pumps) ?? pumps;
+            var deadline = new ProcessDeadline(settings.Timeout, process.ExecutionStarted, clock ?? TimeProvider.System, stop);
             var deadlineNotice = Task.CompletedTask;
+            var overflowNotice = Task.CompletedTask;
+            var overflowReported = false;
             var localShutdown = new ShutdownWindow();
             var graceDeadline = long.MaxValue;
             var verificationDeadline = long.MaxValue;
@@ -100,7 +116,16 @@ internal static class ProcessOperation
                     {
                         localShutdown.Request();
                     }
-                    if (stdout.IsFaulted || stderr.IsFaulted)
+                    if (capture?.Overflowed == true)
+                    {
+                        localShutdown.Request();
+                        if (!overflowReported && stop.Reason == ProcessStopReason.CaptureLimit)
+                        {
+                            overflowReported = true;
+                            overflowNotice = Task.Run(() => invocation.Output.ProcessCaptureLimitReached(settings.Executable));
+                        }
+                    }
+                    if (stdout.IsFaulted || stderr.IsFaulted || capture?.Echo.IsFaulted == true)
                     {
                         localShutdown.Request(force: true);
                     }
@@ -154,7 +179,9 @@ internal static class ProcessOperation
                         verificationDeadline = Math.Min(verificationDeadline,
                             active.Min(window => window.VerificationDeadline));
                     }
-                    if (empty && readers.IsCompleted && (exitCode.HasValue || deadline.Committed))
+                    var capturedStop = capture is not null &&
+                        (stop.Reason == ProcessStopReason.CaptureLimit || cancellation.Token.IsCancellationRequested);
+                    if (empty && readers.IsCompleted && (exitCode.HasValue || deadline.Committed || capturedStop))
                     {
                         break;
                     }
@@ -190,11 +217,24 @@ internal static class ProcessOperation
                 {
                     outputFailure ??= exception;
                 }
+                if (!overflowReported && capture?.Overflowed == true && stop.Reason == ProcessStopReason.CaptureLimit)
+                {
+                    overflowReported = true;
+                    overflowNotice = Task.Run(() => invocation.Output.ProcessCaptureLimitReached(settings.Executable));
+                }
+                try
+                {
+                    await overflowNotice.ConfigureAwait(false);
+                }
+                catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
+                {
+                    outputFailure ??= exception;
+                }
                 if (!empty || incomplete)
                 {
                     var failure = new ProcessCompletionException(settings.Executable, exitCode, !empty,
                         nativeFailure ?? outputFailure, deadline.Committed ? settings.Timeout : null,
-                        deadline.Committed ? deadline.Elapsed : null);
+                        deadline.Committed ? deadline.Elapsed : null, capture?.Snapshot());
                     invocation.Fail(failure);
                     throw failure;
                 }
@@ -202,26 +242,49 @@ internal static class ProcessOperation
             if (outputFailure is not null)
             {
                 var failure = new ProcessCompletionException(settings.Executable, exitCode, false, outputFailure,
-                    deadline.Committed ? settings.Timeout : null, deadline.Committed ? deadline.Elapsed : null);
+                    deadline.Committed ? settings.Timeout : null, deadline.Committed ? deadline.Elapsed : null,
+                    capture?.Snapshot());
                 invocation.Fail(failure);
                 throw failure;
             }
+            var captured = capture?.Snapshot();
+            if (captured is { StopReason: ProcessStopReason.CaptureLimit, OverflowedStream: { } stream })
+            {
+                throw new ProcessCaptureLimitException(settings.Executable, stream, captured.Limit,
+                    captured.Output, captured.Error, exitCode);
+            }
             if (deadline.Committed)
             {
+                if (captured is not null)
+                {
+                    throw new CapturedProcessTimeoutException(settings.Executable, settings.Timeout!.Value,
+                        deadline.Elapsed, exitCode, captured.Output, captured.Error, captured.Limit,
+                        captured.OverflowedStream);
+                }
                 throw new ProcessTimeoutException(settings.Executable, settings.Timeout!.Value, deadline.Elapsed, exitCode);
             }
             if (!exitCode.HasValue)
             {
+                if (captured is not null)
+                {
+                    ThrowIfCancelled(settings, body, captured);
+                }
                 throw new InvalidOperationException($"Process exit code unavailable | {settings.Executable}", nativeFailure);
             }
-            cancellation.Token.ThrowIfCancellationRequested();
+            ThrowIfCancelled(settings, body, captured, exitCode);
             if (body.Shutdown.Started)
             {
                 throw new OperationCanceledException("The owning body has finished.");
             }
-            var result = new ProcessResult(exitCode.Value, settings.AcceptedExitCodes.Contains(exitCode.Value));
+            var succeeded = settings.AcceptedExitCodes.Contains(exitCode.Value);
+            var result = captured is null ? new ProcessResult(exitCode.Value, succeeded)
+                : new CapturedProcessResult(exitCode.Value, succeeded, captured.Output, captured.Error);
             if (result.Succeeded)
             {
+                if (captured is not null)
+                {
+                    invocation.Output.ProcessCaptured(captured);
+                }
                 return result;
             }
             var rejected = new ProcessFailureException(settings.Executable, settings.AcceptedExitCodes, result);
@@ -250,13 +313,32 @@ internal static class ProcessOperation
                 invocation.Fail();
             }
             invocation.Output.ProcessRejected(rejected, action);
-            cancellation.Token.ThrowIfCancellationRequested();
+            ThrowIfCancelled(settings, body, captured, exitCode);
             if (body.Shutdown.Started)
             {
                 throw new OperationCanceledException("The owning body has finished.");
             }
             return result;
         }
+    }
+
+    private static void ThrowIfCancelled(ProcessSettings settings, BodyProcesses body,
+        ProcessCaptureSnapshot? captured = null, int? exitCode = null)
+    {
+        var cancellation = body.Invocation.Cancellation;
+        if (!cancellation.Token.IsCancellationRequested)
+        {
+            return;
+        }
+        if (settings.Capture is { } configuration)
+        {
+            captured ??= new(CapturedStream.Empty, CapturedStream.Empty, configuration.Limit, null,
+                ProcessStopReason.Cancellation);
+            body.Invocation.Output.ProcessCaptureCancelled(settings.Executable, captured, exitCode);
+            throw new CapturedProcessCanceledException(settings.Executable, exitCode, captured.Output,
+                captured.Error, captured.Limit, captured.OverflowedStream, cancellation.Token);
+        }
+        cancellation.Token.ThrowIfCancellationRequested();
     }
 
     private static async Task PumpAsync(StreamReader reader, Action<string> write, CancellationToken token)

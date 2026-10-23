@@ -18,6 +18,12 @@ public sealed class ProcessApiConsumerTests
         process.StandardOutput.Should().Contain("10.0.").And.Contain("Process result: 0:True");
         process.StandardError.Should().BeEmpty();
 
+        var capture = await consumer.RunAsync("capture", "--quiet");
+        capture.ExitCode.Should().Be(0);
+        capture.StandardOutput.Should().Contain("Captured Ada: 7.").And.NotContain("{\"name\"");
+        capture.StandardError.Should().Contain("Capture (UTF-16 code units): stdout 14 | stderr 18")
+            .And.NotContain("private diagnostic");
+
         var timeout = await consumer.RunAsync("process-timeout", "--plain");
         timeout.ExitCode.Should().Be(1);
         timeout.StandardOutput.Should().Contain("Child output before deadline.");

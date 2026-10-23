@@ -7,6 +7,40 @@ namespace Rafter.WindowsTests.Consumers;
 public sealed class ProcessConsumerTests
 {
     [WindowsFact]
+    public async Task Capture_example_parses_JSON_and_exposes_echo_order_rejection_and_overflow()
+    {
+        using var consumer = new IsolatedConsumer("file-app", TestContext.Current.TestOutputHelper!,
+            "examples/process-capture.cs");
+        await consumer.BuildAsync();
+        var help = await consumer.RunAsync("--help");
+        help.ExitCode.Should().Be(0);
+        help.StandardOutput.Should().Contain("--scenario <value>").And.Contain("--limit <int>");
+        help.StandardError.Should().BeEmpty();
+        var success = await consumer.RunAsync("--quiet");
+        success.ExitCode.Should().Be(0, success.StandardError);
+        success.StandardOutput.Should().Contain("Captured greeting for Ada: Hello, Ada!").And.NotContain("{\"name\"");
+        success.StandardError.Should().BeEmpty();
+        var echoed = await consumer.RunAsync("--quiet", "--echo", "--show-order");
+        echoed.ExitCode.Should().Be(0);
+        echoed.StandardOutput.Should().Contain("{\"name\":\"Ada\"").And.Contain("stdout:").And.Contain("stderr:");
+        echoed.StandardError.Should().Contain("Child diagnostic.");
+        var rejected = await consumer.RunAsync("--quiet", "--scenario", "Failure");
+        rejected.ExitCode.Should().Be(1);
+        rejected.StandardOutput.Should().BeEmpty();
+        rejected.StandardError.Should().Contain("Process failed | dotnet").And.Contain("Exit code: 7")
+            .And.NotContain("could not produce");
+        var overflow = await consumer.RunAsync("--quiet", "--scenario", "Overflow");
+        overflow.ExitCode.Should().Be(1);
+        overflow.StandardOutput.Should().BeEmpty();
+        overflow.StandardError.Should().Contain("Process capture limit exceeded | dotnet")
+            .And.Contain("Partial capture (UTF-16 code units): stdout 1024 | stderr 0")
+            .And.NotContain(new string('x', 20)).And.NotContain("Exception:");
+        var invalid = await consumer.RunAsync("--limit", "0", "--quiet");
+        invalid.ExitCode.Should().Be(2);
+        invalid.StandardError.Should().Contain("Must be greater than zero").And.NotContain("Process |");
+    }
+
+    [WindowsFact]
     public async Task Timeout_example_validates_inputs_and_runs_with_successful_and_expired_deadlines()
     {
         using var consumer = new IsolatedConsumer("file-app", TestContext.Current.TestOutputHelper!,
