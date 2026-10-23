@@ -78,7 +78,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Failures | — | — | — | — |
 | External processes | ✓ | Partial | Partial | Partial |
 | Reusable process settings | — | — | — | — |
-| Captured output | — | — | — | — |
+| Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
 | Sensitive values | — | — | — | — |
@@ -691,6 +691,23 @@ The [timeout design](process-timeouts.md) records agreed scope, catchable recove
 rules and configuration validation. The [implementation guide](../guides/process-timeouts.md) records delivery.
 A settled `ProcessTimeoutException` can be caught for recovery without automatically recording
 failure; independent failures, invocation cancellation, and settlement uncertainty remain in force.
+
+### Captured output
+
+Implemented scope and [runnable example](../../examples/process-capture.cs), 2026-10-23: capture separate bounded stdout/stderr
+text for script inspection, silently by default with optional live echo. The combined execution name
+`RunAndCaptureAsync(...)` is implemented, alongside streamed `RunAsync()`. The example parses a child's JSON using a
+typed result with non-null `CapturedStream` objects for `StandardOutput` / `StandardError`, avoiding `Capture!`.
+Each stream's `Text` / `Chunks` shape and the shared observation-order counter are agreed. The
+[capture design](process-capture.md) records the preferred typed failure callback and agreed explicit positive per-stream
+UTF-16 limits, overflow shutdown/settlement, surrogate-pair-safe retention, and capture-limit exception properties with
+bounded partial streams. Overflow/timeout/cancellation arbitration, immediate validation, per-call snapshots, and
+callback/`OnFailure` selection are agreed, including capture-specific timeout/cancellation exceptions with bounded
+partial streams and secondary overflow metadata. The [final decisions](process-capture.md#final-decisions-before-the-implementation-issue)
+accept result inheritance, immutable public data types, a single public capture budget, and deferral of public partial
+text on uncertain settlement. [Issue #44](https://github.com/sotsera/rafter/issues/44) implements this Windows slice;
+the [capture guide](../guides/process-capture.md) records usage and verification scope. Binary capture, stream selection,
+live parsing, spooling, custom encodings, and Linux-native ownership remain separate work.
 
 ### Completion of owned process scopes
 

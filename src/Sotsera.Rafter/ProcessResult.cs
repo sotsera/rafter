@@ -1,7 +1,7 @@
 namespace Sotsera.Rafter;
 
 /// <summary>The observed exit of a process whose owned descendants and output have finished.</summary>
-public sealed class ProcessResult
+public class ProcessResult
 {
     public bool Succeeded { get; }
     public int ExitCode { get; }

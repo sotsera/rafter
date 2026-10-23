@@ -18,13 +18,22 @@ internal sealed class BodyProcesses(ProcessInvocation invocation, string name)
             {
                 throw new InvalidOperationException($"Cannot start a process after {name} has finished.");
             }
-            Invocation.Cancellation.Token.ThrowIfCancellationRequested();
+            if (settings.Capture is null)
+            {
+                Invocation.Cancellation.Token.ThrowIfCancellationRequested();
+            }
             var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var operation = ExecuteAsync(start.Task, settings);
             _operations.Add(operation);
             start.SetResult();
             return operation;
         }
+    }
+
+    public Task<CapturedProcessResult> RunCaptured(ProcessSettings settings)
+    {
+        // Run registers the complete underlying operation before this typed projection is returned.
+        return CastCapturedAsync(Run(settings));
     }
 
     public async Task FinishAsync()
@@ -57,6 +66,11 @@ internal sealed class BodyProcesses(ProcessInvocation invocation, string name)
                 Invocation.Fail(exception);
             }
         }
+    }
+
+    private static async Task<CapturedProcessResult> CastCapturedAsync(Task<ProcessResult> operation)
+    {
+        return (CapturedProcessResult)await operation.ConfigureAwait(false);
     }
 
     private async Task<ProcessResult> ExecuteAsync(Task start, ProcessSettings settings)

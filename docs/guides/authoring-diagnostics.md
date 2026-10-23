@@ -9,7 +9,7 @@ Runtime validation and process tracking remain active. Diagnostics neither evalu
 | --- | --- | --- |
 | RAF001 | Error | Constant null, empty, or whitespace-only descriptions. |
 | RAF002 | Warning | Nullable type arguments to `Command.Option<T>`. |
-| RAF003 | Error | Clearly discarded `ProcessCommand.RunAsync()` tasks. |
+| RAF003 | Error | Clearly discarded `ProcessCommand.RunAsync()` / `RunAndCaptureAsync(...)` tasks. |
 | RAF004 | Error | Repeated or conflicting option policies through the same local in a supported straight-line segment. |
 
 These are the implementation defaults. Broader option-policy analysis, repeated process settings, empty targets,
@@ -50,6 +50,7 @@ Do not discard the task returned by a process operation. Awaiting a task and ign
 ```csharp
 context.Process("dotnet").Arguments("--version").RunAsync();     // RAF003
 _ = context.Process("dotnet").Arguments("--version").RunAsync(); // RAF003
+_ = context.Process("tool").RunAndCaptureAsync(4096); // RAF003
 await context.Process("dotnet").Arguments("--version").RunAsync(); // Valid
 ```
 

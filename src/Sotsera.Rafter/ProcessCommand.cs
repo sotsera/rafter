@@ -134,12 +134,35 @@ public sealed class ProcessCommand
     {
         lock (_gate)
         {
-            var executable = _executable.IndexOfAny(['/', '\\', ':']) >= 0
-                ? Path.GetFullPath(_executable, _root) : _executable;
-            return _body.Run(new(executable, _arguments.ToArray(), _directory ?? _root,
-                new Dictionary<string, string>(_environment, StringComparer.OrdinalIgnoreCase),
-                _acceptedExitCodes?.ToArray() ?? [0], _handler, _timeout));
+            return _body.Run(Snapshot(_handler));
         }
+    }
+
+    /// <summary>Executes with bounded decoded output. The positive UTF-16 limit applies independently to each stream.
+    /// The optional capture-specific rejected-exit handler cannot be combined with OnFailure.</summary>
+    public Task<CapturedProcessResult> RunAndCaptureAsync(int maxCharactersPerStream, bool echo = false,
+        Func<CapturedProcessResult, ProcessFailureAction>? onFailure = null)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCharactersPerStream);
+        lock (_gate)
+        {
+            if (_hasHandler && onFailure is not null)
+            {
+                throw new InvalidOperationException("Choose either OnFailure or the capture-specific handler, not both.");
+            }
+            Func<ProcessResult, ProcessFailureAction>? handler = onFailure is null
+                ? _handler : result => onFailure((CapturedProcessResult)result);
+            return _body.RunCaptured(Snapshot(handler) with { Capture = new(maxCharactersPerStream, echo) });
+        }
+    }
+
+    private ProcessSettings Snapshot(Func<ProcessResult, ProcessFailureAction>? handler)
+    {
+        var executable = _executable.IndexOfAny(['/', '\\', ':']) >= 0
+            ? Path.GetFullPath(_executable, _root) : _executable;
+        return new(executable, _arguments.ToArray(), _directory ?? _root,
+            new Dictionary<string, string>(_environment, StringComparer.OrdinalIgnoreCase),
+            _acceptedExitCodes?.ToArray() ?? [0], handler, _timeout);
     }
 
     private static void CheckText(string value, string name)

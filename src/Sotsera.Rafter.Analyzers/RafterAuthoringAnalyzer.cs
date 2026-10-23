@@ -74,7 +74,7 @@ public sealed class RafterAuthoringAnalyzer : DiagnosticAnalyzer
                 {
                     AnalyzeOption(operationContext, invocation);
                 }
-                if (method.Name == "RunAsync" &&
+                if (method.Name is "RunAsync" or "RunAndCaptureAsync" &&
                     SymbolEqualityComparer.Default.Equals(method.ContainingType, process) &&
                     IsDiscarded(invocation))
                 {

@@ -27,9 +27,11 @@ output settlement. It does not promise a return at the configured instant. Monit
 and the existing supervision loop; scheduling delays are possible. Slow output after confirmed execution completion
 uses the existing drain policy and is not an execution timeout.
 
-After clean settlement, the process call throws public sealed `ProcessTimeoutException : TimeoutException`, exposing
+After clean settlement, the process call throws public `ProcessTimeoutException : TimeoutException`, exposing
 `Executable`, `Timeout`, `Elapsed`, and nullable `ObservedExitCode`. Elapsed includes shutdown and output settlement.
 An observed exit zero does not erase a committed timeout. No process result is returned and `OnFailure` is not invoked.
+The base type has internal construction and supports the sealed
+[`CapturedProcessTimeoutException`](process-capture.md) subtype for captured execution.
 
 ```csharp
 try

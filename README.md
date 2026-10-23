@@ -53,7 +53,11 @@ dotnet run --file examples/processes.cs -- --quiet
 dotnet run --file examples/dependencies.cs -- --project tests/testassets/workflows/sample-tests/BuildSample.Tests.csproj
 ```
 
-All eleven examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
+[Process capture](docs/guides/process-capture.md) adds explicit bounded stdout/stderr capture, optional live echo,
+ordered chunks, and partial diagnostics on clean overflow, timeout, and cancellation.
+Try `dotnet run --file examples/process-capture.cs -- --quiet` to capture and parse a child's JSON.
+
+All thirteen examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
 and an automatic namespace import. The [local package](docs/guides/local-package.md) provides the same authoring support to
 fresh file apps and regular projects; public publication and process ownership on other platforms remain separate work.
 Authoring diagnostics also catch repeated or conflicting option presence policies in supported straight-line code.

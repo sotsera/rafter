@@ -1,6 +1,9 @@
 # Rafter by Sotsera
 
 Rafter runs small C# automation scripts with descriptions, typed inputs, target dependencies, and owned child processes.
+`ProcessCommand.RunAndCaptureAsync(...)` adds bounded decoded stdout/stderr, immutable ordered chunks, and optional
+live echo. Its explicit positive limit counts UTF-16 code units per stream; clean overflow, timeout, and cancellation
+exceptions expose bounded partial streams. Owned process execution currently requires Windows.
 This is a local development package for the first working examples milestone; it has not been published to NuGet.org.
 
 The runtime targets .NET 10. Verification targets SDK 10.0.402 on Windows x64 and Ubuntu 24.04 x64.

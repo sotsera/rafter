@@ -25,6 +25,7 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Invocation roots and child paths | [Roots and paths](guides/roots-and-paths.md) |
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
+| Bounded process capture, ordered chunks, echo, and partial output | [Process capture](guides/process-capture.md) |
 | Compiler/editor authoring diagnostics | [Authoring diagnostics](guides/authoring-diagnostics.md) |
 | Human/plain output and help contracts | [Output design](design/output-design.md) |
 
@@ -39,6 +40,10 @@ behind the [duration-input API](guides/duration-inputs.md) and [runnable example
 The [per-process timeout design](design/process-timeouts.md) and
 [runnable example](../examples/process-timeout.cs) implement the agreed scope, recovery, exception/output contracts,
 race arbitration, and configuration validation. See the [process timeout guide](guides/process-timeouts.md).
+The [process capture design](design/process-capture.md) and [runnable example](../examples/process-capture.cs) deliver
+`RunAndCaptureAsync(...)`, immutable streams/chunks, bounded Unicode-safe retention, and partial output on clean stops
+for [issue #44](https://github.com/sotsera/rafter/issues/44). See the [capture guide](guides/process-capture.md) for usage,
+recovery, output contracts, and verification scope. Public access to partial text on uncertain settlement is deferred.
 
 ## Developing this repository
 

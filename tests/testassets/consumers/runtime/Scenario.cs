@@ -6,6 +6,58 @@ internal static class Scenario
     {
         var scenario = args.FirstOrDefault() ?? "sync";
         var controls = args.Skip(1).ToArray();
+        if (scenario == "capture-review-child")
+        {
+            if (controls[0] is "review-capture-overflow" or "review-capture-caught")
+            {
+                Console.Write(new string('x', 2048));
+                return 0;
+            }
+            Console.Write("private stdout");
+            Console.Error.Write("private stderr");
+            return controls[0] == "review-capture-reject" ? 7 : 0;
+        }
+        if (scenario.StartsWith("review-capture-", StringComparison.Ordinal))
+        {
+            return await Rafter.Command("Review captured process output.").RunAsync(controls, async context =>
+            {
+                try
+                {
+                    var result = await context.Process("dotnet")
+                        .Arguments(typeof(Scenario).Assembly.Location, "capture-review-child", scenario)
+                        .Environment("RAFTER_CAPTURE", "")
+                        .RunAndCaptureAsync(1024);
+                    context.WriteLine($"Captured stdout: {result.StandardOutput.Text.Length}.");
+                }
+                catch (ProcessCaptureLimitException failure) when (scenario == "review-capture-caught")
+                {
+                    context.WriteLine($"Recovered capture: {failure.PartialStandardOutput.Text.Length}.");
+                }
+            });
+        }
+        if (scenario == "capture-child")
+        {
+            Console.Write("{\"name\":\"Ada\"}");
+            Console.Error.Write("private diagnostic");
+            return int.Parse(controls[0]);
+        }
+        if (scenario == "capture")
+        {
+            return await Rafter.Command("Parse captured JSON.").RunAsync(controls, async context =>
+            {
+                var process = context.Process("dotnet").Arguments(typeof(Scenario).Assembly.Location, "capture-child", "7");
+                var result = await process.RunAndCaptureAsync(1024, onFailure: captured =>
+                {
+                    if (captured.StandardError.Text != "private diagnostic")
+                    {
+                        throw new InvalidOperationException("Missing captured stderr");
+                    }
+                    return ProcessFailureAction.Continue;
+                });
+                using var json = System.Text.Json.JsonDocument.Parse(result.StandardOutput.Text);
+                context.WriteLine($"Captured {json.RootElement.GetProperty("name").GetString()}: {result.ExitCode}.");
+            });
+        }
         if (scenario == "timeout-child")
         {
             Console.WriteLine("Child output before deadline.");

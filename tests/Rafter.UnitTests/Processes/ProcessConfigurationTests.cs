@@ -9,6 +9,58 @@ public sealed class ProcessConfigurationTests
 {
     [Theory]
     [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(int.MinValue)]
+    public async Task Invalid_capture_limits_throw_synchronously_without_admitting_work(int limit)
+    {
+        using var host = new ProcessHost();
+        (await host.Command.RunAsync([], context =>
+        {
+            var process = context.Process("must-not-launch");
+            Task<CapturedProcessResult>? operation = null;
+            Action invalid = () => operation = process.RunAndCaptureAsync(limit);
+            invalid.Should().Throw<ArgumentOutOfRangeException>().Which.ParamName.Should().Be("maxCharactersPerStream");
+            operation.Should().BeNull();
+            process.OnFailure(_ => ProcessFailureAction.Continue);
+        })).Should().Be(0);
+        host.Error.ToString().Should().NotContain("Process |").And.NotContain("unfinished");
+    }
+
+    [Fact]
+    public async Task Capture_handler_conflicts_throw_before_admission_even_after_cancellation()
+    {
+        using var host = new ProcessHost();
+        (await host.Command.RunAsync([], context =>
+        {
+            var process = context.Process("must-not-launch").OnFailure(_ => ProcessFailureAction.Continue);
+            host.Signal();
+            Action invalid = () => process.RunAndCaptureAsync(1, onFailure: _ => ProcessFailureAction.Continue)
+                .GetAwaiter().GetResult();
+            invalid.Should().Throw<InvalidOperationException>();
+        })).Should().Be(130);
+        host.Error.ToString().Should().NotContain("Process |").And.NotContain("unfinished");
+    }
+
+    [Fact]
+    public async Task Validated_capture_after_cancellation_has_empty_typed_partials_and_the_invocation_token()
+    {
+        using var host = new ProcessHost();
+        (await host.Command.RunAsync(["--quiet"], async context =>
+        {
+            host.Signal();
+            Func<Task> run = async () => { await context.Process("must-not-launch").RunAndCaptureAsync(8); };
+            var cancelled = (await run.Should().ThrowAsync<CapturedProcessCanceledException>()).Which;
+            cancelled.PartialStandardOutput.Text.Should().BeEmpty();
+            cancelled.PartialStandardError.Chunks.Should().BeEmpty();
+            cancelled.CaptureLimit.Should().Be(8);
+            cancelled.CancellationToken.Should().Be(context.CancellationToken);
+            cancelled.ObservedExitCode.Should().BeNull();
+        })).Should().Be(130);
+        host.Error.ToString().Should().NotContain("Process |").And.NotContain("unfinished");
+    }
+
+    [Theory]
+    [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
     public async Task Invalid_configuration_is_catchable_before_launch(int kind)

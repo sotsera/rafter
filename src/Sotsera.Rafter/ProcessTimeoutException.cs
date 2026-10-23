@@ -1,7 +1,7 @@
 namespace Sotsera.Rafter;
 
 /// <summary>A process execution deadline expired and its owned processes and output have settled.</summary>
-public sealed class ProcessTimeoutException : TimeoutException
+public class ProcessTimeoutException : TimeoutException
 {
     public string Executable { get; }
     public TimeSpan Timeout { get; }

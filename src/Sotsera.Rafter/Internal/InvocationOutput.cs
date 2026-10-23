@@ -145,10 +145,23 @@ internal sealed class InvocationOutput
 
     public void Exception(Exception exception, string scope)
     {
+        if (exception is ProcessCaptureLimitException limit)
+        {
+            _error.Framework("  Process capture limit exceeded | " + limit.Executable, new Style(Color.Red));
+            _error.Framework($"  Stream: {StreamName(limit.Stream)} | limit: {limit.Limit} UTF-16 code units", Style.Plain);
+            CaptureCounts(limit.PartialStandardOutput, limit.PartialStandardError, partial: true);
+            ObservedExit(limit.ObservedExitCode);
+            return;
+        }
         if (exception is ProcessTimeoutException timeout)
         {
             _error.Framework("  " + timeout.Message, new Style(Color.Red));
             ProcessTimeout(timeout.Timeout, timeout.Elapsed);
+            if (timeout is CapturedProcessTimeoutException captured)
+            {
+                CaptureCounts(captured.PartialStandardOutput, captured.PartialStandardError, partial: true);
+                CaptureOverflow(captured.OverflowedStream, captured.CaptureLimit);
+            }
             if (timeout.ObservedExitCode is { } observed)
             {
                 _error.Framework($"  Observed exit code: {observed}", Style.Plain);
@@ -180,6 +193,11 @@ internal sealed class InvocationOutput
             if (completion.Timeout is { } configured && completion.Elapsed is { } elapsed)
             {
                 ProcessTimeout(configured, elapsed);
+            }
+            if (completion.Capture is { } partial)
+            {
+                CaptureCounts(partial.Output, partial.Error, partial: true);
+                CaptureOverflow(partial.OverflowedStream, partial.Limit);
             }
             if (completion.ExitCode is { } code)
             {
@@ -217,6 +235,60 @@ internal sealed class InvocationOutput
         }
     }
 
+    public void ProcessCaptureLimitReached(string executable)
+    {
+        if (!_arguments.Quiet)
+        {
+            _error.Framework("  Capture limit exceeded | " + executable, new Style(Color.Yellow));
+        }
+    }
+
+    public void ProcessCaptured(ProcessCaptureSnapshot capture)
+    {
+        if (_arguments.Verbose)
+        {
+            CaptureCounts(capture.Output, capture.Error, partial: false);
+        }
+    }
+
+    public void ProcessCaptureCancelled(string executable, ProcessCaptureSnapshot capture, int? exitCode)
+    {
+        if (_arguments.Verbose)
+        {
+            _error.Framework("  Process cancelled | " + executable, new Style(Color.Yellow));
+            CaptureCounts(capture.Output, capture.Error, partial: true);
+            CaptureOverflow(capture.OverflowedStream, capture.Limit);
+            ObservedExit(exitCode);
+        }
+    }
+
+    private void CaptureCounts(CapturedStream output, CapturedStream error, bool partial)
+    {
+        var label = partial ? "Partial capture" : "Capture";
+        _error.Framework($"  {label} (UTF-16 code units): stdout {output.Text.Length} | stderr {error.Text.Length}",
+            Style.Plain);
+    }
+
+    private void CaptureOverflow(ProcessOutputStream? stream, int limit)
+    {
+        if (stream is { } overflowed)
+        {
+            _error.Framework($"  Capture limit also exceeded: {StreamName(overflowed)} | limit: {limit} UTF-16 code units",
+                Style.Plain);
+        }
+    }
+
+    private void ObservedExit(int? exitCode)
+    {
+        if (exitCode is { } observed)
+        {
+            _error.Framework($"  Observed exit code: {observed}", Style.Plain);
+        }
+    }
+
+    private static string StreamName(ProcessOutputStream stream)
+        => stream == ProcessOutputStream.StandardOutput ? "stdout" : "stderr";
+
     private void ProcessTimeout(TimeSpan timeout, TimeSpan elapsed)
     {
         _error.Layout(new Paragraph($"Timeout: {DurationInputs.Format(timeout)} | elapsed: {DurationInputs.Format(elapsed)}")
@@ -239,6 +311,10 @@ internal sealed class InvocationOutput
     {
         _error.Framework($"  Exit code: {failure.Result.ExitCode} | accepted: {string.Join(", ", failure.AcceptedExitCodes)}",
             Style.Plain);
+        if (failure.Result is CapturedProcessResult captured)
+        {
+            CaptureCounts(captured.StandardOutput, captured.StandardError, partial: false);
+        }
     }
 
     public void Summary(int code, TimeSpan elapsed, TargetExecution? targets = null)

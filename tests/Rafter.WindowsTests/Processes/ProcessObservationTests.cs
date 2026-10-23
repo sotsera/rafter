@@ -11,6 +11,48 @@ namespace Rafter.WindowsTests.Processes;
 [Trait("LongRunning", "true")]
 public sealed class ProcessObservationTests
 {
+    [WindowsFact]
+    public async Task Capture_overflow_keeps_termination_uncertainty_authoritative_and_retains_bounded_internal_context()
+    {
+        using var stdout = new StringWriter();
+        using var stderr = new StringWriter();
+        var root = Directory.GetCurrentDirectory();
+        var ready = Path.Combine(Path.GetTempPath(), "rafter-capture-force-fault-" + Guid.NewGuid().ToString("N"));
+        var host = new InvocationHost(root, stdout, stderr, true, true, false, 100, _ => new Subscription());
+        var output = new InvocationOutput(host, new(false, false, false, true, []));
+        using var cancellation = new InvocationCancellation(output);
+        var invocation = new ProcessInvocation(cancellation, output);
+        var arguments = WindowsProcessTests.ProbeArguments("tree", ready);
+        var settings = new ProcessSettings("dotnet", arguments, root, new Dictionary<string, string>(), [0],
+            _ => throw new Exception("Not an exit failure"), Capture: new(2, false));
+        var native = WindowsProcess.Start("dotnet", arguments, root, settings.Environment);
+        using var observed = new FailedForce(native);
+        try
+        {
+            await WindowsProcessTests.UntilAsync(() => File.Exists(ready));
+            using var descendant = Process.GetProcessById(int.Parse(File.ReadAllText(ready)));
+            Func<Task> run = async () =>
+            {
+                await ProcessOperation.CompleteAsync(settings, new(invocation, "body"), observed);
+            };
+            var failure = (await run.Should().ThrowAsync<ProcessCompletionException>()).Which;
+            failure.Message.Should().Contain("Termination unknown");
+            failure.Capture!.Output.Text.Should().Be("pa");
+            failure.Capture.OverflowedStream.Should().Be(Sotsera.Rafter.ProcessOutputStream.StandardOutput);
+            invocation.Failed.Should().BeTrue();
+            output.Exception(failure, "body");
+            stderr.ToString().Should().Contain("Partial capture (UTF-16 code units): stdout 2 | stderr 0")
+                .And.NotContain("Process capture limit exceeded");
+            await WindowsProcessTests.UntilAsync(() => descendant.HasExited);
+        }
+        finally
+        {
+            File.Delete(ready);
+            await output.CompleteOutputAsync();
+            await output.CompleteErrorAsync();
+        }
+    }
+
     [WindowsTheory]
     [InlineData(true)]
     [InlineData(false)]

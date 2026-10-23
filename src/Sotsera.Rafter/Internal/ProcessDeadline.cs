@@ -1,8 +1,9 @@
 namespace Sotsera.Rafter.Internal;
 
 // Compare elapsed time rather than scheduling a timer with a restricted maximum duration.
-internal sealed class ProcessDeadline(TimeSpan? timeout, long started, TimeProvider clock)
+internal sealed class ProcessDeadline(TimeSpan? timeout, long started, TimeProvider clock, ProcessStopState? stop = null)
 {
+    internal ProcessStopState? Stop { get; } = stop;
     public bool Committed { get; private set; }
     public bool ExecutionCompleted { get; private set; }
     public TimeSpan Elapsed => clock.GetElapsedTime(started);
@@ -22,5 +23,9 @@ internal sealed class ProcessDeadline(TimeSpan? timeout, long started, TimeProvi
 
     internal void Complete() => ExecutionCompleted = true;
 
-    internal void Commit() => Committed = true;
+    internal void Commit()
+    {
+        Stop?.Commit(ProcessStopReason.Timeout);
+        Committed = true;
+    }
 }

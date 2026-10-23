@@ -73,7 +73,7 @@ internal sealed class InvocationCancellation : IDisposable
     {
         lock (_gate)
         {
-            if (_requested)
+            if (_requested || deadline.Stop is { Reason: not ProcessStopReason.None })
             {
                 return false;
             }
@@ -83,12 +83,23 @@ internal sealed class InvocationCancellation : IDisposable
                 deadline.Complete();
                 return false;
             }
-            if (_requested)
+            if (_requested || deadline.Stop is { Reason: not ProcessStopReason.None })
             {
                 return false;
             }
             deadline.Commit();
             return true;
+        }
+    }
+
+    internal void CommitCaptureOverflow(ProcessStopState stop)
+    {
+        lock (_gate)
+        {
+            if (stop.Reason == ProcessStopReason.None)
+            {
+                stop.Commit(_requested ? ProcessStopReason.Cancellation : ProcessStopReason.CaptureLimit);
+            }
         }
     }
 

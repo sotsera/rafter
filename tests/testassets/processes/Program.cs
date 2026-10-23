@@ -76,9 +76,29 @@ public static class Program
                     Console.Error.Write("0123456789");
                 }
                 return 0;
+            case "capture-unicode":
+                Console.Write("A😀B");
+                Console.Error.Write("é世界");
+                return 0;
+            case "capture-overflow-tree":
+                using (var child = Child(runtime, "hold", args[2]))
+                {
+                    while (!File.Exists(args[2]))
+                    {
+                        await Task.Delay(10);
+                    }
+                    Console.Write(new string('x', 10000));
+                    await Task.Delay(Timeout.InfiniteTimeSpan);
+                    return 0;
+                }
             case "output-hold":
+            case "capture-hold":
             case "hold":
                 Console.CancelKeyPress += (_, signal) => { signal.Cancel = true; };
+                if (mode == "capture-hold")
+                {
+                    Console.Write("child output");
+                }
                 PublishReady(args[2]);
                 if (mode == "output-hold")
                 {
