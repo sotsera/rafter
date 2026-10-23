@@ -9,10 +9,10 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 595 | 0 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 596 | 0 |
 | [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory behavior plus file-app/project/compiler/package consumers. | 1 | 30 |
 | [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, and process consumers. | 53 | 28 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 649 | 58 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 650 | 58 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44). Deliberate native timeout/failed-termination waits are long-running; controlled

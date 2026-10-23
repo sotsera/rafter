@@ -30,6 +30,7 @@ internal sealed class InvocationCancellation : IDisposable
 
     public void Request()
     {
+        TaskCompletionSource notice;
         lock (_gate)
         {
             if (_requested)
@@ -48,15 +49,22 @@ internal sealed class InvocationCancellation : IDisposable
                 return;
             }
             Processes.Request();
-            _callbacks = _source.CancelAsync();
-            try
-            {
-                _output.CancellationRequested();
-            }
-            catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
-            {
-                // The destination retains the failure. Never throw a reporting error on the console event thread.
-            }
+            notice = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            _callbacks = Task.WhenAll(_source.CancelAsync(), notice.Task);
+        }
+        try
+        {
+            // A user writer may block. Do not hold the cancellation/stop-cause gate while reporting,
+            // and keep the notice owned until StopAsync joins it before final output settlement.
+            _output.CancellationRequested();
+        }
+        catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
+        {
+            // The destination retains the failure. Never throw a reporting error on the console event thread.
+        }
+        finally
+        {
+            notice.SetResult();
         }
     }
 

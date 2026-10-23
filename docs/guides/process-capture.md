@@ -90,6 +90,8 @@ shutdown diagnostics; it does not promise the interrupted child flushed all inte
 after consumers join. Cancellation requested before timeout/overflow commitment wins; otherwise the first committed
 timeout or overflow remains primary. Secondary overflow enforces the same bound and becomes metadata. No later event
 restarts or extends the existing shutdown/drain budgets; timeout monitoring disarms after confirmed owned completion.
+Cancellation notices write outside the stopping-cause lock, so a blocked destination cannot prevent supervision or
+cause commitment. The invocation still joins that notice before final output settlement.
 
 **Termination unknown**, **Output incomplete**, and independent failures keep their existing sticky precedence.
 Available bounded counts and stopping context remain in framework diagnostics; public access to partial text through
@@ -128,6 +130,9 @@ Observed locally on Windows x64 / SDK 10.0.402, 2026-10-23, before the delivery 
   focused failed-termination case: **Passed: 1, Failed: 0, Skipped: 0**. These runs are not added together as one run.
 - Final capture unit selection: **Passed: 41, Failed: 0, Skipped: 0**. The separate pseudoterminal graceful-signal
   invocation reports **Passed: 1, Failed: 0, Skipped: 0**, covering the headless capability skip separately.
+- A subsequent blocked-cancellation-notice regression reproduced the prior lock defect. After the correction, the
+  full unit suite reports **Passed: 596, Failed: 0, Skipped: 0**, with no build warnings. Before/fixed reports are retained
+  separately under `artifacts/process-capture/blocked-notice-before-fix/` and `final-unit-fixed/`.
 - Release build and local package succeed with **0 warnings/errors**. All **43 redirected** and **118 terminal/mixed**
   output checks pass. Raw TRX/package evidence is retained under `artifacts/process-capture/`; output records use the
   repository's `artifacts/evidence/verification/runtime-terminal/` policy.

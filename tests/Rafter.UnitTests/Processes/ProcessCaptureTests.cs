@@ -9,6 +9,49 @@ namespace Rafter.UnitTests.Processes;
 public sealed class ProcessCaptureTests
 {
     [Fact]
+    public async Task Blocked_cancellation_notice_cannot_hold_stop_commitment_and_is_joined_before_output_closes()
+    {
+        using var writer = new PausedCancellationWriter();
+        using var fixture = new Fixture(error: writer);
+        using var process = new ObservedProcess("overflow", "");
+        var request = Task.Run(fixture.Cancellation.Request, TestContext.Current.CancellationToken);
+        Task<Sotsera.Rafter.ProcessResult>? run = null;
+        try
+        {
+            await writer.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            fixture.Clock.Advance(TimeSpan.FromSeconds(2));
+            run = Task.Run(() => fixture.RunAsync(process, fixture.Settings(limit: 3)),
+                TestContext.Current.CancellationToken);
+            Func<Task> complete = async () =>
+            {
+                await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            };
+            var failure = (await complete.Should().ThrowAsync<CapturedProcessCanceledException>()).Which;
+            failure.OverflowedStream.Should().Be(ProcessOutputStream.StandardOutput);
+            failure.PartialStandardOutput.Text.Should().Be("ove");
+            process.Disposed.Should().BeTrue("supervision must finish even while the notice writer is paused");
+            fixture.Cancellation.StopAsync().IsCompleted.Should().BeFalse("the reporting producer is still owned");
+        }
+        finally
+        {
+            writer.Release.Set();
+            await request;
+            await fixture.Cancellation.StopAsync();
+            if (run is not null)
+            {
+                try
+                {
+                    await run;
+                }
+                catch (OperationCanceledException)
+                {
+                    // The assertion above inspects the cancelled operation; always join it on assertion failure too.
+                }
+            }
+        }
+    }
+
+    [Fact]
     public async Task Confirmed_cancelled_scope_can_expose_partial_data_without_an_observed_root_exit_code()
     {
         using var fixture = new Fixture();
@@ -216,15 +259,16 @@ public sealed class ProcessCaptureTests
     private sealed class Fixture : IDisposable
     {
         public StringWriter StandardOutput { get; }
-        public StringWriter StandardError { get; } = new();
+        public StringWriter StandardError { get; }
         public InvocationOutput Output { get; }
         public InvocationCancellation Cancellation { get; }
         public ProcessInvocation Invocation { get; }
         public ProcessDeadlineTests.ManualClock Clock { get; } = new();
 
-        public Fixture(StringWriter? output = null)
+        public Fixture(StringWriter? output = null, StringWriter? error = null)
         {
             StandardOutput = output ?? new StringWriter();
+            StandardError = error ?? new StringWriter();
             var host = new InvocationHost(Directory.GetCurrentDirectory(), StandardOutput, StandardError,
                 true, true, false, 100, _ => throw new NotSupportedException());
             Output = new(host, new(false, false, false, true, []));
@@ -320,5 +364,30 @@ public sealed class ProcessCaptureTests
     private sealed class FailedWriter : StringWriter
     {
         public override void Write(string? value) => throw new IOException("Echo failed");
+    }
+
+    private sealed class PausedCancellationWriter : StringWriter
+    {
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public ManualResetEventSlim Release { get; } = new();
+
+        public override void Write(string? value)
+        {
+            if (value?.Contains("Cancellation", StringComparison.Ordinal) == true)
+            {
+                Entered.TrySetResult();
+                Release.Wait();
+            }
+            base.Write(value);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                Release.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
 }
