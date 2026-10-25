@@ -2,11 +2,14 @@
 
 Agreed design for the new Rafter. The [minimal runtime](minimal-runtime.md) implements per-invocation root capture;
 the [process runtime](process-runtime.md) implements child working directories and environment overrides on Windows.
-Explicit roots remain pending. The captured root is currently internal to the invocation.
+The first increment for [issue #46](https://github.com/sotsera/rafter/issues/46) adds public root/path access and
+literal or prepared-option root selection in this delivery slice. The
+[root/filesystem design](../design/roots-and-filesystem.md) records its agreed contract; richer filesystem helpers
+remain a separate agreed increment under [issue #47](https://github.com/sotsera/rafter/issues/47).
 
 ## Default root
 
-`Rafter.Command(description)` uses the process working directory at the start of `RunAsync` as the command root.
+Without explicit root configuration, `Rafter.Command(description)` uses the process working directory at the start of `RunAsync` as the command root.
 For an ordinary shell invocation, this is the directory from which the user launches the script.
 The script's location does not determine the default root.
 
@@ -33,6 +36,8 @@ For example, given a script at `C:\work\sample\scripts\hello.cs`:
 | `C:\scratch` | `C:\scratch` |
 
 Moving the script alone does not change this rule. Launching it from another directory changes the default root.
+Read the selected root through the read-only `context.RootDirectory` string property. It is stable for every body
+and target in that invocation; reusing a command captures a new invocation directory for the next run.
 
 ## Path resolution and working directory
 
@@ -42,6 +47,21 @@ directory to implement this behavior.
 Ordinary .NET file operations and other libraries retain their own path-resolution behavior. For example, a direct
 `File.ReadAllText("input.txt")` uses the process working directory; selecting a different Rafter root would not redirect
 that call. Script code must explicitly resolve paths against the command root when that is its intent.
+
+```csharp
+var manifest = context.ResolvePath("artifacts/run.json");
+await File.WriteAllTextAsync(manifest, text, context.CancellationToken);
+```
+
+`ResolvePath(string)` normalizes a relative path against the selected root or normalizes a fully qualified path
+directly. `.` refers to the root and `..` is allowed. Resolution performs no filesystem I/O: it does not create a
+directory, require existence, inspect links, or constrain paths to stay beneath the root. It returns an ordinary
+absolute string for .NET APIs and tool arguments.
+
+Null, blank, or NUL-containing paths are rejected. On Windows, drive-relative/rooted-but-not-fully-qualified forms
+such as `C:output` and `\output` are rejected as ambiguous. These rejected forms throw an argument exception when
+passed directly to the resolver; an unhandled exception follows the usual execution-failure contract. These rules do not change
+ordinary .NET calls or the existing process working-directory/executable configuration APIs.
 
 ## Child process working directory
 
@@ -66,6 +86,45 @@ are passed unchanged, so relative paths inside arguments are interpreted by the 
 
 ## Explicit roots
 
-Scripts that need paths anchored to their source directory or another chosen directory can select an explicit root.
-The exact root configuration syntax, source-directory discovery, path validation rules, and executable-path resolution
-remain topics for discussion. The agreed defaults and child working-directory override do not depend on those choices.
+Select a literal root once when declaring the command:
+
+```csharp
+var command = Rafter.Command("Build a chosen repository.")
+    .RootDirectory("../repository");
+```
+
+Relative configured roots resolve against the directory captured at `RunAsync` entry; absolute roots are normalized
+directly. Root selection does not change the host CWD or probe whether the directory exists. The selected root becomes
+the default directory for children and the base for `ResolvePath` and relative child-directory overrides.
+Selected roots omit a trailing separator except when it is required for a filesystem root, so
+`context.ResolvePath(".")` and `context.RootDirectory` have the same spelling.
+
+A required/defaulted string option can instead supply the root:
+
+```csharp
+var command = Rafter.Command("Build this repository.");
+var root = command.Option<string>("root", "Repository root relative to the invocation directory.").Default(".");
+command.RootDirectory(root);
+
+return await command.RunAsync(args, async context =>
+{
+    await context.Process("dotnet")
+        .Arguments("build", context.ResolvePath("Rafter.slnx"))
+        .RunAsync();
+});
+```
+
+The option retains normal CLI/environment/default precedence, help, and validation. It is an ordinary declaration,
+not a new built-in Rafter switch. Root selection reads the prepared value once after input validation and before
+any body/target starts, using the original invocation directory even if a validator changed the host CWD.
+
+Both overloads may be used only once in total. Repeats, null/blank/NUL-containing literal settings, null handles,
+and handles owned by another command are initial declaration errors (exit `2`, including with help). Optional
+`Option<string>` handles cannot be bound; use a required/defaulted `ValueOption<string>`.
+Valid help does not resolve roots or probe directories. On an executing run, malformed selected root paths return
+safe input/configuration diagnostics and exit `2`, without echoing rejected text. Nonexistent but lexically valid
+roots are allowed; a later file operation or process launch decides whether an existing directory is required.
+
+Source-directory discovery, repository discovery, and selector callbacks remain separate work. The agreed
+filesystem helpers and complete repository workflow example follow in later delivery slices; their APIs are
+not part of this root increment. Verification is recorded in the [design](../design/roots-and-filesystem.md).

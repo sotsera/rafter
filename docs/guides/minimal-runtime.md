@@ -12,8 +12,9 @@ the compiler; null/blank descriptions and null body delegates are rejected at in
 Declaration validation precedes parsing and help. A null task returned by an asynchronous body is an execution failure.
 
 Each invocation captures its working directory before the first asynchronous suspension. State, cancellation, and
-output belong to that run. The captured root is internal for now; no explicit-root or path API is introduced. Rafter
-does not change the process working directory, replace console writers, or dispose host writers.
+output belong to that run. This original slice kept the root internal; the later
+[root/path increment](roots-and-paths.md) adds public access, explicit roots, and path resolution. Rafter does not
+change the process working directory, replace console writers, or dispose host writers.
 
 The built-in `--help`, `--quiet`, `--verbose`, and `--plain` controls are case-sensitive switches without values or
 aliases. Repetition, attached values, positional input, colon syntax, response files, directives, and quiet plus verbose

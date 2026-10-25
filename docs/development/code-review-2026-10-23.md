@@ -1,6 +1,11 @@
 # Code review — 2026-10-23
 
 Review baseline: `35a8baa6bc78ae337ed915e8e0768b984eec94d6` (bounded process capture, PR #45).
+Delivery status: the fixes below merged on 2026-10-25 through
+[PR #49](https://github.com/sotsera/rafter/pull/49) as `b775ef7`, closing issue #48. Local-status statements in the
+dated sections describe their earlier snapshots. Later root verification belongs to its
+[own design record](../design/roots-and-filesystem.md).
+
 The existing working-tree change in `examples/environment.cs` was preserved. The initial review made documentation
 changes only; the subsequent, explicitly requested fixes are now prepared for delivery under
 [issue #48](https://github.com/sotsera/rafter/issues/48). The [main development plan](../design/example-design-plan.md#next-steps)

@@ -9,13 +9,15 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 614 | 0 |
-| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory behavior plus file-app/project/compiler/package consumers. | 1 | 30 |
-| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, and verification supervision. | 56 | 32 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 671 | 62 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 648 | 0 |
+| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory and root behavior plus file-app/project/compiler/package consumers. | 3 | 30 |
+| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, and verification supervision. | 60 | 32 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 711 | 62 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
+The [root increment](../design/roots-and-filesystem.md) adds 34 unit, two real-host, and four short Windows process
+cases; fresh package/file-app/project consumers also exercise the public root surface.
 Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.

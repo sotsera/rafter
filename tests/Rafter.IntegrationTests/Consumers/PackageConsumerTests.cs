@@ -87,8 +87,15 @@ public sealed class PackageConsumerTests
                 .Default(BuildConfiguration.Release).FromEnvironment("RAFTER_PACKAGE_CONFIGURATION");
             var duration = command.Option<TimeSpan>("duration", "Duration.").Default(TimeSpan.FromSeconds(30))
                 .FromEnvironment("RAFTER_PACKAGE_DURATION");
+            var root = command.Option<string>("root", "Root.").Default(".");
+            command.RootDirectory(root);
             return await command.RunAsync(args, context =>
             {
+                var expectedRoot = Path.GetFullPath(context.GetValue(root), Directory.GetCurrentDirectory());
+                if (context.RootDirectory != expectedRoot || context.ResolvePath(".") != expectedRoot)
+                {
+                    throw new InvalidOperationException("Package root selection did not match the prepared option.");
+                }
                 context.Process("dotnet").Timeout(TimeSpan.MaxValue);
                 context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
                     + $"{context.GetValue(duration).Ticks} ticks.");
@@ -108,6 +115,10 @@ public sealed class PackageConsumerTests
         run.ExitCode.Should().Be(0);
         run.StandardOutput.Should().Be("Hello, Ada! Release. 300000000 ticks." + Environment.NewLine);
         run.StandardError.Should().BeEmpty();
+        var rootRun = await consumer.RunAsync("--quiet", "--root=missing-root");
+        rootRun.ExitCode.Should().Be(0, rootRun.StandardError);
+        rootRun.StandardOutput.Should().Be(run.StandardOutput);
+        Directory.Exists(Path.Combine(consumer.WorkingDirectory, "missing-root")).Should().BeFalse();
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = "Grace";
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = " debug ";
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = " 1H30M ";
