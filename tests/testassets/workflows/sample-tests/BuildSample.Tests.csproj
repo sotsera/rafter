@@ -12,5 +12,6 @@
     <ProjectReference Include="../src/BuildSample.csproj" />
     <PackageReference Include="xunit.v3.mtp-v2" />
     <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
   </ItemGroup>
 </Project>

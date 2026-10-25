@@ -11,8 +11,8 @@ Linux-native process ownership and macOS remain unverified.
 | --- | --- | ---: | ---: |
 | [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 664 | 0 |
 | [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 16 | 30 |
-| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, and verification supervision. | 60 | 32 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 740 | 62 |
+| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 60 | 37 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 740 | 67 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
@@ -20,6 +20,10 @@ The [root increment](../design/roots-and-filesystem.md) adds 34 unit, two real-h
 cases; fresh package/file-app/project consumers also exercise the public root surface.
 The [filesystem increment](../design/filesystem-authoring.md) adds 16 unit path cases and 13 temporary-file I/O
 cases. Existing real-host and fresh package consumers also exercise the handles and explicit writes.
+The five [repository workflow](repository-workflow.md) cases are long-running Windows consumers. Their miniature
+solution executes one real sample test with TRX reporting and does not recursively run the root suites.
+Those heavy SDK workflows use the existing nonparallel native collection so they do not overlap short-deadline
+native consumer probes; this scheduling boundary does not change runtime timeout semantics.
 Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.

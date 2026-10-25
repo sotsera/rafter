@@ -3,6 +3,8 @@
 Run these PowerShell tools from the repository root with the pinned SDK. They are optional development checks;
 the [Windows workflow](../.github/workflows/evaluation.yml) also runs the redirected runtime matrix.
 Executable inputs live under [tests/testassets](../tests/testassets/README.md), outside the shipping package.
+The [repository workflow example](../examples/repository-workflow.cs) combines a build, native MTP test run,
+bounded package-metadata capture, and optional local packaging; see its [guide](../docs/development/repository-workflow.md).
 
 | Tool | Purpose and prerequisites |
 | --- | --- |

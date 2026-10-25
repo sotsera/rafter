@@ -296,3 +296,18 @@ The redirected runtime matrix passed **43 cases**, with evidence under
 Local file/heading checks and four PowerShell parser checks passed, as did `git diff --check`. The restored
 `IsolatedConsumer.cs` hash still matches the value recorded above. This local run does not establish attached-console,
 live editor/terminal, native Linux/macOS ownership, or AOT behavior. Portable Linux results belong to the PR's CI run.
+
+## PR delivery and CI — 2026-10-25
+
+[PR #49](https://github.com/sotsera/rafter/pull/49) publishes the isolated slice as
+`77a4f95c44d26c06827b6fccca9f0c82b47bfece`. The user merged it on 2026-10-25 as
+`b775ef70d5a0d3a2058b39e7c0bdf2c25da1d14e`, closing issue #48.
+The [Evaluation run](https://github.com/sotsera/rafter/actions/runs/40209862141) completed successfully for that head:
+
+- Windows ordinary: **670 passed, 0 failed, 1 skipped**; full: **732 passed, 0 failed, 1 skipped**.
+- Windows packaging and **43 redirected runtime cases** passed.
+- Ubuntu portable ordinary: **615 passed, 0 failed, 0 skipped**; full: **645 passed, 0 failed, 0 skipped**.
+
+The Windows skip requires an attached console. Portable Linux success verifies this slice's portable suites and
+consumers; it does not establish native Linux process ownership. The later root/filesystem/workflow increments remain
+uncommitted in the original checkout and are excluded from these PR results.
