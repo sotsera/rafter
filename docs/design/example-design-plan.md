@@ -18,20 +18,20 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
 | Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
 
-The focused delivery sequence has completed its first three PRs:
+The focused delivery sequence is complete:
 
 | Delivery | Status | Record |
 | --- | --- | --- |
 | Review fixes and verification tooling | Merged in [PR #49](https://github.com/sotsera/rafter/pull/49), closing #48. | [Four findings and evidence](../development/code-review-2026-10-23.md). |
-| Invocation roots | Runtime/root consumers merged in [PR #50](https://github.com/sotsera/rafter/pull/50). | [Root contract and verification](roots-and-filesystem.md); #46 retains the final workflow acceptance. |
-| Filesystem helpers | Runtime/filesystem consumers merged in [PR #51](https://github.com/sotsera/rafter/pull/51). | [Filesystem contract and verification](filesystem-authoring.md); #47 retains the final workflow acceptance. |
-| Complete repository workflow and reconciled roadmap | Prepared in this increment under [issue #52](https://github.com/sotsera/rafter/issues/52). | [Workflow guide and independent verification](../development/repository-workflow.md). |
+| Invocation roots | Runtime/root consumers merged in [PR #50](https://github.com/sotsera/rafter/pull/50); workflow acceptance completed by #53, closing #46. | [Root contract and verification](roots-and-filesystem.md). |
+| Filesystem helpers | Runtime/filesystem consumers merged in [PR #51](https://github.com/sotsera/rafter/pull/51); workflow acceptance completed by #53, closing #47. | [Filesystem contract and verification](filesystem-authoring.md). |
+| Complete repository workflow and reconciled roadmap | Merged in [PR #53](https://github.com/sotsera/rafter/pull/53), closing #52/#46/#47. | [Workflow guide and independent verification](../development/repository-workflow.md). |
 
-The latest merged-runtime [CI run](https://github.com/sotsera/rafter/actions/runs/40213817028), for PR #51 head
-`8b1c72e`, passed Windows full **801 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests,
-0 failures, 0 skips**, packaging, and **43 redirected runtime cases**. This predates the five workflow cases added
-in the current increment. Its own observed results belong to the workflow guide; earlier combined local results
-are preserved as history, rather than relabeled as checks of an independently prepared PR.
+The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
+full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
+packaging, and **43 redirected runtime cases**. All five workflow consumers are included. The corrected PR head also
+passed [its own CI](https://github.com/sotsera/rafter/actions/runs/40219933047); the workflow guide retains the initial
+CI assertion failure and correction. Earlier results remain records of their original revisions.
 
 The final workflow slice independently passed **806 tests, 0 failures, 1 console-dependent skip** on Windows
 through the actual file app, created its local package, and passed an SDK-safe outside-checkout ordinary run
@@ -40,27 +40,30 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Review and deliver the complete workflow, then select the next focused increment.** Keep independent validation,
-applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The workflow closes the
-integration acceptance deferred from #46/#47; it introduces no further runtime API or CI configuration.
+**Deliver the agreed CI scheduling improvements, then discuss process authoring.** Keep independent validation,
+applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
+the deferred #46/#47 integration acceptance are merged.
 
-The recommendations after this delivery remain proposals until discussed. Record agreed syntax and observable
-behavior before creating the next scoped implementation issue.
+The CI trigger/concurrency scope below is agreed for the current increment. Cache experiments and later product
+topics remain proposals. Record agreed syntax and observable behavior before creating their implementation issues.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Review the repository workflow and updated roadmap under #52. | Verify default/explicit roots, build/test/optional-pack behavior, bounded metadata, failures/timeouts, and retained evidence; complete #46/#47's deferred integration acceptance. |
-| 2 | Consider a focused CI-efficiency increment. | Remove duplicate branch-push evaluations, cancel superseded PR runs, and measure Windows NuGet cache placement while preserving fresh package-consumer caches and truthful check results. |
+| 1 | Deliver CI trigger/concurrency improvements under [#54](https://github.com/sotsera/rafter/issues/54). | Evaluate branches through PRs, retain main/manual evaluations, and cancel only superseded runs of the same PR. Preserve both full suites, packaging, and evidence. |
+| 2 | Consider a separate Windows NuGet cache experiment. | Measure package/HTTP cache placement while preserving private fresh-package consumer caches; decide remote archive caching from measured results. |
 | 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
 | 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
 | 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
 | 7 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
-The CI review found duplicate fork-push/upstream-PR evaluations for #49. A feature branch avoids that duplicate for
-this delivery, but the general trigger/concurrency policy remains unchanged. Benchmark cache placement separately
-from remote cache transfer; `NUGET_PACKAGES` overrides consumer NuGet configuration, so isolated fresh-package checks
-must retain their own caches. Remote caching is not automatically a win and no lock-file policy has been adopted.
+The CI review found duplicate fork-push/upstream-PR evaluations for #49. The agreed change removes `build/**` push
+evaluations and uses a workflow/event/PR concurrency group for PR runs. Main pushes and manual runs each use their
+own run ID, so they neither cancel nor replace each other's pending runs. Job contents and cache settings stay as
+they are. The [CI workflow record](../development/github-workflow.md#ci-efficiency-increment) owns the details.
+Benchmark cache placement separately from remote cache transfer; `NUGET_PACKAGES` overrides consumer NuGet
+configuration, so isolated fresh-package checks must retain their own caches. Remote caching is not automatically
+a win and no lock-file policy has been adopted.
 
 Keep the two production projects and existing ownership boundaries. Additional layers, parallel target scheduling,
 more input types, machine-readable output, reusable process settings, macOS, and AOT should follow a concrete use case
@@ -82,7 +85,7 @@ identifiers, not GitHub issue numbers. Detailed evidence, regression coverage, a
 P2 means a normal-priority correctness/reliability fix; P3 means a lower-priority diagnostic/usability fix. These
 priorities order follow-up work and do not claim an emergency or a completed release-readiness assessment.
 
-### Current increment: one complete automation workflow
+### Delivered increment: one complete automation workflow
 
 [repository-workflow.cs](../../examples/repository-workflow.cs) is the maintained Windows-only file-app baseline.
 It uses the merged root/filesystem APIs with ordinary C# sequencing, a local process factory, `if (pack)`, and
@@ -188,7 +191,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | --- | --- | --- | --- | --- |
 | Minimal script | ✓ | ✓ | ✓ | ✓ |
 | Roots and paths | Partial | Partial | Partial | Partial |
-| Filesystem authoring | ✓ | ✓ (first increment) | Local #47 | Windows full suite and package consumers |
+| Filesystem authoring | ✓ | ✓ (first increment) | Merged #51/#53 | Windows full suite, package consumers, and workflow |
 | Typed inputs | ✓ | Partial | Partial | Partial |
 | Input validation | ✓ | ✓ | ✓ | ✓ |
 | Environment inputs | ✓ | ✓ | ✓ | ✓ |
@@ -202,7 +205,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
 | Sensitive values | — | — | — | — |
-| Complete workflow | ✓ | Existing API; agreed scenario | Maintained file app under #52 | Windows consumers and actual repository; see guide |
+| Complete workflow | ✓ | Existing API; agreed scenario | Merged #53, closing #52 | Windows consumers and actual repository; see guide |
 
 Failure handling is partially delivered through exception containment, process failure actions, timeout/capture
 exceptions, exit codes, and stopping later targets. Broader expected-failure APIs and combined cleanup failures remain

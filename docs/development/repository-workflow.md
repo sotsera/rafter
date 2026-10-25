@@ -13,6 +13,12 @@ by this example. The [filesystem guide](../guides/filesystem.md) and
 [design](../design/filesystem-authoring.md) describe its now implemented directory/file helpers, explicit I/O, and
 caller-awaited writes. The normal and final-write cancellation choices are preserved.
 
+Delivered in [PR #53](https://github.com/sotsera/rafter/pull/53), closing #46/#47/#52. The
+[post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed
+Windows full **806 cases, 0 failures, 1 console-dependent skip**, Linux portable full **710 cases, 0 failures,
+0 skips**, packaging, and **43 redirected runtime checks**. Earlier verification sections below retain the
+results of their original revisions, including the corrected PR output assertion.
+
 ## Run
 
 From the repository root with the pinned .NET SDK:
