@@ -65,7 +65,8 @@ PR #49's actual jobs. The [fork push](https://github.com/ghidello/rafter/actions
 [upstream PR evaluation](https://github.com/sotsera/rafter/actions/runs/40209862141), adding 11m14s of runner execution.
 On that upstream Windows run, restore took 18s, build 12s, and full tests 4m05s; these are one-run observations.
 
-Agreed scope under [issue #54](https://github.com/sotsera/rafter/issues/54):
+Implemented for review in [PR #55](https://github.com/sotsera/rafter/pull/55), under
+[issue #54](https://github.com/sotsera/rafter/issues/54):
 
 - Run branch validation on `pull_request`; remove the `build/**` push trigger. Pushes to `main` still validate the
   actual merged commit, and `workflow_dispatch` remains available for an explicit branch evaluation.
@@ -83,6 +84,10 @@ and [concurrency semantics](https://docs.github.com/en/actions/reference/workflo
 Validate syntax and group separation locally, then inspect actual PR supersession and the final Windows/Linux run.
 These changes take effect per workflow revision; older branches still containing the previous trigger can still
 start fork-push evaluations until updated.
+
+Local verification passed with actionlint 1.7.12 (optional shell/Python linters disabled), documentation file/heading
+checks, and PowerShell parser checks. Both job definitions were compared with merged main and are identical.
+The PR description records actual supersession and CI results for its published revisions.
 
 Windows package/HTTP cache placement under runner temp remains a separate experiment. Keep remote archive caching
 as a measured decision. `NUGET_PACKAGES` overrides NuGet configuration, so fresh package consumers must retain their
