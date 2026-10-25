@@ -9,6 +9,52 @@ public sealed class TerminalCoordinationTests
 {
     [Theory]
     [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Shared_terminal_headings_and_prefixes_follow_the_physical_line(bool rich, bool reverse)
+    {
+        using var writer = new StringWriter();
+        var state = new DestinationState();
+        var stdout = new RendererDestination(writer, new(rich, true), state: state);
+        var stderr = new RendererDestination(writer, new(rich, true), state: state);
+        var first = reverse ? stderr : stdout;
+        var second = reverse ? stdout : stderr;
+        first.Literal("partial");
+        second.Framework("heading", Spectre.Console.Style.Plain);
+        first.Literal("next");
+        second.Literal(" continuation\n");
+        first.Literal("last\n");
+        await stdout.CompleteAsync();
+        await stderr.CompleteAsync();
+        var text = System.Text.RegularExpressions.Regex.Replace(writer.ToString(), "\u001b\\[[0-9;]*m", "");
+        var prefix = rich ? "  > " : "";
+        text.Should().Be(prefix + "partial" + Environment.NewLine + "heading" + Environment.NewLine
+            + prefix + "next continuation\n" + prefix + "last\n");
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Invocation_shares_line_state_only_when_both_streams_are_terminal(bool redirectOut, bool redirectError)
+    {
+        using var stdout = new StringWriter();
+        using var stderr = new StringWriter();
+        var renderer = new InvocationOutput(new("root", stdout, stderr, redirectOut, redirectError, false, 80,
+            _ => throw new NotSupportedException()), new(false, false, false, true, []));
+        renderer.ProcessOutput("partial", false);
+        renderer.Invalid("heading", []);
+        await renderer.CompleteOutputAsync();
+        await renderer.CompleteErrorAsync();
+        stdout.ToString().Should().Be("partial");
+        stderr.ToString().Should().Be((redirectOut || redirectError ? "" : Environment.NewLine)
+            + "heading" + Environment.NewLine);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]
     [InlineData(true, true)]

@@ -12,7 +12,14 @@ internal sealed record DestinationPolicy(bool Rich, bool NoColor)
     }
 }
 
-// One gate per destination coordinates layout, literal text, prefixes, and final flushing.
+// Shared only by destinations painting the same terminal. All state is accessed under Gate.
+internal sealed class DestinationState
+{
+    public SemaphoreSlim Gate { get; } = new(1, 1);
+    public bool LineStart { get; set; } = true;
+}
+
+// One state per physical destination coordinates layout, literal text, prefixes, and final flushing.
 // The caller owns the writer and must await its producers before CompleteAsync.
 internal sealed class RendererDestination
 {
@@ -20,17 +27,16 @@ internal sealed class RendererDestination
     private readonly DestinationPolicy _policy;
     private readonly IAnsiConsole _console;
     private readonly AnsiWriter _ansi;
-    private readonly SemaphoreSlim _gate;
-    private bool _lineStart = true;
+    private readonly DestinationState _state;
     private bool _completed;
     private Exception? _failure;
 
     public Exception? Failure => _failure;
 
     public RendererDestination(TextWriter writer, DestinationPolicy policy, int width = 80,
-        Dictionary<string, string>? environment = null, SemaphoreSlim? gate = null)
+        Dictionary<string, string>? environment = null, DestinationState? state = null)
     {
-        _gate = gate ?? new SemaphoreSlim(1, 1);
+        _state = state ?? new DestinationState();
         _writer = writer;
         _policy = policy;
         _console = AnsiConsole.Create(new AnsiConsoleSettings
@@ -57,13 +63,13 @@ internal sealed class RendererDestination
 
     public void Layout(IRenderable content, int indentation = 0)
     {
-        _gate.Wait();
+        _state.Gate.Wait();
         try
         {
             ThrowIfCompleted();
-            if (!_lineStart)
+            if (!_state.LineStart)
             {
-                // A framework message starts its own line after a child's unterminated stderr chunk.
+                // A framework message starts its own line after either stream's unterminated terminal chunk.
                 _writer.Write(Environment.NewLine);
             }
             var layoutLineStart = true;
@@ -107,7 +113,7 @@ internal sealed class RendererDestination
             {
                 _writer.Write(Environment.NewLine);
             }
-            _lineStart = true;
+            _state.LineStart = true;
         }
         catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
         {
@@ -116,13 +122,13 @@ internal sealed class RendererDestination
         }
         finally
         {
-            _gate.Release();
+            _state.Gate.Release();
         }
     }
 
     public void Literal(string text, string prefix = "  > ")
     {
-        _gate.Wait();
+        _state.Gate.Wait();
         try
         {
             ThrowIfCompleted();
@@ -131,7 +137,7 @@ internal sealed class RendererDestination
                 _writer.Write(text);
                 if (text.Length > 0)
                 {
-                    _lineStart = text[^1] == '\n';
+                    _state.LineStart = text[^1] == '\n';
                 }
                 return;
             }
@@ -140,16 +146,16 @@ internal sealed class RendererDestination
             var start = 0;
             while (start < text.Length)
             {
-                if (_lineStart)
+                if (_state.LineStart)
                 {
                     _ansi.Write(prefix, new Style(Color.Grey));
-                    _lineStart = false;
+                    _state.LineStart = false;
                 }
 
                 var newline = text.IndexOf('\n', start);
                 var end = newline < 0 ? text.Length : newline + 1;
                 _writer.Write(text.AsSpan(start, end - start));
-                _lineStart = newline >= 0;
+                _state.LineStart = newline >= 0;
                 start = end;
             }
         }
@@ -160,13 +166,13 @@ internal sealed class RendererDestination
         }
         finally
         {
-            _gate.Release();
+            _state.Gate.Release();
         }
     }
 
     public async Task CompleteAsync()
     {
-        await _gate.WaitAsync();
+        await _state.Gate.WaitAsync();
         try
         {
             ThrowIfCompleted();
@@ -180,7 +186,7 @@ internal sealed class RendererDestination
         }
         finally
         {
-            _gate.Release();
+            _state.Gate.Release();
         }
     }
 

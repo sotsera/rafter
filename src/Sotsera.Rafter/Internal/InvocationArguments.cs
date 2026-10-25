@@ -56,18 +56,21 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
         var isQuiet = IsPresent(result.GetResult(quiet));
         var isVerbose = IsPresent(result.GetResult(verbose));
         var isPlain = IsPresent(result.GetResult(plain));
+        var invalidOptions = new HashSet<CliOption>();
         foreach (var option in command.Options)
         {
             var parsed = result.GetResult(option);
             if (parsed?.IdentifierTokenCount > 1)
             {
                 diagnostics.Add($"{option.Name} may only be supplied once.");
+                invalidOptions.Add(option);
             }
             if (inputs.TryGetValue(option, out var declaration))
             {
                 if (IsPresent(parsed) && parsed!.Tokens.Count == 0 && declaration.ValueType != typeof(bool))
                 {
                     diagnostics.Add($"{option.Name} requires a value.");
+                    invalidOptions.Add(option);
                 }
             }
         }
@@ -83,6 +86,10 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
             diagnostics.Add(symbol is OptionResult optionResult
                 ? $"{optionResult.Option.Name} has an invalid value."
                 : "Unexpected input. Only declared options and Rafter controls are accepted.");
+            if (symbol is OptionResult invalid)
+            {
+                invalidOptions.Add(invalid.Option);
+            }
         }
         if (result.Tokens.Any(token => token.Type == TokenType.Directive))
         {
@@ -99,7 +106,8 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
         {
             var parsed = result.GetResult(option);
             var value = declaration.HasDefault ? declaration.DefaultValue : null;
-            if (IsPresent(parsed) && declaration.ValueType == typeof(bool))
+            var convertible = IsPresent(parsed) && !invalidOptions.Contains(option);
+            if (convertible && declaration.ValueType == typeof(bool))
             {
                 if (parsed!.Tokens.Count == 0)
                 {
@@ -114,11 +122,11 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                     diagnostics.Add($"{option.Name} requires true or false.");
                 }
             }
-            else if (IsPresent(parsed) && diagnostics.Count == 0)
+            else if (convertible)
             {
                 if (declaration.EnumChoices is { } choices)
                 {
-                    var text = result.GetValue((System.CommandLine.Option<string>)option)!;
+                    var text = parsed!.GetValueOrDefault<string>()!;
                     if (!choices.TryConvert(text, out value))
                     {
                         diagnostics.Add($"{option.Name} requires a declared enum member name.");
@@ -126,7 +134,7 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                 }
                 else if (declaration.ValueType == typeof(TimeSpan))
                 {
-                    var text = result.GetValue((System.CommandLine.Option<string>)option)!;
+                    var text = parsed!.GetValueOrDefault<string>()!;
                     if (DurationInputs.TryParse(text, out var duration))
                     {
                         value = duration;
@@ -138,9 +146,9 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
                 }
                 else
                 {
-                    value = option is System.CommandLine.Option<int> integer
-                        ? result.GetValue(integer)
-                        : result.GetValue((System.CommandLine.Option<string>)option);
+                    value = declaration.ValueType == typeof(int)
+                        ? parsed!.GetValueOrDefault<int>()
+                        : parsed!.GetValueOrDefault<string>();
                 }
             }
             values.Add(declaration.Declaration, value);

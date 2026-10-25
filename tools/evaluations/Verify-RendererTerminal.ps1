@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot '../shared/VerificationProcess.ps1')
 if ([Console]::IsOutputRedirected -or [Console]::IsErrorRedirected) {
     throw 'Run this evidence script in a real terminal or pseudoterminal with both parent streams attached.'
 }
@@ -34,21 +35,8 @@ function Invoke-TerminalCase([bool]$RedirectOutput, [bool]$RedirectError, [strin
         $start.ArgumentList.Add('--adversarial')
     }
     if ($Narrow) { $start.ArgumentList.Add('--narrow') }
-    $process = [Diagnostics.Process]::Start($start)
-    try {
-        $reads = @()
-        if ($RedirectOutput) { $reads += $process.StandardOutput.ReadToEndAsync() }
-        if ($RedirectError) { $reads += $process.StandardError.ReadToEndAsync() }
-        if (-not $process.WaitForExit(30000)) {
-            $process.Kill($true)
-            $process.WaitForExit()
-            foreach ($read in $reads) { $read.GetAwaiter().GetResult() | Out-Null }
-            throw "Terminal case timed out: $id"
-        }
-        foreach ($read in $reads) { $read.GetAwaiter().GetResult() | Out-Null }
-        if ($process.ExitCode -ne 0) { throw "Terminal consumer failed: $id" }
-    }
-    finally { $process.Dispose() }
+    $completed = Invoke-VerificationProcess $start 30 $evidenceDirectory
+    if ($completed.ExitCode -ne 0) { throw "Terminal consumer failed: $id" }
 
     $record = Get-Content -LiteralPath $recordPath -Raw | ConvertFrom-Json
     if ($record.OutputRedirected -ne $RedirectOutput -or $record.ErrorRedirected -ne $RedirectError) {

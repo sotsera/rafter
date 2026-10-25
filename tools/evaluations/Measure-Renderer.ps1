@@ -1,6 +1,7 @@
 param([int]$Samples = 9)
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot '../shared/VerificationProcess.ps1')
 $repository = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 Set-Location -LiteralPath $repository
 $runId = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ') + '-' + [Guid]::NewGuid().ToString('N')
@@ -19,23 +20,14 @@ function Invoke-Probe([string[]]$ProbeArguments) {
     $start.WorkingDirectory = $repository
     foreach ($argument in $ProbeArguments) { $start.ArgumentList.Add($argument) }
     $timer = [Diagnostics.Stopwatch]::StartNew()
-    $process = [Diagnostics.Process]::Start($start)
-    try {
-        $stdout = $process.StandardOutput.ReadToEndAsync()
-        $stderr = $process.StandardError.ReadToEndAsync()
-        if (-not $process.WaitForExit(120000)) {
-            $process.Kill($true)
-            $process.WaitForExit()
-            [Threading.Tasks.Task]::WaitAll(@($stdout, $stderr))
-            throw 'Renderer measurement process timed out.'
-        }
-        $output = $stdout.GetAwaiter().GetResult()
-        $errorText = $stderr.GetAwaiter().GetResult()
-        $timer.Stop()
-        if ($process.ExitCode -ne 0) { throw "dotnet failed: $output $errorText" }
-        return [pscustomobject]@{ Milliseconds = $timer.Elapsed.TotalMilliseconds; Output = $output; Error = $errorText }
+    $completed = Invoke-VerificationProcess $start 120 $evidenceDirectory
+    $timer.Stop()
+    if ($completed.ExitCode -ne 0) { throw "dotnet failed: $($completed.StandardOutput) $($completed.StandardError)" }
+    return [pscustomobject]@{
+        Milliseconds = $timer.Elapsed.TotalMilliseconds
+        Output = $completed.StandardOutput
+        Error = $completed.StandardError
     }
-    finally { $process.Dispose() }
 }
 
 $consumers = @()
