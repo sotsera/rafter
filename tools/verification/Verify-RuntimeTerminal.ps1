@@ -1,6 +1,7 @@
 param([switch]$RedirectedOnly)
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot '../shared/VerificationProcess.ps1')
 if (-not $RedirectedOnly -and ([Console]::IsOutputRedirected -or [Console]::IsErrorRedirected)) {
     throw 'Run in a terminal/pseudoterminal with both streams attached, or select -RedirectedOnly.'
 }
@@ -28,21 +29,8 @@ function Invoke-ReviewCase([string]$Scenario, [string]$Mode, [bool]$RedirectOutp
     foreach ($argument in @($assembly, $Scenario)) { $start.ArgumentList.Add($argument) }
     if ($Mode -in @('plain', 'quiet', 'verbose')) { $start.ArgumentList.Add("--$Mode") }
     if ($Scenario -eq 'review-help') { $start.ArgumentList.Add('--help') }
-    $process = [Diagnostics.Process]::Start($start)
-    try {
-        $reads = @()
-        if ($RedirectOutput) { $reads += $process.StandardOutput.ReadToEndAsync() }
-        if ($RedirectError) { $reads += $process.StandardError.ReadToEndAsync() }
-        if (-not $process.WaitForExit(30000)) {
-            $process.Kill($true)
-            $process.WaitForExit()
-            foreach ($read in $reads) { $read.GetAwaiter().GetResult() | Out-Null }
-            throw "Runtime case timed out: $id"
-        }
-        foreach ($read in $reads) { $read.GetAwaiter().GetResult() | Out-Null }
-        if ($process.ExitCode -ne $Expected) { throw "Unexpected exit $($process.ExitCode): $id" }
-    }
-    finally { $process.Dispose() }
+    $completed = Invoke-VerificationProcess $start 30 $evidence
+    if ($completed.ExitCode -ne $Expected) { throw "Unexpected exit $($completed.ExitCode): $id" }
     $record = Get-Content -LiteralPath $recordPath -Raw | ConvertFrom-Json
     if ($record.ExitCode -ne $Expected -or $record.OutputRedirected -ne $RedirectOutput -or $record.ErrorRedirected -ne $RedirectError) {
         throw "Wrong recorded exit or handle state: $id"

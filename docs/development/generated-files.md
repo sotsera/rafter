@@ -11,6 +11,7 @@ manifest, licenses, and parent-workspace discovery bridge.
 | Project `bin/` and `obj/` trees | Disposable compiler/restore output. Rebuild when needed; do not treat these trees as the authoritative verification record. |
 | `artifacts/packages/` | Rebuildable local NuGet feed. Reusing a version does not refresh restored consumer caches; follow the [package instructions](../guides/local-package.md). Preserve the exact package separately when a retained investigation requires its bytes. |
 | `artifacts/test-results/` and other named test-result directories | TRX and associated execution records. Retain the relevant run when it supports acceptance or an unresolved failure. A green later run does not erase a failed attempt. |
+| Temporary `rafter-tests-*` consumer workspaces | Successful launches settle before normal disposal. A supervision failure retains the workspace and `verification-failure-*.txt` with partial streams and cleanup uncertainty; the test output prints the path. Confirm related descendants are stopped before any manual removal. |
 | `artifacts/evidence/verification/runtime-terminal/<run>/` | Per-case raw stream/capability records and a terminal or redirected result manifest for the current runtime. |
 | `artifacts/evidence/verification/editor/<run>/` | Editor result JSON, stdout/stderr logs, generated consumer sources, package cache, and isolated editor profile. Raw results/logs/sources support the finding; bulk caches/profile data can be considered separately during a reviewed cleanup. |
 | `artifacts/evidence/evaluations/renderer-terminal/<run>/` | Dependency-comparison terminal records and result manifest. |
@@ -21,6 +22,10 @@ The four [development tools](../../tools/README.md) allocate a fresh UTC timesta
 They print the resulting directory and do not overwrite previous runs. Failed runs keep any evidence written before
 the failure. Existing `artifacts/runtime-review/`, `artifacts/renderer/`, and `artifacts/editor-review*` records remain
 at their historical paths; documents describing them are not claims that a new invocation writes there.
+
+The shared process supervisor writes `process-failure-*.json` into a failed tool's run directory. These files retain
+partial stdout/stderr and the failure details. Canceled output reads establish that the helper's reads have settled;
+they do not establish descendant termination or authorize deleting a workspace still in use.
 
 Local evidence has **no automatic expiry**. Retain acceptance baselines and unresolved-failure evidence until there is
 an explicit decision about the named run. For each reported result, record the source revision, command/options,

@@ -37,6 +37,22 @@ Issue #1 adds the [Windows evaluation workflow](../../.github/workflows/evaluati
 Windows evaluation; see the [harness record](../history/evaluation-harness.md) for actual run results. Adding this workflow
 does not enable branch protection or make the check required for merging.
 
+## Resuming focused delivery — 2026-10-25
+
+The current delivery order is maintained in the [main development plan](../design/example-design-plan.md#next-steps).
+The first PR addresses [review findings #48](https://github.com/sotsera/rafter/issues/48); roots, filesystem helpers,
+and the repository workflow example follow as separate reviewable slices. Validate each slice independently rather
+than treating a successful run of the combined local changes as verification of an earlier slice.
+
+Publish the focused branch on `ghidello/rafter` and open its PR into `sotsera/rafter:main`. Keep later uncommitted work
+safe in the original checkout while validating an isolated slice. Review and applicable CI must finish before a
+squash merge; opening a PR does not authorize automatic merging or bypassing a review checkpoint.
+
+The current [evaluation workflow](../../.github/workflows/evaluation.yml) runs **Windows evaluation** and
+**Linux portable evaluation** for PRs, with ordinary and full profiles. Record results for the PR's actual head
+revision. Inspect skips and failed jobs explicitly; a portable Linux pass does not establish native Linux ownership
+or macOS support. These are working delivery rules; this update does not change GitHub protection settings.
+
 ## Published initial work
 
 Milestone: [First working examples](https://github.com/sotsera/rafter/milestone/1).

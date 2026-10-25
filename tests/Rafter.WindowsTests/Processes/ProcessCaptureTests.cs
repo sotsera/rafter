@@ -10,6 +10,33 @@ namespace Rafter.WindowsTests.Processes;
 public sealed class ProcessCaptureTests
 {
     [WindowsFact]
+    public async Task Completed_capture_results_are_collectible_while_the_body_and_builder_remain_alive()
+    {
+        using var host = new Host();
+        var collected = false;
+        var code = await host.Command.RunAsync(["--quiet"], async context =>
+        {
+            var builder = Probe(context, "output");
+            var references = new List<WeakReference>();
+            for (var index = 0; index < 4; index++)
+            {
+                references.Add(await CaptureAndReleaseAsync(builder));
+            }
+            await WindowsProcessTests.UntilAsync(() =>
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                return references.All(reference => !reference.IsAlive);
+            });
+            collected = true;
+            GC.KeepAlive(builder);
+        });
+        code.Should().Be(0);
+        collected.Should().BeTrue();
+    }
+
+    [WindowsFact]
     public async Task Abandoned_capture_is_owned_by_its_body_and_prevents_later_targets()
     {
         using var host = new Host();
@@ -256,6 +283,13 @@ public sealed class ProcessCaptureTests
 
     private static ProcessCommand Probe(RafterContext context, string mode, params string[] arguments)
         => context.Process("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, arguments));
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static async Task<WeakReference> CaptureAndReleaseAsync(ProcessCommand builder)
+    {
+        var result = await builder.RunAndCaptureAsync(100);
+        return new WeakReference(result.StandardOutput);
+    }
 
     private sealed class Host : IDisposable
     {

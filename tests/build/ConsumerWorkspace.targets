@@ -2,6 +2,8 @@
   <!-- Explicitly imported only by suites that launch isolated SDK consumers. -->
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)../Shared/*.cs" Link="Infrastructure/%(Filename)%(Extension)" />
+    <Compile Include="$(MSBuildThisFileDirectory)../../tools/shared/VerificationProcess.cs"
+             Link="Infrastructure/VerificationProcess.cs" />
 
     <None Include="$(MSBuildThisFileDirectory)../testassets/**"
           Exclude="$(MSBuildThisFileDirectory)../testassets/**/bin/**;$(MSBuildThisFileDirectory)../testassets/**/obj/**"

@@ -4,7 +4,7 @@ namespace Sotsera.Rafter.Internal;
 internal sealed class BodyProcesses(ProcessInvocation invocation, string name)
 {
     private readonly object _gate = new();
-    private readonly List<Task<ProcessResult>> _operations = [];
+    private readonly HashSet<Task<ProcessResult>> _operations = [];
     private bool _closed;
 
     public ProcessInvocation Invocation { get; } = invocation;
@@ -25,6 +25,13 @@ internal sealed class BodyProcesses(ProcessInvocation invocation, string name)
             var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var operation = ExecuteAsync(start.Task, settings);
             _operations.Add(operation);
+            _ = operation.ContinueWith(completed =>
+            {
+                lock (_gate)
+                {
+                    _operations.Remove(completed);
+                }
+            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             start.SetResult();
             return operation;
         }
@@ -43,6 +50,8 @@ internal sealed class BodyProcesses(ProcessInvocation invocation, string name)
         {
             _closed = true;
             unfinished = _operations.Where(task => !task.IsCompleted).ToArray();
+            // The local snapshot now owns the join. A retained context must not retain settled results.
+            _operations.Clear();
         }
         if (unfinished.Length == 0)
         {

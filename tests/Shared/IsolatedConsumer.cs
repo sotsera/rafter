@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using AwesomeAssertions;
+using Rafter.Verification;
 using Xunit;
 
 namespace Rafter.Testing;
@@ -12,9 +13,11 @@ internal sealed class IsolatedConsumer : IDisposable
     private readonly string _kind;
     private readonly ITestOutputHelper _output;
     private readonly string _entryPoint;
+    private bool _preserveWorkspace;
 
     public string WorkingDirectory { get; }
     public Dictionary<string, string?> EnvironmentOverrides { get; } = new(StringComparer.Ordinal);
+    internal TimeSpan ExecutionTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
     public IsolatedConsumer(string kind, ITestOutputHelper output, string? entryPoint = null, bool copyWorkspace = true)
     {
@@ -68,6 +71,11 @@ internal sealed class IsolatedConsumer : IDisposable
 
     public void Dispose()
     {
+        if (_preserveWorkspace)
+        {
+            _output.WriteLine("Verification cleanup is uncertain. Retained workspace: {0}", _temporaryRoot.FullName);
+            return;
+        }
         // Only this test's newly allocated directory is removed, after all launches have settled.
         _temporaryRoot.Delete(recursive: true);
     }
@@ -107,24 +115,22 @@ internal sealed class IsolatedConsumer : IDisposable
             }
         }
 
-        using var process = Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Could not start the fixture's dotnet process.");
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
-
+        VerificationProcessResult captured;
         try
         {
-            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromMinutes(2));
+            captured = await VerificationProcess.RunAsync(startInfo, ExecutionTimeout,
+                TestContext.Current.CancellationToken);
         }
-        catch (TimeoutException)
+        catch (VerificationProcessException failure)
         {
-            process.Kill(entireProcessTree: true);
-            await process.WaitForExitAsync();
-            await Task.WhenAll(stdout, stderr);
+            _preserveWorkspace = true;
+            var evidence = Path.Combine(WorkingDirectory, "verification-failure-" + Guid.NewGuid().ToString("N") + ".txt");
+            var details = $"{failure}\nstdout:\n{failure.StandardOutput}\nstderr:\n{failure.StandardError}";
+            await File.WriteAllTextAsync(evidence, details, CancellationToken.None);
+            _output.WriteLine("Verification failure evidence: {0}\n{1}", evidence, details);
             throw;
         }
-
-        var result = new ProcessResult(process.ExitCode, await stdout, await stderr);
+        var result = new ProcessResult(captured.ExitCode, captured.StandardOutput, captured.StandardError);
         _output.WriteLine("dotnet {0}\nWorking directory: {1}\nExit: {2}\nstdout:\n{3}\nstderr:\n{4}",
             string.Join(" ", arguments), directory, result.ExitCode, result.StandardOutput, result.StandardError);
         return result;

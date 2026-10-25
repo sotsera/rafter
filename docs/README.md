@@ -73,6 +73,7 @@ their own instructions in [local packaging](guides/local-package.md) and the [to
 | [GitHub workflow](development/github-workflow.md) | Upstream/fork identity, scoped issues, PRs, and merge conventions. |
 | [Skills setup](development/dotnet-skills-setup.md) | Installed guidance, provenance, workspace bridge, and updates. |
 | [Repository organization review](development/repository-review.md) | Folder/project roles and the agreed next organization steps. |
+| [Code review, 2026-10-23](development/code-review-2026-10-23.md) | Four correctness findings, fixes, regression evidence, and verification limits. |
 | [Development tools](../tools/README.md) | Current verification versus optional dependency evaluations, with reproduction commands. |
 | [Generated files and evidence](development/generated-files.md) | Per-run evidence directories, CI retention, and bounded cleanup policy. |
 | [Testing guide](development/testing.md) | Suite boundaries, ordinary/full/long-only profiles, capabilities, and observed selection checks. |

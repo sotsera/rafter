@@ -16,6 +16,25 @@ See [Output and help](output-design.md) for the current agreed visual direction 
 Use the [dependency review](../history/dependency-decisions.md) when choosing the SDK, runtime packages, analyzer tooling, and
 test dependencies before implementation. Its shortlist remains proposed until selection and compatibility checks.
 
+## Next steps
+
+The [2026-10-23 code review](../development/code-review-2026-10-23.md) identified four correctness findings.
+Their fixes are prepared for review under [issue #48](https://github.com/sotsera/rafter/issues/48): release settled
+capture results, report independent input errors together, coordinate shared-terminal line state, and bound
+test/tool process exit plus output drain. Keep the findings and observed verification in the review record.
+
+Resume delivery through focused PRs, with review and applicable Windows/Linux checks before squash merging:
+
+1. Deliver the review fixes and verification tooling.
+2. Deliver the agreed invocation-root increment under [issue #46](https://github.com/sotsera/rafter/issues/46).
+3. Deliver multi-segment filesystem helpers under [issue #47](https://github.com/sotsera/rafter/issues/47).
+4. Deliver the repository workflow example and reconcile the broader development roadmap with those APIs.
+
+The later increments already exist in the original local checkout. They are excluded from this first delivery
+slice and do not establish capabilities in this branch. Review their concrete syntax and verification when each
+slice is prepared. Preserve the existing runtime/analyzer split and treat broader release and platform work as
+separate decisions.
+
 ## Working approach
 
 1. Choose a topic and a concrete script scenario.

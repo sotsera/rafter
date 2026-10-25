@@ -9,13 +9,14 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 596 | 0 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target contracts, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 614 | 0 |
 | [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory behavior plus file-app/project/compiler/package consumers. | 1 | 30 |
-| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, and process consumers. | 53 | 28 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 650 | 58 |
+| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, and verification supervision. | 56 | 32 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 671 | 62 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
-[issue #44](https://github.com/sotsera/rafter/issues/44). Deliberate native timeout/failed-termination waits are long-running; controlled
+[issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
+Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.
 
@@ -84,6 +85,12 @@ fixtures, because conditional skips can occur after setup. The portable view is 
 Real host working-directory changes retain their nonparallel collection in IntegrationTests. The deliberate native
 handle-inheritance reproduction retains its isolated collection in WindowsTests. All SDK children use isolated
 workspaces, and process/stream settlement still precedes cleanup.
+
+The shared [verification supervisor](../../tools/shared/VerificationProcess.cs) bounds exit and output drain together.
+On a supervision failure, it joins its own canceled reads/wait and reports whether root exit was confirmed; it cannot
+confirm containment of an already orphaned descendant. The consumer launcher therefore retains its workspace and
+partial-output diagnostics on this path. The Windows regression owns and cleans its recorded probe descendants
+separately. See the [evidence policy](generated-files.md) before manually removing a retained workspace.
 
 Graceful console signalling and forceful termination now have separate cases. The graceful case declares
 `Requires=Console` for discovery. A headless host explicitly skips the
