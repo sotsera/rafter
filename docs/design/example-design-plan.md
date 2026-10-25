@@ -1,6 +1,124 @@
 # Rafter example design plan
 
-Draft for ongoing discussion.
+This is the main development roadmap and record of example/API decisions. Start with the current position and next
+steps below; the topic inventory and detailed decisions preserve the reasoning behind the implementation.
+
+## Current position — 2026-10-25
+
+Rafter has a working Windows-first automation runtime and a portable command/input/target layer. The **First working
+examples** milestone is complete. Subsequent increments added environment inputs, named enums, exact durations,
+per-process timeouts, bounded capture, invocation roots, filesystem helpers, separate suites, and portable Linux CI.
+
+| Area | Implemented now | Remaining boundary |
+| --- | --- | --- |
+| Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
+| Targets | Sequential dependency graphs, groups, multiple selected entries, and failure/cancellation handling. | Conditional execution and shared-resource cleanup APIs remain undesigned. |
+| Processes | Windows ownership from launch, descendant cleanup, concurrent awaited operations, failure actions, execution timeouts, and bounded capture. | Linux-native ownership, reusable settings, and broader deadlines remain separate work. |
+| Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
+| Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
+| Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
+
+The focused delivery sequence has completed its first three PRs:
+
+| Delivery | Status | Record |
+| --- | --- | --- |
+| Review fixes and verification tooling | Merged in [PR #49](https://github.com/sotsera/rafter/pull/49), closing #48. | [Four findings and evidence](../development/code-review-2026-10-23.md). |
+| Invocation roots | Runtime/root consumers merged in [PR #50](https://github.com/sotsera/rafter/pull/50). | [Root contract and verification](roots-and-filesystem.md); #46 retains the final workflow acceptance. |
+| Filesystem helpers | Runtime/filesystem consumers merged in [PR #51](https://github.com/sotsera/rafter/pull/51). | [Filesystem contract and verification](filesystem-authoring.md); #47 retains the final workflow acceptance. |
+| Complete repository workflow and reconciled roadmap | Prepared in this increment under [issue #52](https://github.com/sotsera/rafter/issues/52). | [Workflow guide and independent verification](../development/repository-workflow.md). |
+
+The latest merged-runtime [CI run](https://github.com/sotsera/rafter/actions/runs/40213817028), for PR #51 head
+`8b1c72e`, passed Windows full **801 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests,
+0 failures, 0 skips**, packaging, and **43 redirected runtime cases**. This predates the five workflow cases added
+in the current increment. Its own observed results belong to the workflow guide; earlier combined local results
+are preserved as history, rather than relabeled as checks of an independently prepared PR.
+
+The final workflow slice independently passed **806 tests, 0 failures, 1 console-dependent skip** on Windows
+through the actual file app, created its local package, and passed an SDK-safe outside-checkout ordinary run
+(**739 passed, 0 failed, 1 skipped**). Its five workflow consumers passed. The workflow guide retains exact
+commands, run IDs, the initial deadline-consumer failure, and the scheduling adjustment before the passing full run.
+
+## Next steps
+
+**Review and deliver the complete workflow, then select the next focused increment.** Keep independent validation,
+applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The workflow closes the
+integration acceptance deferred from #46/#47; it introduces no further runtime API or CI configuration.
+
+The recommendations after this delivery remain proposals until discussed. Record agreed syntax and observable
+behavior before creating the next scoped implementation issue.
+
+| Order | Work | Intended outcome |
+| --- | --- | --- |
+| 1 | Review the repository workflow and updated roadmap under #52. | Verify default/explicit roots, build/test/optional-pack behavior, bounded metadata, failures/timeouts, and retained evidence; complete #46/#47's deferred integration acceptance. |
+| 2 | Consider a focused CI-efficiency increment. | Remove duplicate branch-push evaluations, cancel superseded PR runs, and measure Windows NuGet cache placement while preserving fresh package-consumer caches and truthful check results. |
+| 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
+| 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
+| 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
+| 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
+| 7 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
+
+The CI review found duplicate fork-push/upstream-PR evaluations for #49. A feature branch avoids that duplicate for
+this delivery, but the general trigger/concurrency policy remains unchanged. Benchmark cache placement separately
+from remote cache transfer; `NUGET_PACKAGES` overrides consumer NuGet configuration, so isolated fresh-package checks
+must retain their own caches. Remote caching is not automatically a win and no lock-file policy has been adopted.
+
+Keep the two production projects and existing ownership boundaries. Additional layers, parallel target scheduling,
+more input types, machine-readable output, reusable process settings, macOS, and AOT should follow a concrete use case
+and their own design/verification decisions. The order above can change when the workflow reveals a stronger need.
+
+### Fix backlog from the code review
+
+All entries are **merged through PR #49**, closing issue #48. The IDs below are local review
+identifiers, not GitHub issue numbers. Detailed evidence, regression coverage, and verification limits live in the
+[review record](../development/code-review-2026-10-23.md); link that record from future issues rather than duplicating it.
+
+| ID | Priority | Implemented fix | Regression coverage |
+| --- | --- | --- | --- |
+| R1 | P2 | Remove settled process tasks/results from the body tracker; retain ownership of unfinished operations. | Real captures become collectible while the body and builder remain alive; existing abandonment and shutdown coverage remains. |
+| R2 | P3 | Validate independently convertible CLI options while excluding structurally invalid parser results. | Invalid enum/duration combinations, reversed declaration order, and unrelated structural errors report together without exposing values or running callbacks. |
+| R3 | P2 | Share physical terminal line state and serialization across stdout/stderr; keep redirected destinations independent. | Both stream directions, rich/plain output, partial lines, and all redirection combinations. |
+| R4 | P2 | Supervise process exit and output drain together; cancel and join owned reads, bound root cleanup, and retain workspaces/evidence on uncertain descendant cleanup. | Real inherited-pipe descendant reproduction, live-root timeout/cancellation, exact/large output, and retained consumer diagnostics. This helper does not provide native descendant containment. |
+
+P2 means a normal-priority correctness/reliability fix; P3 means a lower-priority diagnostic/usability fix. These
+priorities order follow-up work and do not claim an emergency or a completed release-readiness assessment.
+
+### Current increment: one complete automation workflow
+
+[repository-workflow.cs](../../examples/repository-workflow.cs) is the maintained Windows-only file-app baseline.
+It uses the merged root/filesystem APIs with ordinary C# sequencing, a local process factory, `if (pack)`, and
+`try/finally`. The [workflow guide](../development/repository-workflow.md) owns usage, evidence paths, independent
+verification, and the SDK-launch caveat. Its five real consumer scenarios use a small solution rather than recursively
+running the repository's full workflow tests.
+
+Acceptance for this delivery:
+
+- Inspect bounded MSBuild JSON, build/test the selected root, and optionally create a local package.
+- Help and invalid inputs create no workflow evidence; default and explicit roots are supported without changing CWD.
+- Build/test failures prevent later stages. Timeouts settle owned process work before the final manifest write.
+- Preserve completed stages, logs, metadata, TRX, and package paths in a unique evidence directory on success/failure.
+- Run the actual repository with full tests and packaging, plus an SDK-safe outside-checkout launch.
+
+The existing body/target/process APIs and public root/filesystem helpers are the agreed foundation. `if (pack)`
+is sufficient for this workflow; target conditions do not acquire a new requirement from this example. Sensitive
+values, public publication, and Linux-native ownership remain separate work.
+
+### Workflow cleanup follow-up
+
+Revisit [repository-workflow.cs](../../examples/repository-workflow.cs) as process-authoring APIs evolve. Its
+explicit Dotnet helper is a working baseline for comparison, with these remaining follow-ups:
+
+- Simplify repeated process configuration when an agreed process-settings API is available.
+- Address SDK-environment inheritance: an outside `dotnet run` can select a preview SDK and carry its MSBuild paths
+  into children using the repository's pinned SDK. The guide retains the observed failure and built-DLL workaround.
+- The first root/filesystem cleanup is implemented through #50/#51 and used by this example: directory/file
+  composition, probes, evidence creation, and metadata/manifest writes use the agreed helpers.
+- Rerun workflow success, failure, timeout, root, optional-pack, and evidence checks after future cleanup. Preserve
+  process/stream settlement and explicit cancellation choices for final evidence.
+
+Replacement process syntax remains a design decision. Keep this follow-up visible until that authoring work is
+reviewed and the example reflects it.
+
+## Design approach and references
 
 We will shape the new Rafter through small, realistic example scripts, discuss their syntax and behavior, and then
 implement connected groups of examples. The aim is to make scripts pleasant to write while checking design assumptions
@@ -10,35 +128,12 @@ The original scripts live in [reference/examples](../../reference/examples/). Th
 APIs and feature set are not requirements for the new implementation. Keep those copies unchanged so comparisons remain
 possible. Current syntax drafts live in [examples](../../examples/).
 
-See [First working examples](../history/first-working-examples.md) for the consistency review, proposed implementation scope,
-remaining decision groups, and issue outlines. Its recommendations remain proposals until accepted.
+See [First working examples](../history/first-working-examples.md) for the historical consistency review, original
+implementation scope, and issue outlines, and the [completion summary](../history/milestone-review.md) for delivery.
+Use the current position and next steps above for new work; historical recommendations are not pending commitments.
 See [Output and help](output-design.md) for the current agreed visual direction and remaining presentation decisions.
 Use the [dependency review](../history/dependency-decisions.md) when choosing the SDK, runtime packages, analyzer tooling, and
 test dependencies before implementation. Its shortlist remains proposed until selection and compatibility checks.
-
-## Next steps
-
-The [2026-10-23 code review](../development/code-review-2026-10-23.md) identified four correctness findings.
-Their fixes merged through [PR #49](https://github.com/sotsera/rafter/pull/49), closing
-[issue #48](https://github.com/sotsera/rafter/issues/48): release settled
-capture results, report independent input errors together, coordinate shared-terminal line state, and bound
-test/tool process exit plus output drain. Keep the findings and observed verification in the review record.
-
-Resume delivery through focused PRs, with review and applicable Windows/Linux checks before squash merging:
-
-1. Review fixes and verification tooling: merged in PR #49; Windows and portable Linux CI passed.
-2. Deliver the agreed [invocation-root increment](roots-and-filesystem.md) under
-   [issue #46](https://github.com/sotsera/rafter/issues/46): runtime/consumer slice merged through
-   [PR #50](https://github.com/sotsera/rafter/pull/50) with Windows and portable Linux CI passing. The complete
-   workflow's remaining acceptance stays with the final delivery slice.
-3. Deliver [multi-segment filesystem helpers](filesystem-authoring.md) under
-   [issue #47](https://github.com/sotsera/rafter/issues/47), now prepared on top of merged PR #50.
-4. Deliver the repository workflow example and reconcile the broader development roadmap with those APIs.
-
-The complete workflow already exists in the original local checkout and is excluded from this filesystem slice.
-Review its concrete syntax and verification when that slice is prepared. Preserve the existing runtime/analyzer
-split and treat broader release and platform work as separate decisions. Proposed CI optimizations remain a
-separate follow-up; no CI configuration is changed by these filesystem helpers.
 
 ## Working approach
 
@@ -73,8 +168,8 @@ topics may merge, split, or be deferred during design.
 - Close an issue when its scoped work is complete. A broader topic may remain partially complete in this plan.
   Avoid duplicating detailed acceptance checklists between issues and this document.
 
-Once the first group is agreed, organize its implementation under a **First working examples** milestone with a few
-concrete issues. Verify the target repository and establish the contribution workflow before creating GitHub resources.
+The **First working examples** milestone is complete. For the next agreed group, create a new scoped milestone only
+when its scope is settled. Verify the target repository and acting identity before creating GitHub resources.
 
 ## Progress tracking
 
@@ -93,20 +188,25 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | --- | --- | --- | --- | --- |
 | Minimal script | ✓ | ✓ | ✓ | ✓ |
 | Roots and paths | Partial | Partial | Partial | Partial |
+| Filesystem authoring | ✓ | ✓ (first increment) | Local #47 | Windows full suite and package consumers |
 | Typed inputs | ✓ | Partial | Partial | Partial |
 | Input validation | ✓ | ✓ | ✓ | ✓ |
 | Environment inputs | ✓ | ✓ | ✓ | ✓ |
 | Targets and dependencies | ✓ | ✓ | ✓ | ✓ |
 | Conditional execution | — | — | — | — |
 | Output and diagnostics | Partial | Partial | Partial | Partial |
-| Failures | — | — | — | — |
+| Failures | Partial | Partial | Partial | Partial |
 | External processes | ✓ | Partial | Partial | Partial |
 | Reusable process settings | — | — | — | — |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
 | Sensitive values | — | — | — | — |
-| Complete workflow | — | — | — | — |
+| Complete workflow | ✓ | Existing API; agreed scenario | Maintained file app under #52 | Windows consumers and actual repository; see guide |
+
+Failure handling is partially delivered through exception containment, process failure actions, timeout/capture
+exceptions, exit codes, and stopping later targets. Broader expected-failure APIs and combined cleanup failures remain
+open. Completed cells describe delivered feature scope; the fix backlog above tracks defects within that scope.
 
 ## Topic inventory
 
@@ -133,16 +233,15 @@ Several examples cover more than one topic. The links below account for all 23 r
 
 ## First group of examples
 
-Proposed order:
+The original delivery sequence was:
 
 1. **Minimal script:** perform one small action and return an outcome.
 2. **Basic inputs:** add a required value, a defaulted value, and a Boolean flag.
 3. **One external process:** invoke a tool with explicit arguments and handle its outcome.
 4. **Two dependent targets:** connect real steps and establish what happens when the first step fails.
 
-After discussing these examples, implement the smallest working foundation that supports them. Include the root,
-output, and failure decisions necessary for that foundation, leaving broader policies open. Then review the scripts
-as a group before expanding the API.
+This foundation was delivered in the completed first milestone. It remains here as design history; use
+[Next steps](#next-steps) for the current proposed sequence.
 
 ## Questions raised by the reference examples
 
@@ -338,9 +437,11 @@ Child processes use the command root by default. `.WorkingDirectory(path)` overr
 resolving relative paths against the command root and using absolute paths directly, without changing the command
 root or the script process's working directory. See the external-process notes and root guide for examples.
 
-Explicit root syntax, source-directory discovery, path validation, and executable-path resolution remain open.
-Per-invocation root capture and child working directories are implemented and verified on Windows.
-Explicit/source roots and broader path APIs remain pending.
+The [2026-10-25 root/path design](roots-and-filesystem.md) adds agreed public string `RootDirectory`,
+`ResolvePath(path)`, and literal/prepared-option root declarations. This first increment merged through PR #50
+under [issue #46](https://github.com/sotsera/rafter/issues/46); the current guide records its behavior and the design
+records verification. The later [filesystem increment](filesystem-authoring.md) is also agreed and implemented
+through PR #51 under #47. Source/repository discovery and broader filesystem operations remain separate work.
 
 ### Invalid values and repeated callback configuration
 

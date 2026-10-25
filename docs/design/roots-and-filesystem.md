@@ -137,9 +137,10 @@ The original root slice included:
 - Fresh package-only project and file-app consumers that select a root through a prepared option, check the public
   root/resolver values, and confirm selecting a nonexistent directory does not create it.
 
-The full repository workflow example remains in the original checkout. Its delivery and combined success/failure/
-timeout/pack checks follow under the agreed PR sequence; they are not part of this slice's verification. Rich file/
-directory handles follow separately under [issue #47](https://github.com/sotsera/rafter/issues/47). Source-directory
+The original root slice excluded the full repository workflow and its success/failure/timeout/pack checks.
+Those integration checks now accompany [workflow delivery #52](https://github.com/sotsera/rafter/issues/52);
+their results belong to the [workflow guide](../development/repository-workflow.md), rather than this root-only run.
+File/directory handles merged separately in [PR #51](https://github.com/sotsera/rafter/pull/51) under #47. Source-directory
 discovery, repository discovery, selector callbacks, and native Linux/macOS process ownership remain separate work.
 
 ## Decision
@@ -170,3 +171,11 @@ The consumer helper still has SHA-256 `FE1C5E40733D64B340272491C9DBBEBFA28FC55CC
 the merged review fixes. No new live editor/terminal, AOT, or native Linux/macOS ownership result is claimed.
 Portable Linux results belong to this slice's PR CI. The combined workflow results from the original checkout
 are not relabeled as verification of this independently tested branch.
+
+## Root PR delivery record
+
+[PR #50](https://github.com/sotsera/rafter/pull/50) merged on 2026-10-25 as `51c66e9`. Its
+[CI run](https://github.com/sotsera/rafter/actions/runs/40211637262), for head `7f10eef`, passed Windows full
+**772 tests, 0 failures, 1 console-dependent skip**, portable Linux full **681 tests, 0 failures, 0 skips**,
+packaging, and **43 redirected runtime cases**. This predates the separately delivered filesystem helpers.
+The complete workflow's remaining acceptance is recorded in the workflow guide under issue #52.

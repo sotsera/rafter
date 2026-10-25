@@ -1,6 +1,6 @@
 # Rafter examples
 
-The thirteen implemented examples listed below run against the new runtime through project references. The process examples currently require
+The fourteen implemented examples listed below run against the new runtime through project references. The process examples currently require
 Windows; the target-only example prepares and prints a greeting without child processes. See the
 [design plan](../docs/design/example-design-plan.md) for accepted decisions and open topics.
 
@@ -21,6 +21,7 @@ use a package reference with a configured local feed, or supply equivalent proje
 | [dependencies.cs](dependencies.cs) | `--project` identifies a test project; uses .NET 10 native Microsoft.Testing.Platform mode. |
 | [process-timeout.cs](process-timeout.cs) | Windows; `--project` identifies a buildable project. Optional `--timeout` / `RAFTER_PROCESS_TIMEOUT` defaults to 10s. See [process timeouts](../docs/guides/process-timeouts.md). |
 | [process-capture.cs](process-capture.cs) | Windows; captures its child's JSON. Optional `--echo`, `--show-order`, `--limit` (default 1024), and `--scenario Failure` / `Overflow` demonstrate capture behavior. See [process capture](../docs/guides/process-capture.md). |
+| [repository-workflow.cs](repository-workflow.cs) | Windows and the pinned SDK; build/test this checkout, inspect bounded MSBuild JSON, and optionally `--pack`. `--root` supports another invocation directory. See the [workflow guide](../docs/development/repository-workflow.md). |
 
 ## Running the workflow examples
 

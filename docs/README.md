@@ -1,6 +1,7 @@
 # Rafter documentation
 
 Start with the [repository README](../README.md) and [runnable examples](../examples/README.md).
+For current status and priorities, use the [main development plan](design/example-design-plan.md#next-steps).
 The [first milestone summary](history/milestone-review.md) records the completed Windows x64 baseline and its limits.
 
 | Folder | Contents |
@@ -75,6 +76,7 @@ their own instructions in [local packaging](guides/local-package.md) and the [to
 | [Skills setup](development/dotnet-skills-setup.md) | Installed guidance, provenance, workspace bridge, and updates. |
 | [Repository organization review](development/repository-review.md) | Folder/project roles and the agreed next organization steps. |
 | [Code review, 2026-10-23](development/code-review-2026-10-23.md) | Four correctness findings, fixes, regression evidence, and verification limits. |
+| [Repository workflow](development/repository-workflow.md) | Maintained Windows file app for bounded metadata, build/test, optional packaging, explicit roots, and retained evidence. |
 | [Development tools](../tools/README.md) | Current verification versus optional dependency evaluations, with reproduction commands. |
 | [Generated files and evidence](development/generated-files.md) | Per-run evidence directories, CI retention, and bounded cleanup policy. |
 | [Testing guide](development/testing.md) | Suite boundaries, ordinary/full/long-only profiles, capabilities, and observed selection checks. |

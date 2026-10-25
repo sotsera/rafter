@@ -1,11 +1,13 @@
 # Filesystem authoring: first increment
 
-Agreed on 2026-10-25 and prepared for delivery under [issue #47](https://github.com/sotsera/rafter/issues/47).
+Agreed on 2026-10-25 and merged through [PR #51](https://github.com/sotsera/rafter/pull/51) under
+[issue #47](https://github.com/sotsera/rafter/issues/47).
 The [filesystem guide](../guides/filesystem.md) describes usage. The
 [root/path API](../guides/roots-and-paths.md), merged in [PR #50](https://github.com/sotsera/rafter/pull/50), is the
 foundation. The original local repository-workflow experiment supplies the immediate use cases: checking repository
 files, creating an evidence directory, selecting tool paths, and writing metadata and a final manifest. The complete
-workflow example follows in its own [delivery slice](example-design-plan.md#next-steps).
+workflow example now accompanies [delivery #52](https://github.com/sotsera/rafter/issues/52), with its remaining
+integration acceptance and observed results in the [workflow guide](../development/repository-workflow.md).
 
 ## Agreed authoring shape
 
@@ -161,10 +163,10 @@ this document owns its detailed behavior and verification scenarios.
 
 ## Delivery boundaries
 
-This slice contains the path handles and operations, 16 unit path cases, 13 real-I/O cases, and extensions to the
-real-host and fresh package-only file-app/project consumers. The complete repository workflow and its five consumer
-cases remain in the original checkout for the final delivery slice. Its combined historical results do not verify
-this independent branch, and its workflow-specific acceptance remains open under issue #47 until that delivery.
+The original filesystem slice contained the path handles and operations, 16 unit path cases, 13 real-I/O cases,
+and extensions to real-host and fresh package-only file-app/project consumers. Its independent results below
+exclude the complete workflow and its five consumer cases. The latter now accompany delivery #52; their observed
+results are recorded separately in the workflow guide before closing #47's remaining integration acceptance.
 
 No deterministic in-flight cancellation case is claimed. Precancellation and settled success/failure paths are
 exercised; actual write/stream lifetime is delegated to the caller-awaited .NET task. SDK-environment isolation,
@@ -196,3 +198,12 @@ Mismatch hashes/timestamps and the refresh check remain under `artifacts/evidenc
 Local documentation file/heading checks and four PowerShell parser checks passed; `git diff --check` passed.
 Precancellation, awaited stream closure, and I/O failure paths are verified; deterministic in-flight cancellation
 was not forced. Portable Linux results belong to the PR's own CI run, and no new native platform guarantee follows.
+
+## Filesystem PR delivery record
+
+[PR #51](https://github.com/sotsera/rafter/pull/51) merged on 2026-10-25 as `5684994`. Its
+[CI run](https://github.com/sotsera/rafter/actions/runs/40213817028), for head `8b1c72e`, passed Windows full
+**801 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
+packaging, and **43 redirected runtime cases**. The feature branch avoided a duplicate fork-push evaluation.
+The complete workflow's remaining acceptance is recorded separately under issue #52; the five workflow cases
+are not included in this filesystem-only CI count.

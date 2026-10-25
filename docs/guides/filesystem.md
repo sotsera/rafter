@@ -1,6 +1,7 @@
 # Filesystem authoring
 
-The first filesystem increment is implemented in this delivery slice for [issue #47](https://github.com/sotsera/rafter/issues/47).
+The first filesystem increment merged in [PR #51](https://github.com/sotsera/rafter/pull/51) for
+[issue #47](https://github.com/sotsera/rafter/issues/47).
 It builds on the [root/path API](roots-and-paths.md). The [design record](../design/filesystem-authoring.md) owns
 the agreed scope, behavior choices, and verification evidence.
 
@@ -73,6 +74,6 @@ the destination untouched; cancellation or I/O failure after a write begins can 
 Writes do not promise atomic replacement. Synchronous probes and directory creation are not advertised as
 interruptible. I/O failures propagate through the usual body exception contract when unhandled.
 
-The complete repository workflow example follows in its own delivery slice. Its process setup/SDK-environment
+The [complete repository workflow example](../../examples/repository-workflow.cs) uses these helpers. Its process setup/SDK-environment
 follow-up remains separate. Delete/copy/globbing, stream factories, append, custom encodings, and JSON helpers
 are not part of this first increment.

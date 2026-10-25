@@ -40,8 +40,11 @@ does not enable branch protection or make the check required for merging.
 ## Resuming focused delivery — 2026-10-25
 
 The current delivery order is maintained in the [main development plan](../design/example-design-plan.md#next-steps).
-The first PR addresses [review findings #48](https://github.com/sotsera/rafter/issues/48); roots, filesystem helpers,
-and the repository workflow example follow as separate reviewable slices. Validate each slice independently rather
+The review fixes merged through [PR #49](https://github.com/sotsera/rafter/pull/49), roots through
+[PR #50](https://github.com/sotsera/rafter/pull/50), and filesystem helpers through
+[PR #51](https://github.com/sotsera/rafter/pull/51). The final workflow/example slice is tracked by
+[issue #52](https://github.com/sotsera/rafter/issues/52), including #46/#47's deferred integration acceptance.
+Validate each slice independently rather
 than treating a successful run of the combined local changes as verification of an earlier slice.
 
 Publish the focused branch on `ghidello/rafter` and open its PR into `sotsera/rafter:main`. Keep later uncommitted work
@@ -52,6 +55,20 @@ The current [evaluation workflow](../../.github/workflows/evaluation.yml) runs *
 **Linux portable evaluation** for PRs, with ordinary and full profiles. Record results for the PR's actual head
 revision. Inspect skips and failed jobs explicitly; a portable Linux pass does not establish native Linux ownership
 or macOS support. These are working delivery rules; this update does not change GitHub protection settings.
+
+## Proposed CI-efficiency follow-up
+
+The [NuGet cache-placement article](https://awakecoding.com/posts/speeding-up-dotnet-builds-on-windows-nuget-cache/)
+and [CI-efficiency review](https://montemagno.com/reducing-github-actions-costs-ai-agents/) prompted an inspection of
+PR #49's actual jobs. The [fork push](https://github.com/ghidello/rafter/actions/runs/40209848924) duplicated the
+[upstream PR evaluation](https://github.com/sotsera/rafter/actions/runs/40209862141), adding 11m14s of runner execution.
+On that upstream Windows run, restore took 18s, build 12s, and full tests 4m05s; these are one-run observations.
+
+Proposed work: remove duplicate branch-push evaluation, scope cancellation to superseded PR runs, and benchmark
+Windows package/HTTP cache placement under runner temp. Keep remote archive caching as a separate measured decision.
+`NUGET_PACKAGES` overrides NuGet configuration, so fresh package consumers must retain their private cache; do not
+blindly apply a job-wide override. No lock-file policy is adopted here. Feature branches avoid the current
+`build/**` push trigger, but that workaround does not change general CI configuration or cancellation policy.
 
 ## Published initial work
 

@@ -127,5 +127,5 @@ roots are allowed; a later file operation or process launch decides whether an e
 
 Source-directory discovery, repository discovery, and selector callbacks remain separate work. The
 [filesystem helpers](filesystem.md) now build on this path base with immutable handles and explicit operations.
-The complete repository workflow example follows in its own delivery slice. Root verification is recorded in the
+The [complete repository workflow](../../examples/repository-workflow.cs) uses that surface. Root verification is recorded in the
 [design](../design/roots-and-filesystem.md).
