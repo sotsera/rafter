@@ -31,7 +31,8 @@ the host has no standard-input handle. Stdout and stderr remain separate; plain 
 whitespace. Routine process headings respect quiet mode; verbose output includes the child directory. Rafter does
 not automatically print argument or environment values.
 
-`WorkingDirectory(path)` resolves relative paths against the captured invocation root. It may be specified once.
+`WorkingDirectory(path)` resolves relative paths against the invocation's selected root. It may be specified once.
+Explicit command roots and public path resolution follow the [root/path contract](roots-and-paths.md).
 `AcceptExitCodes(params int[])` also allows one call, requires a non-null, nonempty list, and ignores duplicates within
 that list. Both reject a repeated call even when its value is unchanged. The accepted-code array is copied.
 

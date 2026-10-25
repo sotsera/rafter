@@ -12,11 +12,34 @@ public sealed class Command
     private readonly List<OptionDeclaration> _options = [];
     private readonly List<CombinedRule> _rules = [];
     private readonly List<Target> _targets = [];
+    private RootSelection _root = new();
 
     internal Command(string description, Func<InvocationHost>? captureHost = null)
     {
         _description = description;
         _captureHost = captureHost ?? InvocationHost.Capture;
+    }
+
+    /// <summary>Selects a command root once. Relative paths use the directory captured at RunAsync entry.
+    /// Invalid declaration settings are reported by RunAsync without changing the host working directory.</summary>
+    public Command RootDirectory(string path)
+    {
+        lock (_declarationGate)
+        {
+            _root = new(_root.Calls + 1, Path: path);
+        }
+        return this;
+    }
+
+    /// <summary>Selects the command root from a required/defaulted string owned by this command.
+    /// Its prepared value is resolved once after input validation and before execution.</summary>
+    public Command RootDirectory(ValueOption<string> option)
+    {
+        lock (_declarationGate)
+        {
+            _root = new(_root.Calls + 1, Option: option, FromOption: true);
+        }
+        return this;
     }
 
     /// <summary>Declares an optional typed input. Presence and default policies can finalize its value contract.</summary>
@@ -125,12 +148,14 @@ public sealed class Command
             OptionSnapshot[] options;
             CombinedRule[] rules;
             TargetSnapshot[] targets;
+            RootSelection root;
             Target[]? entries = null;
             lock (_declarationGate)
             {
                 options = _options.Select(option => option.Snapshot()).ToArray();
                 rules = _rules.ToArray();
                 targets = _targets.Select(target => target.Snapshot()).ToArray();
+                root = _root;
                 if (targetInvocation)
                 {
                     entries = [entry!, .. additionalTargets ?? []];
@@ -159,6 +184,7 @@ public sealed class Command
             {
                 options[index].ValidateDeclaration(index, declarations, spellings);
             }
+            root.ValidateDeclaration(options, declarations);
             foreach (var rule in rules)
             {
                 if (string.IsNullOrWhiteSpace(rule.Description) || rule.Predicate is null)
@@ -198,7 +224,6 @@ public sealed class Command
                         output.Invalid("Invalid input", validation.Diagnostics);
                     }
                     processes = new(cancellation, output);
-                    var context = new RafterContext(host.RootDirectory, output, cancellation.Token, arguments.Values, processes);
                     try
                     {
                         if (validation.Exception is { } validationException)
@@ -217,9 +242,16 @@ public sealed class Command
                         {
                             code = 2;
                         }
+                        else if (!root.TryResolve(host.RootDirectory, options, arguments.Values,
+                            out var rootDirectory, out var rootDiagnostic))
+                        {
+                            output.Invalid("Invalid input", [rootDiagnostic!]);
+                            code = 2;
+                        }
                         else
                         {
-                            context.CancellationToken.ThrowIfCancellationRequested();
+                            cancellation.Token.ThrowIfCancellationRequested();
+                            var context = new RafterContext(rootDirectory, output, cancellation.Token, arguments.Values, processes);
                             executed = true;
                             output.Start(_description, plan);
                             output.InputSources(options, arguments.Values);
