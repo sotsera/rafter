@@ -3,8 +3,8 @@
 The first increment was agreed on 2026-10-25 and merged through
 [PR #50](https://github.com/sotsera/rafter/pull/50) under [issue #46](https://github.com/sotsera/rafter/issues/46).
 The [root guide](../guides/roots-and-paths.md) describes its
-public surface. It follows concrete repository-workflow experiments in the original local checkout; publishing
-that complete example follows the roots and filesystem PRs in the [delivery plan](example-design-plan.md#next-steps).
+public surface. It follows concrete repository-workflow experiments in the original local checkout. The complete
+example merged in [PR #53](https://github.com/sotsera/rafter/pull/53), completing #46's workflow acceptance.
 
 ## Agreed first increment
 
@@ -178,4 +178,5 @@ are not relabeled as verification of this independently tested branch.
 [CI run](https://github.com/sotsera/rafter/actions/runs/40211637262), for head `7f10eef`, passed Windows full
 **772 tests, 0 failures, 1 console-dependent skip**, portable Linux full **681 tests, 0 failures, 0 skips**,
 packaging, and **43 redirected runtime cases**. This predates the separately delivered filesystem helpers.
-The complete workflow's remaining acceptance is recorded in the workflow guide under issue #52.
+The complete workflow's acceptance passed separately and merged in [PR #53](https://github.com/sotsera/rafter/pull/53),
+closing #46/#47/#52; the [workflow guide](../development/repository-workflow.md) records its results.

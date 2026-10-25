@@ -42,9 +42,10 @@ does not enable branch protection or make the check required for merging.
 The current delivery order is maintained in the [main development plan](../design/example-design-plan.md#next-steps).
 The review fixes merged through [PR #49](https://github.com/sotsera/rafter/pull/49), roots through
 [PR #50](https://github.com/sotsera/rafter/pull/50), and filesystem helpers through
-[PR #51](https://github.com/sotsera/rafter/pull/51). The final workflow/example slice is tracked by
-[issue #52](https://github.com/sotsera/rafter/issues/52), including #46/#47's deferred integration acceptance.
-Validate each slice independently rather
+[PR #51](https://github.com/sotsera/rafter/pull/51). The final workflow/example slice merged in
+[PR #53](https://github.com/sotsera/rafter/pull/53), closing #52 and #46/#47's deferred integration acceptance.
+The [post-merge evaluation](https://github.com/sotsera/rafter/actions/runs/40221671404) passed both platforms,
+packaging, and redirected runtime checks. Validate each slice independently rather
 than treating a successful run of the combined local changes as verification of an earlier slice.
 
 Publish the focused branch on `ghidello/rafter` and open its PR into `sotsera/rafter:main`. Keep later uncommitted work
@@ -56,7 +57,7 @@ The current [evaluation workflow](../../.github/workflows/evaluation.yml) runs *
 revision. Inspect skips and failed jobs explicitly; a portable Linux pass does not establish native Linux ownership
 or macOS support. These are working delivery rules; this update does not change GitHub protection settings.
 
-## Proposed CI-efficiency follow-up
+## CI-efficiency increment
 
 The [NuGet cache-placement article](https://awakecoding.com/posts/speeding-up-dotnet-builds-on-windows-nuget-cache/)
 and [CI-efficiency review](https://montemagno.com/reducing-github-actions-costs-ai-agents/) prompted an inspection of
@@ -64,11 +65,33 @@ PR #49's actual jobs. The [fork push](https://github.com/ghidello/rafter/actions
 [upstream PR evaluation](https://github.com/sotsera/rafter/actions/runs/40209862141), adding 11m14s of runner execution.
 On that upstream Windows run, restore took 18s, build 12s, and full tests 4m05s; these are one-run observations.
 
-Proposed work: remove duplicate branch-push evaluation, scope cancellation to superseded PR runs, and benchmark
-Windows package/HTTP cache placement under runner temp. Keep remote archive caching as a separate measured decision.
-`NUGET_PACKAGES` overrides NuGet configuration, so fresh package consumers must retain their private cache; do not
-blindly apply a job-wide override. No lock-file policy is adopted here. Feature branches avoid the current
-`build/**` push trigger, but that workaround does not change general CI configuration or cancellation policy.
+Implemented for review in [PR #55](https://github.com/sotsera/rafter/pull/55), under
+[issue #54](https://github.com/sotsera/rafter/issues/54):
+
+- Run branch validation on `pull_request`; remove the `build/**` push trigger. Pushes to `main` still validate the
+  actual merged commit, and `workflow_dispatch` remains available for an explicit branch evaluation.
+- Group PR runs by workflow name, event, and PR number. A new revision cancels older running or pending evaluations
+  of that same PR. Different PRs use separate groups.
+- Use the run ID for each non-PR group, and enable cancellation only for PR events. Main and manual runs retain
+  independent evaluations, including pending runs. Using a shared main group with cancellation disabled would still
+  replace older pending runs, so it would not preserve this behavior.
+- Preserve both job names, ordinary/full coverage, package validation, artifact retention, permissions, and caches.
+
+The group uses `github.workflow`, `github.event_name`, and `github.event.pull_request.number || github.run_id`;
+`cancel-in-progress` is true only when the event is `pull_request`. This follows GitHub's documented
+[event filters](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushbranchestagsbranches-ignoretags-ignore)
+and [concurrency semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency).
+Validate syntax and group separation locally, then inspect actual PR supersession and the final Windows/Linux run.
+These changes take effect per workflow revision; older branches still containing the previous trigger can still
+start fork-push evaluations until updated.
+
+Local verification passed with actionlint 1.7.12 (optional shell/Python linters disabled), documentation file/heading
+checks, and PowerShell parser checks. Both job definitions were compared with merged main and are identical.
+The PR description records actual supersession and CI results for its published revisions.
+
+Windows package/HTTP cache placement under runner temp remains a separate experiment. Keep remote archive caching
+as a measured decision. `NUGET_PACKAGES` overrides NuGet configuration, so fresh package consumers must retain their
+private cache; do not blindly apply a job-wide override. No lock-file policy is adopted here.
 
 ## Published initial work
 

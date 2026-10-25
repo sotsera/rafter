@@ -6,8 +6,8 @@ The [filesystem guide](../guides/filesystem.md) describes usage. The
 [root/path API](../guides/roots-and-paths.md), merged in [PR #50](https://github.com/sotsera/rafter/pull/50), is the
 foundation. The original local repository-workflow experiment supplies the immediate use cases: checking repository
 files, creating an evidence directory, selecting tool paths, and writing metadata and a final manifest. The complete
-workflow example now accompanies [delivery #52](https://github.com/sotsera/rafter/issues/52), with its remaining
-integration acceptance and observed results in the [workflow guide](../development/repository-workflow.md).
+workflow example merged in [PR #53](https://github.com/sotsera/rafter/pull/53), closing #47 and delivery #52;
+its integration acceptance and observed results are in the [workflow guide](../development/repository-workflow.md).
 
 ## Agreed authoring shape
 
@@ -205,5 +205,5 @@ was not forced. Portable Linux results belong to the PR's own CI run, and no new
 [CI run](https://github.com/sotsera/rafter/actions/runs/40213817028), for head `8b1c72e`, passed Windows full
 **801 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
 packaging, and **43 redirected runtime cases**. The feature branch avoided a duplicate fork-push evaluation.
-The complete workflow's remaining acceptance is recorded separately under issue #52; the five workflow cases
-are not included in this filesystem-only CI count.
+The complete workflow's acceptance passed separately and merged in [PR #53](https://github.com/sotsera/rafter/pull/53),
+closing #46/#47/#52. The five workflow cases are not included in this filesystem-only CI count.
