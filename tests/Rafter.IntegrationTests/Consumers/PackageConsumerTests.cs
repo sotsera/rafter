@@ -88,13 +88,25 @@ public sealed class PackageConsumerTests
             var duration = command.Option<TimeSpan>("duration", "Duration.").Default(TimeSpan.FromSeconds(30))
                 .FromEnvironment("RAFTER_PACKAGE_DURATION");
             var root = command.Option<string>("root", "Root.").Default(".");
+            var write = command.Option<bool>("write", "Exercise packaged filesystem helpers.").Default(false);
             command.RootDirectory(root);
-            return await command.RunAsync(args, context =>
+            return await command.RunAsync(args, async context =>
             {
                 var expectedRoot = Path.GetFullPath(context.GetValue(root), Directory.GetCurrentDirectory());
                 if (context.RootDirectory != expectedRoot || context.ResolvePath(".") != expectedRoot)
                 {
                     throw new InvalidOperationException("Package root selection did not match the prepared option.");
+                }
+                if (context.GetValue(write))
+                {
+                    var directory = context.Directory("files", "nested").EnsureExists();
+                    var file = directory.File("result.txt");
+                    await file.WriteAllTextAsync("Package filesystem: 界面 😀", context.CancellationToken);
+                    if (!directory.Exists() || !file.Exists()
+                        || file.FullPath != context.File("files", "nested", "result.txt").FullPath)
+                    {
+                        throw new InvalidOperationException("Packaged filesystem helpers did not select the expected paths.");
+                    }
                 }
                 context.Process("dotnet").Timeout(TimeSpan.MaxValue);
                 context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
@@ -119,6 +131,11 @@ public sealed class PackageConsumerTests
         rootRun.ExitCode.Should().Be(0, rootRun.StandardError);
         rootRun.StandardOutput.Should().Be(run.StandardOutput);
         Directory.Exists(Path.Combine(consumer.WorkingDirectory, "missing-root")).Should().BeFalse();
+        var filesystemRun = await consumer.RunAsync("--quiet", "--write");
+        filesystemRun.ExitCode.Should().Be(0, filesystemRun.StandardError);
+        filesystemRun.StandardOutput.Should().Be(run.StandardOutput);
+        (await File.ReadAllTextAsync(Path.Combine(consumer.WorkingDirectory, "files/nested/result.txt")))
+            .Should().Be("Package filesystem: 界面 😀");
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_NAME"] = "Grace";
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = " debug ";
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = " 1H30M ";

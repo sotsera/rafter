@@ -28,14 +28,17 @@ Resume delivery through focused PRs, with review and applicable Windows/Linux ch
 
 1. Review fixes and verification tooling: merged in PR #49; Windows and portable Linux CI passed.
 2. Deliver the agreed [invocation-root increment](roots-and-filesystem.md) under
-   [issue #46](https://github.com/sotsera/rafter/issues/46), now prepared on top of that merge.
-3. Deliver multi-segment filesystem helpers under [issue #47](https://github.com/sotsera/rafter/issues/47).
+   [issue #46](https://github.com/sotsera/rafter/issues/46): runtime/consumer slice merged through
+   [PR #50](https://github.com/sotsera/rafter/pull/50) with Windows and portable Linux CI passing. The complete
+   workflow's remaining acceptance stays with the final delivery slice.
+3. Deliver [multi-segment filesystem helpers](filesystem-authoring.md) under
+   [issue #47](https://github.com/sotsera/rafter/issues/47), now prepared on top of merged PR #50.
 4. Deliver the repository workflow example and reconcile the broader development roadmap with those APIs.
 
-The filesystem/workflow increments already exist in the original local checkout. They are excluded from this root
-delivery slice and do not establish capabilities in this branch. Review their concrete syntax and verification when each
-slice is prepared. Preserve the existing runtime/analyzer split and treat broader release and platform work as
-separate decisions.
+The complete workflow already exists in the original local checkout and is excluded from this filesystem slice.
+Review its concrete syntax and verification when that slice is prepared. Preserve the existing runtime/analyzer
+split and treat broader release and platform work as separate decisions. Proposed CI optimizations remain a
+separate follow-up; no CI configuration is changed by these filesystem helpers.
 
 ## Working approach
 

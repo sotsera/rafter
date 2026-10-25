@@ -3,9 +3,9 @@
 Agreed design for the new Rafter. The [minimal runtime](minimal-runtime.md) implements per-invocation root capture;
 the [process runtime](process-runtime.md) implements child working directories and environment overrides on Windows.
 The first increment for [issue #46](https://github.com/sotsera/rafter/issues/46) adds public root/path access and
-literal or prepared-option root selection in this delivery slice. The
+literal or prepared-option root selection, merged in [PR #50](https://github.com/sotsera/rafter/pull/50). The
 [root/filesystem design](../design/roots-and-filesystem.md) records its agreed contract; richer filesystem helpers
-remain a separate agreed increment under [issue #47](https://github.com/sotsera/rafter/issues/47).
+are implemented separately under [issue #47](https://github.com/sotsera/rafter/issues/47).
 
 ## Default root
 
@@ -125,6 +125,7 @@ Valid help does not resolve roots or probe directories. On an executing run, mal
 safe input/configuration diagnostics and exit `2`, without echoing rejected text. Nonexistent but lexically valid
 roots are allowed; a later file operation or process launch decides whether an existing directory is required.
 
-Source-directory discovery, repository discovery, and selector callbacks remain separate work. The agreed
-filesystem helpers and complete repository workflow example follow in later delivery slices; their APIs are
-not part of this root increment. Verification is recorded in the [design](../design/roots-and-filesystem.md).
+Source-directory discovery, repository discovery, and selector callbacks remain separate work. The
+[filesystem helpers](filesystem.md) now build on this path base with immutable handles and explicit operations.
+The complete repository workflow example follows in its own delivery slice. Root verification is recorded in the
+[design](../design/roots-and-filesystem.md).

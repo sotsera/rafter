@@ -1,7 +1,8 @@
 # Roots, paths, and filesystem authoring
 
-The first increment was agreed on 2026-10-25 and is prepared for delivery under
-[issue #46](https://github.com/sotsera/rafter/issues/46). The [root guide](../guides/roots-and-paths.md) describes its
+The first increment was agreed on 2026-10-25 and merged through
+[PR #50](https://github.com/sotsera/rafter/pull/50) under [issue #46](https://github.com/sotsera/rafter/issues/46).
+The [root guide](../guides/roots-and-paths.md) describes its
 public surface. It follows concrete repository-workflow experiments in the original local checkout; publishing
 that complete example follows the roots and filesystem PRs in the [delivery plan](example-design-plan.md#next-steps).
 
@@ -9,7 +10,7 @@ that complete example follows the roots and filesystem PRs in the [delivery plan
 
 Keep paths as ordinary strings for the first increment. Expose the root already captured by the invocation,
 provide one explicit resolver, and let command configuration select a different root from a literal or a prepared
-string option. Filesystem convenience syntax remains separate under
+string option. The later [filesystem helpers](filesystem-authoring.md) are implemented separately under
 [issue #47](https://github.com/sotsera/rafter/issues/47).
 
 Agreed API shape:
@@ -123,9 +124,9 @@ The existing [preparation and exception rules](example-design-plan.md#invalid-va
 still govern user input validators. This increment does not give validation callbacks an execution context or new
 filesystem facilities. A valid selected path is not a promise that later I/O will succeed.
 
-## Verification and delivery boundaries
+## Root slice verification and delivery boundaries
 
-This slice includes:
+The original root slice included:
 
 - 34 portable root cases: literal/prepared/default roots, normalization, argument/declaration validation, safe
   diagnostics, help without root resolution, environment precedence, concurrent invocations, and declaration snapshots.
