@@ -23,6 +23,7 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Enum choices, conversion, declaration validation, and allowed-values help | [Enum inputs](guides/enum-inputs.md) |
 | Exact duration conversion, compounds, and canonical help defaults | [Duration inputs](guides/duration-inputs.md) |
 | Invocation roots and child paths | [Roots and paths](guides/roots-and-paths.md), [agreed API design](design/roots-and-filesystem.md) |
+| Multi-segment file/directory handles and explicit I/O | [Filesystem authoring](guides/filesystem.md), [design record](design/filesystem-authoring.md) |
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
 | Bounded process capture, ordered chunks, echo, and partial output | [Process capture](guides/process-capture.md) |

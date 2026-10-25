@@ -35,6 +35,12 @@ public sealed class RafterContext
     /// Performs no filesystem I/O and does not require the path to exist.</summary>
     public string ResolvePath(string path) => RootPaths.Resolve(path, RootDirectory);
 
+    /// <summary>Combines path segments and selects a directory relative to this invocation's root without performing I/O.</summary>
+    public DirectoryPath Directory(params string[] paths) => new(RootPaths.Combine(RootDirectory, paths));
+
+    /// <summary>Combines path segments and selects a file relative to this invocation's root without performing I/O.</summary>
+    public FilePath File(params string[] paths) => new(RootPaths.Combine(RootDirectory, paths));
+
     /// <summary>Configures a child process owned by this body, with the invocation's selected root as its directory.</summary>
     public ProcessCommand Process(string executable)
     {

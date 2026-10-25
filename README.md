@@ -45,6 +45,13 @@ dotnet run --file examples/targets.cs -- --name Ada
 dotnet run --file examples/targets.cs -- --help
 ```
 
+The [root/path API](docs/guides/roots-and-paths.md) exposes `context.RootDirectory` and `context.ResolvePath(path)`.
+Select a command root with `command.RootDirectory(...)` using a literal or a prepared string option; resolved file
+paths and child directories share that base without changing the host working directory.
+
+The [filesystem helpers](docs/guides/filesystem.md) add `context.Directory("artifacts", runId)` and
+`context.File(...)`, with explicit existence probes, directory creation, and caller-awaited UTF-8 text writes.
+
 The [process runtime](docs/guides/process-runtime.md) adds owned Windows child processes, separate output streams,
 child directory/environment settings, failure actions, and cancellation with descendant cleanup:
 

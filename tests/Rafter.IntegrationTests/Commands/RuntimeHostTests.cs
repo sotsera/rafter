@@ -44,7 +44,9 @@ public sealed class RuntimeHostTests
                 context.RootDirectory.Should().Be(selected);
                 Directory.GetCurrentDirectory().Should().Be(during);
                 var path = context.ResolvePath("result.txt");
-                await File.WriteAllTextAsync(path, "selected root", context.CancellationToken);
+                var file = context.Directory(".").File("result.txt");
+                file.FullPath.Should().Be(path);
+                await file.WriteAllTextAsync("selected root", context.CancellationToken);
                 File.Exists(Path.Combine(during, "result.txt")).Should().BeFalse();
                 (await File.ReadAllTextAsync(path, context.CancellationToken)).Should().Be("selected root");
             })).Should().Be(0);
