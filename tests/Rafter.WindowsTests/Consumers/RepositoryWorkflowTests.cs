@@ -57,7 +57,14 @@ public sealed class RepositoryWorkflowTests
             record.GetProperty("PackageDirectory").ValueKind.Should().Be(JsonValueKind.Null);
             result.StandardOutput.Should().Contain("Packaging skipped");
         }
-        result.StandardOutput.Should().NotContain("\x1b");
+        // --plain controls Rafter output. Child tools may emit ANSI even when their streams are redirected.
+        var workflowLines = result.StandardOutput.Split('\n')
+            .Where(line => line.Contains("Workflow evidence:", StringComparison.Ordinal)
+                || line.Contains("Package: Sotsera.Rafter", StringComparison.Ordinal)
+                || line.Contains("Local packages:", StringComparison.Ordinal)
+                || line.Contains("Packaging skipped;", StringComparison.Ordinal))
+            .ToArray();
+        workflowLines.Should().HaveCount(3).And.OnlyContain(line => !line.Contains('\x1b'));
         result.StandardError.Should().BeEmpty();
     }
 

@@ -223,3 +223,17 @@ succeeded in the approved unrestricted context without a source/SDK change. The 
 Local documentation file/heading and PowerShell parser checks passed, as did staged whitespace checks. These
 observations complete the deferred workflow integration for #46/#47, subject to PR CI and user review. No live
 workflow cancellation, attached-console/editor, AOT, or new native Linux/macOS ownership result is claimed.
+
+### PR CI output correction
+
+The first [PR #53 CI run](https://github.com/sotsera/rafter/actions/runs/40217216344) passed Linux portable coverage
+(710 cases) but reported **804 passed, 2 failed, 1 skipped** in the Windows full suite. Both workflow success cases
+completed their actual work; their assertions incorrectly rejected ANSI escapes anywhere in captured stdout.
+GitHub's child test runner emits color when redirected. Rafter's `--plain` controls framework output, while raw child
+streams retain their original content.
+
+The assertions now require the three workflow-owned result lines to be present and plain, preserving the child-stream
+contract. With process-scoped `CI=true` and `GITHUB_ACTIONS=true`, the focused workflow class passed **5/5** cases,
+including colored runner output. The Windows test project build had **0 warnings/errors**. The original failed CI log
+is retained in `artifacts/evidence/pr-workflow/windows-ci-initial.log`; focused TRX results are in
+`artifacts/test-results/pr-workflow-ci-output/`. Full CI must verify the corrected PR revision.
