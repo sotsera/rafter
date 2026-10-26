@@ -55,8 +55,11 @@ The benchmark mode and fresh-package isolation fix merged in PR #57; its
 [post-merge main run](https://github.com/sotsera/rafter/actions/runs/40403934136) passed. Profiling shows that portable
 integration and Windows-specific suites currently run serially. The [scheduling increment](../development/ci-duration.md)
 under [#58](https://github.com/sotsera/rafter/issues/58) runs them on separate Windows runners, retaining all cases and
-native isolation. Measure wall time and extra runner setup before claiming a benefit. Remote archive caching and
-later product topics remain proposals.
+native isolation. Three complete hosted runs passed in 5m06s–6m00s (median 5m38s); the same-revision serial control
+took 8m56s, and latest merged main took 7m00s. All 740 ordinary / 807 full Windows case identities and outcomes match.
+The median summed Windows runner time increased to 9m49s versus 8m52s for the serial control. The scheduling record
+preserves this tradeoff and measurement limits. This slice awaits PR review and final-revision CI; remote archive
+caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
