@@ -47,6 +47,10 @@ public sealed class PackageConsumerTests
     {
         var entry = kind == "project" ? "Consumer.csproj" : "consumer.cs";
         using var consumer = new IsolatedConsumer(kind, TestContext.Current.TestOutputHelper!, entry, copyWorkspace: false);
+        var cache = Path.Combine(consumer.WorkingDirectory, ".packages");
+        Directory.Exists(cache).Should().BeFalse();
+        // Environment settings override NuGet.Config, including a job-wide relocated package cache.
+        consumer.EnvironmentOverrides["NUGET_PACKAGES"] = cache;
         var configuration = new XDocument(new XElement("configuration",
             new XElement("packageSources", new XElement("clear"),
                 new XElement("add", new XAttribute("key", "local"), new XAttribute("value", feed)),
@@ -57,7 +61,7 @@ public sealed class PackageConsumerTests
                 new XElement("packageSource", new XAttribute("key", "nuget.org"),
                     new XElement("package", new XAttribute("pattern", "*")))),
             new XElement("config", new XElement("add", new XAttribute("key", "globalPackagesFolder"),
-                new XAttribute("value", Path.Combine(consumer.WorkingDirectory, ".packages"))))));
+                new XAttribute("value", cache)))));
         configuration.Save(Path.Combine(consumer.WorkingDirectory, "NuGet.Config"));
         if (kind == "project")
         {
@@ -221,7 +225,6 @@ public sealed class PackageConsumerTests
         policyValidation.StandardOutput.Should().BeEmpty();
 
         // The consumer has no project/source references to Rafter and restores its own fresh package cache.
-        var cache = Path.Combine(consumer.WorkingDirectory, ".packages");
         Directory.Exists(Path.Combine(cache, "sotsera.rafter", "0.1.0-local")).Should().BeTrue();
         Directory.EnumerateDirectories(cache).Select(Path.GetFileName)
             .Should().NotContain(name => name!.StartsWith("microsoft.codeanalysis", StringComparison.OrdinalIgnoreCase));
@@ -229,6 +232,9 @@ public sealed class PackageConsumerTests
         {
             using var assets = JsonDocument.Parse(await File.ReadAllTextAsync(
                 Path.Combine(consumer.WorkingDirectory, "obj", "project.assets.json"), TestContext.Current.CancellationToken));
+            var restoredCache = assets.RootElement.GetProperty("project").GetProperty("restore")
+                .GetProperty("packagesPath").GetString()!;
+            Path.TrimEndingDirectorySeparator(restoredCache).Should().Be(cache);
             assets.RootElement.GetProperty("libraries").EnumerateObject()
                 .Should().OnlyContain(library => library.Value.GetProperty("type").GetString() == "package");
             await VerifyTransitiveImportAsync(consumer, originalProject, valid);

@@ -1,10 +1,17 @@
 name: Evaluation
+run-name: ${{ inputs.nuget-cache-experiment && inputs.nuget-cache-experiment != 'off' && format('Windows cache - {0}', inputs.nuget-cache-experiment) || format('Evaluation - {0}', github.ref_name) }}
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      nuget-cache-experiment:
+        description: Windows-only cache measurement; off runs the normal evaluation
+        type: choice
+        default: 'off'
+        options: ['off', default, runner-temp]
 
 permissions:
   contents: read
@@ -16,6 +23,7 @@ concurrency:
 jobs:
   linux-portable-evaluation:
     name: Linux portable evaluation
+    if: inputs.nuget-cache-experiment != 'default' && inputs.nuget-cache-experiment != 'runner-temp'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
@@ -86,15 +94,35 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Select runner-temp NuGet caches for measurement
+        if: inputs.nuget-cache-experiment == 'runner-temp'
+        shell: pwsh
+        run: |
+          $packages = Join-Path $env:RUNNER_TEMP 'nuget/packages'
+          $httpCache = Join-Path $env:RUNNER_TEMP 'nuget/http-cache'
+          New-Item -ItemType Directory -Path $packages, $httpCache -Force | Out-Null
+          "NUGET_PACKAGES=$packages" >> $env:GITHUB_ENV
+          "NUGET_HTTP_CACHE_PATH=$httpCache" >> $env:GITHUB_ENV
+
       - name: Record environment
         shell: pwsh
+        env:
+          RAFTER_NUGET_CACHE_EXPERIMENT: ${{ inputs.nuget-cache-experiment || 'off' }}
         run: |
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           dotnet --info | Tee-Object artifacts/dotnet-info.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-ComputerInfo -Property WindowsProductName, WindowsVersion, OsBuildNumber, OsArchitecture |
             Out-File artifacts/windows-info.txt
-          "ImageOS=$env:ImageOS ImageVersion=$env:ImageVersion" | Out-File artifacts/runner-image.txt
+          "ImageOS=$env:ImageOS ImageVersion=$env:ImageVersion" | Tee-Object artifacts/runner-image.txt
+          dotnet nuget locals all --list | Tee-Object artifacts/nuget-locations.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          [ordered]@{
+            Experiment = $env:RAFTER_NUGET_CACHE_EXPERIMENT
+            Packages = $env:NUGET_PACKAGES
+            HttpCache = $env:NUGET_HTTP_CACHE_PATH
+            RunnerTemp = $env:RUNNER_TEMP
+          } | ConvertTo-Json | Tee-Object artifacts/nuget-cache.json
 
       - name: Restore
         run: dotnet restore Rafter.slnx

@@ -65,7 +65,7 @@ PR #49's actual jobs. The [fork push](https://github.com/ghidello/rafter/actions
 [upstream PR evaluation](https://github.com/sotsera/rafter/actions/runs/40209862141), adding 11m14s of runner execution.
 On that upstream Windows run, restore took 18s, build 12s, and full tests 4m05s; these are one-run observations.
 
-Implemented for review in [PR #55](https://github.com/sotsera/rafter/pull/55), under
+Merged in [PR #55](https://github.com/sotsera/rafter/pull/55), under
 [issue #54](https://github.com/sotsera/rafter/issues/54):
 
 - Run branch validation on `pull_request`; remove the `build/**` push trigger. Pushes to `main` still validate the
@@ -89,9 +89,16 @@ Local verification passed with actionlint 1.7.12 (optional shell/Python linters 
 checks, and PowerShell parser checks. Both job definitions were compared with merged main and are identical.
 The PR description records actual supersession and CI results for its published revisions.
 
-Windows package/HTTP cache placement under runner temp remains a separate experiment. Keep remote archive caching
-as a measured decision. `NUGET_PACKAGES` overrides NuGet configuration, so fresh package consumers must retain their
-private cache; do not blindly apply a job-wide override. No lock-file policy is adopted here.
+The post-merge [main run](https://github.com/sotsera/rafter/actions/runs/40235060589) passed both platforms. The
+same-PR supersession and absence of duplicate fork-push runs were also verified before merge. This change reduces
+wasted evaluation; the two Windows main jobs were 9m04s before and 9m08s after, without a demonstrated speedup.
+
+The separate [Windows cache experiment](ci-cache-measurements.md), tracked by
+[issue #56](https://github.com/sotsera/rafter/issues/56), compared three full Windows jobs per placement. Root restore
+improved from a median 21s to 4s, but the complete job was longer: 8m05s default versus 9m03s runner-temp. All six
+samples passed. Default cache placement is retained; the opt-in manual mode remains available for measurement.
+Fresh package consumers explicitly retain their private cache despite ambient `NUGET_PACKAGES`. Remote archive
+caching and lock-file policy remain separate decisions; the measurement record preserves the samples and limits.
 
 ## Published initial work
 
