@@ -24,7 +24,8 @@ override the ambient `NUGET_PACKAGES` with each consumer's private `.packages` d
 empty. They must still verify the freshly packed runtime and analyzers. Other consumers can share the job cache.
 
 Keep main pushes and PR evaluations enabled. Benchmark dispatches use the existing unique manual-run concurrency
-groups, so samples do not cancel each other. The input changes no Linux execution or normal job commands.
+groups, so samples do not cancel each other. Normal PR/main/manual-off evaluations retain both jobs and their
+existing commands. Benchmark dispatches alone skip Linux.
 
 ## Decision rule
 
@@ -38,9 +39,51 @@ requires them by default. This increment introduces neither a lock-file policy n
 NuGet's [cache documentation](https://learn.microsoft.com/en-us/nuget/consume-packages/managing-the-global-packages-and-cache-folders)
 describes the environment overrides used here.
 
-## Results
+## Results — 2026-10-26
 
-Pending hosted measurements. No duration improvement or new default cache location is claimed yet.
+**Keep default cache placement.** All six hosted samples passed, but runner-temp placement did not improve the
+complete Windows job. Its median job time was **9m03s**, compared with **8m05s** for default placement: **58s longer
+(about 12%)**. It was slower in each of the three dispatch pairs. Root restore improved consistently, but the full
+test suite dominated the job and took longer in these samples.
+
+All samples used commit `467c2938cf5b810cc59bf970c60ebbd304bae4d9`, SDK **10.0.403**, and runner image
+**20261022.344.1** (`win22`). Each reported Windows full **806 passed, 0 failed, 1 console-dependent skip**, successful
+packaging, and **43** redirected runtime checks. No failed sample was excluded or replaced.
+
+| Metric | Default median (range), seconds | Runner-temp median (range), seconds |
+| --- | --- | --- |
+| Restore | 21 (16–22) | 4 (4–5) |
+| Build | 9 (8–9) | 11 (9–13) |
+| Full tests | 365 (332–374) | 436 (368–455) |
+| Complete Windows job | 485 (428–488) | 543 (474–565) |
+
+These are hosted-runner observations from three samples per placement, not a controlled disk-only experiment.
+They do not establish why the full suite took longer or a universal regression from relocating caches. They do
+establish that this measurement does not support adopting runner-temp placement for Rafter's normal evaluation.
+The 17s median root-restore saving alone would overstate the practical result.
+
+| Pair | Default run / job time | Runner-temp run / job time |
+| --- | --- | --- |
+| 1 | [40398812432](https://github.com/ghidello/rafter/actions/runs/40398812432) / 7m08s | [40398832438](https://github.com/ghidello/rafter/actions/runs/40398832438) / 7m54s |
+| 2 | [40398868878](https://github.com/ghidello/rafter/actions/runs/40398868878) / 8m05s | [40398851587](https://github.com/ghidello/rafter/actions/runs/40398851587) / 9m25s |
+| 3 | [40398885543](https://github.com/ghidello/rafter/actions/runs/40398885543) / 8m08s | [40398901559](https://github.com/ghidello/rafter/actions/runs/40398901559) / 9m03s |
+
+Default resolved packages to `C:/Users/runneradmin/.nuget/packages/` and HTTP cache to
+`C:/Users/runneradmin/AppData/Local/NuGet/v3-cache`. Runner-temp resolved them to `D:/a/_temp/nuget/packages` and
+`D:/a/_temp/nuget/http-cache`. Fresh package consumers retained their own `.packages` directories in both modes.
+The opt-in comparison remains available; no remote archive cache or SDK policy change is introduced.
+
+To repeat after this increment merges, dispatch the existing evaluation workflow on the selected revision with
+`nuget-cache-experiment=default` or `runner-temp`; `off` is the normal two-platform evaluation. For example:
+
+```powershell
+gh workflow run evaluation.yml --repo sotsera/rafter --ref main -f nuget-cache-experiment=default
+gh workflow run evaluation.yml --repo sotsera/rafter --ref main -f nuget-cache-experiment=runner-temp
+```
+
+Use a single revision and record each new sample; do not relabel the observations above as checks of a later commit.
+
+### Local regression verification
 
 Local regression: the integration project built with zero warnings/errors, and the package-consumer class passed
 **1 test, 0 failures, 0 skips** with both cache environment variables set to an ambient directory. Project and

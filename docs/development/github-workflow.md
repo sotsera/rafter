@@ -94,9 +94,11 @@ same-PR supersession and absence of duplicate fork-push runs were also verified 
 wasted evaluation; the two Windows main jobs were 9m04s before and 9m08s after, without a demonstrated speedup.
 
 The separate [Windows cache experiment](ci-cache-measurements.md), tracked by
-[issue #56](https://github.com/sotsera/rafter/issues/56), compares package/HTTP cache placement using the complete
-Windows job. Fresh package consumers explicitly retain their private cache despite ambient `NUGET_PACKAGES`.
-Remote archive caching and lock-file policy remain separate decisions.
+[issue #56](https://github.com/sotsera/rafter/issues/56), compared three full Windows jobs per placement. Root restore
+improved from a median 21s to 4s, but the complete job was longer: 8m05s default versus 9m03s runner-temp. All six
+samples passed. Default cache placement is retained; the opt-in manual mode remains available for measurement.
+Fresh package consumers explicitly retain their private cache despite ambient `NUGET_PACKAGES`. Remote archive
+caching and lock-file policy remain separate decisions; the measurement record preserves the samples and limits.
 
 ## Published initial work
 

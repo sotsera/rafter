@@ -40,19 +40,22 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Measure Windows cache placement, then discuss process authoring.** Keep independent validation,
+**Review the measured cache experiment, then discuss process authoring.** Keep independent validation,
 applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
 the deferred #46/#47 integration acceptance are merged.
 
 CI trigger/concurrency changes merged through [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54;
-its post-merge main evaluation passed. The cache-placement measurement is agreed under
-[#56](https://github.com/sotsera/rafter/issues/56), following the [measurement method](../development/ci-cache-measurements.md).
-Remote archive caching and later product topics remain proposals.
+its post-merge main evaluation passed. The cache-placement measurement under
+[#56](https://github.com/sotsera/rafter/issues/56) completed three successful samples per placement. Root restore
+improved, but whole-job medians were 8m05s default and 9m03s runner-temp; keep default placement. The
+[measurement record](../development/ci-cache-measurements.md) owns the method, source revision, samples, and limits.
+The benchmark mode and fresh-package isolation fix await focused PR delivery. Remote archive caching and later
+product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Measure Windows NuGet cache placement under [#56](https://github.com/sotsera/rafter/issues/56). | Compare three default and three runner-temp full Windows jobs while preserving private fresh-package consumers; adopt only a measured improvement. |
-| 2 | Consider remote archive caching after the placement results. | Measure transfer/extraction/save time and hit/miss behavior before adopting a cache or lock-file policy. |
+| 1 | Review the cache experiment and isolation fix under [#56](https://github.com/sotsera/rafter/issues/56). | Retain default placement after six passing hosted samples; deliver the opt-in comparison and explicit fresh-package cache isolation. |
+| 2 | Consider further CI profiling before remote archive caching. | Full consumer tests dominate the measured job. Profile them separately; any archive experiment must include transfer/extraction/save time and hit/miss behavior before adopting a cache or lock-file policy. |
 | 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
 | 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
