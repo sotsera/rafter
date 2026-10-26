@@ -3,7 +3,7 @@
 This is the main development roadmap and record of example/API decisions. Start with the current position and next
 steps below; the topic inventory and detailed decisions preserve the reasoning behind the implementation.
 
-## Current position — 2026-10-25
+## Current position — 2026-10-26
 
 Rafter has a working Windows-first automation runtime and a portable command/input/target layer. The **First working
 examples** milestone is complete. Subsequent increments added environment inputs, named enums, exact durations,
@@ -40,27 +40,29 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Deliver the agreed CI scheduling improvements, then discuss process authoring.** Keep independent validation,
+**Measure Windows cache placement, then discuss process authoring.** Keep independent validation,
 applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
 the deferred #46/#47 integration acceptance are merged.
 
-The CI trigger/concurrency scope below is agreed for the current increment. Cache experiments and later product
-topics remain proposals. Record agreed syntax and observable behavior before creating their implementation issues.
+CI trigger/concurrency changes merged through [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54;
+its post-merge main evaluation passed. The cache-placement measurement is agreed under
+[#56](https://github.com/sotsera/rafter/issues/56), following the [measurement method](../development/ci-cache-measurements.md).
+Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver CI trigger/concurrency improvements under [#54](https://github.com/sotsera/rafter/issues/54). | Evaluate branches through PRs, retain main/manual evaluations, and cancel only superseded runs of the same PR. Preserve both full suites, packaging, and evidence. |
-| 2 | Consider a separate Windows NuGet cache experiment. | Measure package/HTTP cache placement while preserving private fresh-package consumer caches; decide remote archive caching from measured results. |
+| 1 | Measure Windows NuGet cache placement under [#56](https://github.com/sotsera/rafter/issues/56). | Compare three default and three runner-temp full Windows jobs while preserving private fresh-package consumers; adopt only a measured improvement. |
+| 2 | Consider remote archive caching after the placement results. | Measure transfer/extraction/save time and hit/miss behavior before adopting a cache or lock-file policy. |
 | 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
 | 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
 | 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
 | 7 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
-The CI review found duplicate fork-push/upstream-PR evaluations for #49. The agreed change removes `build/**` push
+The CI review found duplicate fork-push/upstream-PR evaluations for #49. The merged change removes `build/**` push
 evaluations and uses a workflow/event/PR concurrency group for PR runs. Main pushes and manual runs each use their
-own run ID, so they neither cancel nor replace each other's pending runs. Job contents and cache settings stay as
-they are. The [CI workflow record](../development/github-workflow.md#ci-efficiency-increment) owns the details.
+own run ID, so they neither cancel nor replace each other's pending runs. Its job contents and cache settings stayed
+unchanged. The [CI workflow record](../development/github-workflow.md#ci-efficiency-increment) owns the details.
 Benchmark cache placement separately from remote cache transfer; `NUGET_PACKAGES` overrides consumer NuGet
 configuration, so isolated fresh-package checks must retain their own caches. Remote caching is not automatically
 a win and no lock-file policy has been adopted.
