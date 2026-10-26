@@ -79,6 +79,61 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  windows-portable-evaluation:
+    name: Windows portable evaluation
+    if: inputs.nuget-cache-experiment != 'default' && inputs.nuget-cache-experiment != 'runner-temp'
+    runs-on: windows-2022
+    timeout-minutes: 15
+    env:
+      DOTNET_NOLOGO: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Record environment and portable membership
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+          dotnet --info | Tee-Object artifacts/dotnet-info.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "ImageOS=$env:ImageOS ImageVersion=$env:ImageVersion" | Out-File artifacts/runner-image.txt
+          $projects = dotnet sln Rafter.Portable.slnf list
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $projects | Tee-Object artifacts/portable-projects.txt
+          if (-not ($projects | Select-String -SimpleMatch 'Rafter.UnitTests.csproj') -or
+              -not ($projects | Select-String -SimpleMatch 'Rafter.IntegrationTests.csproj')) {
+            throw 'Both portable test projects must be selected.'
+          }
+          if ($projects | Select-String -Pattern 'Rafter.WindowsTests|ProcessProbe') {
+            throw 'Windows projects must be excluded from the portable solution filter.'
+          }
+
+      - name: Restore portable solution
+        run: dotnet restore Rafter.Portable.slnf
+
+      - name: Build portable solution
+        run: dotnet build Rafter.Portable.slnf --configuration Release --no-restore -bl:artifacts/build.binlog
+
+      - name: Run ordinary portable tests
+        run: dotnet test --solution Rafter.Portable.slnf --configuration Release --no-build --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/ordinary
+
+      - name: Run full portable evaluation
+        run: dotnet test --solution Rafter.Portable.slnf --configuration Release --no-build -p:IncludeLongRunningTests=true --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/full
+
+      - name: Retain portable evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-portable-evaluation
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
   windows-evaluation:
     name: Windows evaluation
     runs-on: windows-2022
@@ -87,6 +142,7 @@ jobs:
       DOTNET_NOLOGO: '1'
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+      RAFTER_NUGET_CACHE_EXPERIMENT: ${{ inputs.nuget-cache-experiment || 'off' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -106,8 +162,6 @@ jobs:
 
       - name: Record environment
         shell: pwsh
-        env:
-          RAFTER_NUGET_CACHE_EXPERIMENT: ${{ inputs.nuget-cache-experiment || 'off' }}
         run: |
           New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           dotnet --info | Tee-Object artifacts/dotnet-info.txt
@@ -131,10 +185,24 @@ jobs:
         run: dotnet build Rafter.slnx --configuration Release --no-restore -bl:artifacts/build.binlog
 
       - name: Run ordinary tests
-        run: dotnet test --solution Rafter.slnx --configuration Release --no-build --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/ordinary
+        shell: pwsh
+        run: |
+          $testScope = @('--project', 'tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj')
+          if ($env:RAFTER_NUGET_CACHE_EXPERIMENT -ne 'off') {
+            $testScope = @('--solution', 'Rafter.slnx')
+          }
+          "Test scope: $($testScope -join ' ')"
+          dotnet test @testScope --configuration Release --no-build --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/ordinary
 
       - name: Run full evaluation
-        run: dotnet test --solution Rafter.slnx --configuration Release --no-build -p:IncludeLongRunningTests=true --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/full
+        shell: pwsh
+        run: |
+          $testScope = @('--project', 'tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj')
+          if ($env:RAFTER_NUGET_CACHE_EXPERIMENT -ne 'off') {
+            $testScope = @('--solution', 'Rafter.slnx')
+          }
+          "Test scope: $($testScope -join ' ')"
+          dotnet test @testScope --configuration Release --no-build -p:IncludeLongRunningTests=true --minimum-expected-tests 1 --max-parallel-test-modules 1 --report-trx --results-directory artifacts/test-results/full
 
       - name: Pack local runtime and analyzers
         run: dotnet pack src/Sotsera.Rafter/Sotsera.Rafter.csproj --configuration Release --no-build --no-restore --output artifacts/packages

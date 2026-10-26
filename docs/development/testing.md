@@ -33,6 +33,14 @@ two portable projects and their production dependencies, excluding WindowsTests 
 application starts. Its membership and execution are verified on Windows and Ubuntu. The filter uses backslash
 project identifiers and a root-relative solution filename; the same file works with the pinned SDK on both systems.
 
+Normal CI runs this portable filter in **Linux portable evaluation** and **Windows portable evaluation**. The
+separate **Windows evaluation** job selects `Rafter.WindowsTests` directly, then checks packaging and redirected
+runtime output. Both Windows jobs execute concurrently on separate machines; their combined counts remain
+740 ordinary / 807 full. Review all three checks. Solution/project wiring, test source, native collections, and
+per-module execution policy are unchanged. See the [scheduling record](ci-duration.md) for verification and timing.
+The explicit cache-placement benchmark retains the original single Windows full-solution run; it skips both
+portable jobs only for manual `default`/`runner-temp` experiment modes.
+
 Each project explicitly imports [shared settings](../../tests/build/Rafter.Test.props) and
 [execution policy](../../tests/build/Rafter.Test.targets). Main-suite settings do not flow through an automatic
 `tests/Directory.Build.*` import to standalone assets. The integration/Windows suites share the small
