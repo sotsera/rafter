@@ -26,6 +26,8 @@ The focused delivery sequence is complete:
 | Invocation roots | Runtime/root consumers merged in [PR #50](https://github.com/sotsera/rafter/pull/50); workflow acceptance completed by #53, closing #46. | [Root contract and verification](roots-and-filesystem.md). |
 | Filesystem helpers | Runtime/filesystem consumers merged in [PR #51](https://github.com/sotsera/rafter/pull/51); workflow acceptance completed by #53, closing #47. | [Filesystem contract and verification](filesystem-authoring.md). |
 | Complete repository workflow and reconciled roadmap | Merged in [PR #53](https://github.com/sotsera/rafter/pull/53), closing #52/#46/#47. | [Workflow guide and independent verification](../development/repository-workflow.md). |
+| CI triggers and supersession | Merged in [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54. | [CI workflow record](../development/github-workflow.md#ci-efficiency-increment). |
+| Windows cache measurement and package isolation | Merged in [PR #57](https://github.com/sotsera/rafter/pull/57), closing #56; default placement retained. | [Six-sample result](../development/ci-cache-measurements.md). |
 
 The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
 full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
@@ -40,7 +42,7 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Review the measured cache experiment, then discuss process authoring.** Keep independent validation,
+**Measure a shorter Windows test critical path, then discuss process authoring.** Keep independent validation,
 applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
 the deferred #46/#47 integration acceptance are merged.
 
@@ -49,12 +51,19 @@ its post-merge main evaluation passed. The cache-placement measurement under
 [#56](https://github.com/sotsera/rafter/issues/56) completed three successful samples per placement. Root restore
 improved, but whole-job medians were 8m05s default and 9m03s runner-temp; keep default placement. The
 [measurement record](../development/ci-cache-measurements.md) owns the method, source revision, samples, and limits.
-The benchmark mode and fresh-package isolation fix await focused PR delivery. Remote archive caching and later
-product topics remain proposals.
+The benchmark mode and fresh-package isolation fix merged in PR #57; its
+[post-merge main run](https://github.com/sotsera/rafter/actions/runs/40403934136) passed. Profiling shows that portable
+integration and Windows-specific suites currently run serially. The [scheduling increment](../development/ci-duration.md)
+under [#58](https://github.com/sotsera/rafter/issues/58) runs them on separate Windows runners, retaining all cases and
+native isolation. Three complete hosted runs passed in 5m06s–6m00s (median 5m38s); the same-revision serial control
+took 8m56s, and latest merged main took 7m00s. All 740 ordinary / 807 full Windows case identities and outcomes match.
+The median summed Windows runner time increased to 9m49s versus 8m52s for the serial control. The scheduling record
+preserves this tradeoff and measurement limits. This slice awaits PR review and final-revision CI; remote archive
+caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Review the cache experiment and isolation fix under [#56](https://github.com/sotsera/rafter/issues/56). | Retain default placement after six passing hosted samples; deliver the opt-in comparison and explicit fresh-package cache isolation. |
+| 1 | Deliver and measure parallel Windows suite scheduling under [#58](https://github.com/sotsera/rafter/issues/58). | Preserve all 740 ordinary / 807 full Windows cases across two isolated jobs, keep Linux coverage, and compare complete-evaluation duration and runner time. |
 | 2 | Consider further CI profiling before remote archive caching. | Full consumer tests dominate the measured job. Profile them separately; any archive experiment must include transfer/extraction/save time and hit/miss behavior before adopting a cache or lock-file policy. |
 | 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |

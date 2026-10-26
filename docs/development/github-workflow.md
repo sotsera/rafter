@@ -52,8 +52,11 @@ Publish the focused branch on `ghidello/rafter` and open its PR into `sotsera/ra
 safe in the original checkout while validating an isolated slice. Review and applicable CI must finish before a
 squash merge; opening a PR does not authorize automatic merging or bypassing a review checkpoint.
 
-The current [evaluation workflow](../../.github/workflows/evaluation.yml) runs **Windows evaluation** and
-**Linux portable evaluation** for PRs, with ordinary and full profiles. Record results for the PR's actual head
+The current [evaluation workflow](../../.github/workflows/evaluation.yml) runs **Windows evaluation**,
+**Windows portable evaluation**, and **Linux portable evaluation** for normal PR/main/manual-off runs, with ordinary
+and full profiles. The two Windows jobs run concurrently on separate machines; the [duration record](ci-duration.md)
+owns their coverage and measurement details. All three checks must pass under the working delivery rules.
+The manual cache experiment retains its single Windows full-solution workload. Record results for the PR's actual head
 revision. Inspect skips and failed jobs explicitly; a portable Linux pass does not establish native Linux ownership
 or macOS support. These are working delivery rules; this update does not change GitHub protection settings.
 

@@ -24,8 +24,9 @@ override the ambient `NUGET_PACKAGES` with each consumer's private `.packages` d
 empty. They must still verify the freshly packed runtime and analyzers. Other consumers can share the job cache.
 
 Keep main pushes and PR evaluations enabled. Benchmark dispatches use the existing unique manual-run concurrency
-groups, so samples do not cancel each other. Normal PR/main/manual-off evaluations retain both jobs and their
-existing commands. Benchmark dispatches alone skip Linux.
+groups, so samples do not cancel each other. The subsequent [suite-scheduling increment](ci-duration.md) splits normal
+Windows evaluation across two runners alongside Linux. Explicit cache benchmark modes retain the original single
+Windows full-solution workload and skip both portable jobs, keeping this comparison repeatable.
 
 ## Decision rule
 
