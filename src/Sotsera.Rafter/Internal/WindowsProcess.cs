@@ -69,7 +69,8 @@ internal sealed class WindowsProcess : IOwnedProcess
     }
 
     public static WindowsProcess Start(string executable, string[] arguments, string directory,
-        IReadOnlyDictionary<string, string> overrides, Action<int>? handlesPrepared = null)
+        IReadOnlyDictionary<string, string> overrides, Action<int>? handlesPrepared = null,
+        IReadOnlyCollection<string>? removedEnvironment = null)
     {
         using var stdout = new OutputPipe();
         using var stderr = new OutputPipe();
@@ -104,7 +105,7 @@ internal sealed class WindowsProcess : IOwnedProcess
             {
                 flags |= CreateNoWindow;
             }
-            var environment = EnvironmentBlock(overrides);
+            var environment = EnvironmentBlock(overrides, removedEnvironment);
             var commandLine = new StringBuilder(string.Join(" ", new[] { executable }.Concat(arguments).Select(Quote)));
             handlesPrepared?.Invoke(donor.Id);
             Check(Native.CreateProcessW(null, commandLine, IntPtr.Zero, IntPtr.Zero, true, flags,
@@ -160,12 +161,17 @@ internal sealed class WindowsProcess : IOwnedProcess
         return empty;
     }
 
-    private static string EnvironmentBlock(IReadOnlyDictionary<string, string> overrides)
+    private static string EnvironmentBlock(IReadOnlyDictionary<string, string> overrides,
+        IReadOnlyCollection<string>? removedEnvironment = null)
     {
         var values = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
         {
             values[(string)entry.Key] = (string)entry.Value!;
+        }
+        foreach (var name in removedEnvironment ?? [])
+        {
+            values.Remove(name);
         }
         foreach (var entry in overrides)
         {

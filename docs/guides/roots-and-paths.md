@@ -69,7 +69,7 @@ Child processes use the command root as their default working directory. `.Worki
 that child: relative paths resolve against the command root, and absolute paths are used directly.
 
 ```csharp
-await context.Process("dotnet")
+await context.Executable("dotnet")
     .WorkingDirectory("src")
     .Arguments("build")
     .RunAsync();
@@ -108,7 +108,7 @@ command.RootDirectory(root);
 
 return await command.RunAsync(args, async context =>
 {
-    await context.Process("dotnet")
+    await context.Executable("dotnet")
         .Arguments("build", context.ResolvePath("Rafter.slnx"))
         .RunAsync();
 });

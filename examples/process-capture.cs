@@ -41,7 +41,7 @@ var showOrder = command.Option<bool>("show-order", "Display captured chunks in R
 
 return await command.RunAsync(args, async context =>
 {
-    var result = await context.Process("dotnet")
+    var result = await context.Executable("dotnet")
         .Arguments(Assembly.GetExecutingAssembly().Location, "--capture-child", context.GetValue(scenario).ToString())
         .Timeout(TimeSpan.FromSeconds(10))
         .RunAndCaptureAsync(maxCharactersPerStream: context.GetValue(limit), echo: context.GetValue(echo));

@@ -5,7 +5,7 @@ Implemented for [issue #42](https://github.com/sotsera/rafter/issues/42), follow
 user-selected project using a positive duration option. Owned process execution currently requires Windows.
 
 ```csharp
-await context.Process("dotnet")
+await context.Executable("dotnet")
     .Arguments("build", context.GetValue(project))
     .Timeout(context.GetValue(timeout))
     .RunAsync();
@@ -36,12 +36,12 @@ The base type has internal construction and supports the sealed
 ```csharp
 try
 {
-    await context.Process("tool").Timeout(TimeSpan.FromSeconds(10)).RunAsync();
+    await context.Executable("tool").Timeout(TimeSpan.FromSeconds(10)).RunAsync();
 }
 catch (ProcessTimeoutException exception)
 {
     context.WriteLine($"{exception.Executable} exceeded its execution deadline; using a fallback.");
-    await context.Process("fallback-tool").RunAsync();
+    await context.Executable("fallback-tool").RunAsync();
 }
 ```
 

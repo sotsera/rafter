@@ -112,7 +112,12 @@ public sealed class PackageConsumerTests
                         throw new InvalidOperationException("Packaged filesystem helpers did not select the expected paths.");
                     }
                 }
-                context.Process("dotnet").Timeout(TimeSpan.MaxValue);
+                context.Executable("dotnet").Timeout(TimeSpan.MaxValue);
+                var dotnet = context.Dotnet().Timeout(TimeSpan.MaxValue);
+                dotnet.Build("sample.csproj").Configuration("Custom").NoRestore().DisableBuildServers().MaxCpuCount(1)
+                    .Arguments("--nologo");
+                dotnet.Publish("sample.csproj").Configuration("Custom").NoBuild().Output("published");
+                dotnet.Pack("sample.csproj").Configuration("Custom").NoBuild().Output("packages");
                 context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
                     + $"{context.GetValue(duration).Ticks} ticks.");
             });
@@ -193,8 +198,10 @@ public sealed class PackageConsumerTests
             name.Default("Ada");
             return await command.RunAsync(args, context =>
             {
-                _ = context.Process("must-never-launch").RunAsync();
-                _ = context.Process("must-never-launch").RunAndCaptureAsync(1024);
+                _ = context.Executable("must-never-launch").RunAsync();
+                _ = context.Executable("must-never-launch").RunAndCaptureAsync(1024);
+                _ = context.Dotnet().Build().RunAsync();
+                _ = context.Dotnet().Publish().RunAndCaptureAsync(1024);
             });
             """;
         await File.WriteAllTextAsync(sourcePath, directives + invalid, TestContext.Current.CancellationToken);

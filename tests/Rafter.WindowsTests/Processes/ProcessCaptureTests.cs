@@ -282,7 +282,7 @@ public sealed class ProcessCaptureTests
     }
 
     private static ProcessCommand Probe(RafterContext context, string mode, params string[] arguments)
-        => context.Process("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, arguments));
+        => context.Executable("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, arguments));
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     private static async Task<WeakReference> CaptureAndReleaseAsync(ProcessCommand builder)

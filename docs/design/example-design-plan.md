@@ -3,7 +3,7 @@
 This is the main development roadmap and record of example/API decisions. Start with the current position and next
 steps below; the topic inventory and detailed decisions preserve the reasoning behind the implementation.
 
-## Current position — 2026-10-26
+## Current position — 2026-10-27
 
 Rafter has a working Windows-first automation runtime and a portable command/input/target layer. The **First working
 examples** milestone is complete. Subsequent increments added environment inputs, named enums, exact durations,
@@ -13,7 +13,7 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 | --- | --- | --- |
 | Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
 | Targets | Sequential dependency graphs, groups, multiple selected entries, and failure/cancellation handling. | Conditional execution and shared-resource cleanup APIs remain undesigned. |
-| Processes | Windows ownership from launch, descendant cleanup, concurrent awaited operations, failure actions, execution timeouts, and bounded capture. | Linux-native ownership, reusable settings, and broader deadlines remain separate work. |
+| Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, and capture; reusable executables and typed .NET build/publish/pack are implemented and verified locally under #60. | Local review/PR CI for #60, SDK environment policy, Git/npm helpers, Linux-native ownership, and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
 | Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
@@ -28,6 +28,7 @@ The focused delivery sequence is complete:
 | Complete repository workflow and reconciled roadmap | Merged in [PR #53](https://github.com/sotsera/rafter/pull/53), closing #52/#46/#47. | [Workflow guide and independent verification](../development/repository-workflow.md). |
 | CI triggers and supersession | Merged in [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54. | [CI workflow record](../development/github-workflow.md#ci-efficiency-increment). |
 | Windows cache measurement and package isolation | Merged in [PR #57](https://github.com/sotsera/rafter/pull/57), closing #56; default placement retained. | [Six-sample result](../development/ci-cache-measurements.md). |
+| Parallel Windows evaluation | Merged in [PR #59](https://github.com/sotsera/rafter/pull/59), closing #58. | [Duration, coverage, and runner-time tradeoff](../development/ci-duration.md). |
 
 The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
 full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
@@ -42,7 +43,7 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Measure a shorter Windows test critical path, then discuss process authoring.** Keep independent validation,
+**Verify and locally review the executable/.NET increment tracked by [#60](https://github.com/sotsera/rafter/issues/60).** Keep independent validation,
 applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
 the deferred #46/#47 integration acceptance are merged.
 
@@ -52,20 +53,23 @@ its post-merge main evaluation passed. The cache-placement measurement under
 improved, but whole-job medians were 8m05s default and 9m03s runner-temp; keep default placement. The
 [measurement record](../development/ci-cache-measurements.md) owns the method, source revision, samples, and limits.
 The benchmark mode and fresh-package isolation fix merged in PR #57; its
-[post-merge main run](https://github.com/sotsera/rafter/actions/runs/40403934136) passed. Profiling shows that portable
-integration and Windows-specific suites currently run serially. The [scheduling increment](../development/ci-duration.md)
-under [#58](https://github.com/sotsera/rafter/issues/58) runs them on separate Windows runners, retaining all cases and
+[post-merge main run](https://github.com/sotsera/rafter/actions/runs/40403934136) passed. Profiling identified serial
+portable integration and Windows-specific suites. The merged [scheduling increment](../development/ci-duration.md)
+in PR #59 runs them on separate Windows runners, retaining all cases and
 native isolation. Three complete hosted runs passed in 5m06s–6m00s (median 5m38s); the same-revision serial control
 took 8m56s, and latest merged main took 7m00s. All 740 ordinary / 807 full Windows case identities and outcomes match.
 The median summed Windows runner time increased to 9m49s versus 8m52s for the serial control. The scheduling record
-preserves this tradeoff and measurement limits. This slice awaits PR review and final-revision CI; remote archive
+preserves this tradeoff and measurement limits. Final PR verification passed all three checks in 5m46s. The next
+product increment is the [executable and chunked-argument design](#process-authoring-draft-for-review); its entry-point
+and argument syntax plus typed-helper direction are agreed, with local implementation verified on Windows. SDK environment
+policy remains open. Remote archive
 caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver and measure parallel Windows suite scheduling under [#58](https://github.com/sotsera/rafter/issues/58). | Preserve all 740 ordinary / 807 full Windows cases across two isolated jobs, keep Linux coverage, and compare complete-evaluation duration and runner time. |
-| 2 | Consider further CI profiling before remote archive caching. | Full consumer tests dominate the measured job. Profile them separately; any archive experiment must include transfer/extraction/save time and hit/miss behavior before adopting a cache or lock-file policy. |
-| 3 | Discuss process authoring and SDK-environment inheritance. | Simplify repeated process settings only after agreeing an API; address the documented outside-launch SDK/MSBuild environment problem and revisit the local Dotnet wrapper. |
+| 1 | Review and deliver [#60](https://github.com/sotsera/rafter/issues/60) through a focused PR. | Reusable executables, grouped arguments, typed .NET build/publish/pack, child overrides, and migrated workflow/consumers. Local checks passed; PR review and CI remain before merging. |
+| 2 | Investigate the SDK-environment boundary. | Reproduce inherited host SDK paths, select an evidence-based child environment policy, and separate child SDK selection from the SDK that launches the file app. Generic explicit removal does not itself resolve this. |
+| 3 | Extend typed tool helpers from concrete examples. | Git and npm use the same generic execution pipeline; review their command-specific syntax before separate implementation increments. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
 | 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
 | 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
@@ -80,7 +84,7 @@ configuration, so isolated fresh-package checks must retain their own caches. Re
 a win and no lock-file policy has been adopted.
 
 Keep the two production projects and existing ownership boundaries. Additional layers, parallel target scheduling,
-more input types, machine-readable output, reusable process settings, macOS, and AOT should follow a concrete use case
+more input types, machine-readable output, cross-target process settings, macOS, and AOT should follow a concrete use case
 and their own design/verification decisions. The order above can change when the workflow reveals a stronger need.
 
 ### Fix backlog from the code review
@@ -102,7 +106,7 @@ priorities order follow-up work and do not claim an emergency or a completed rel
 ### Delivered increment: one complete automation workflow
 
 [repository-workflow.cs](../../examples/repository-workflow.cs) is the maintained Windows-only file-app baseline.
-It uses the merged root/filesystem APIs with ordinary C# sequencing, a local process factory, `if (pack)`, and
+It uses the merged root/filesystem APIs with ordinary C# sequencing, `if (pack)`, and
 `try/finally`. The [workflow guide](../development/repository-workflow.md) owns usage, evidence paths, independent
 verification, and the SDK-launch caveat. Its five real consumer scenarios use a small solution rather than recursively
 running the repository's full workflow tests.
@@ -122,9 +126,10 @@ values, public publication, and Linux-native ownership remain separate work.
 ### Workflow cleanup follow-up
 
 Revisit [repository-workflow.cs](../../examples/repository-workflow.cs) as process-authoring APIs evolve. Its
-explicit Dotnet helper is a working baseline for comparison, with these remaining follow-ups:
+original Dotnet helper remains in the before example below for comparison, with these follow-ups:
 
-- Simplify repeated process configuration when an agreed process-settings API is available.
+- The local #60 increment replaces repeated process configuration with `context.Dotnet()` and typed build/pack calls.
+  All five migrated workflow scenarios passed locally; review and PR CI remain before delivery.
 - Address SDK-environment inheritance: an outside `dotnet run` can select a preview SDK and carry its MSBuild paths
   into children using the repository's pinned SDK. The guide retains the observed failure and built-DLL workaround.
 - The first root/filesystem cleanup is implemented through #50/#51 and used by this example: directory/file
@@ -132,8 +137,249 @@ explicit Dotnet helper is a working baseline for comparison, with these remainin
 - Rerun workflow success, failure, timeout, root, optional-pack, and evidence checks after future cleanup. Preserve
   process/stream settlement and explicit cancellation choices for final evidence.
 
-Replacement process syntax remains a design decision. Keep this follow-up visible until that authoring work is
-reviewed and the example reflects it.
+Keep the SDK-environment follow-up visible after authoring cleanup. The
+[design below](#process-authoring-draft-for-review) records the agreed syntax and local implementation boundary.
+
+### Process authoring draft for review
+
+**Status: syntax and typed-helper direction agreed, 2026-10-27; implemented and verified locally under
+[issue #60](https://github.com/sotsera/rafter/issues/60).** Use
+`context.Executable("dotnet")` for reusable executable configuration and repeated `.Arguments(...)` calls to group
+one, two, or many separate tokens. The same calls can form one inline chain for a single invocation. This replaces
+the earlier `ProcessTemplate(...).Create(...)` proposal. The local runtime provides `Executable`, explicit
+`RemoveEnvironment`, and the first typed .NET helpers. None is merged or published yet.
+The maintained [repository workflow](../../examples/repository-workflow.cs) remains the runnable baseline.
+
+The immediate use case is one workflow body launching several independent `dotnet` children with the same environment
+and per-process timeout. Keep option resolution explicit through `context.GetValue(timeout)` after normal input
+validation. The excerpts use the existing body's `context`, `project`, `solution`, `evidence`, and
+`buildConfiguration` variables; JSON parsing, test arguments, optional packaging, and final-manifest writes retain
+their existing sequencing.
+
+#### Before: previous process factory
+
+Before this increment, the workflow used this local C# function to create a fresh configured child for each operation:
+
+```csharp
+ProcessCommand Dotnet(params string[] arguments)
+{
+    return context.Process("dotnet")
+        .Environment("DOTNET_NOLOGO", "1")
+        .Environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
+        .Environment("DOTNET_CLI_USE_MSBUILD_SERVER", "0")
+        .Timeout(context.GetValue(timeout))
+        .Arguments(arguments);
+}
+
+var metadata = await Dotnet("msbuild", project.FullPath, "-nologo",
+        "-getProperty:PackageId,Version,TargetFramework", "-property:Configuration=" + buildConfiguration)
+    .RunAndCaptureAsync(maxCharactersPerStream: 16 * 1024);
+
+await Dotnet("build", solution.FullPath, "--configuration", buildConfiguration,
+        "--disable-build-servers", "-m:1",
+        "-flp:LogFile=" + evidence.File("build.log").FullPath + ";Verbosity=normal")
+    .RunAsync();
+```
+
+The helper gives each operation a fresh builder. `ProcessCommand.Arguments(...)` appends to that builder;
+keeping one builder and appending the next command's arguments would accumulate arguments. Each execution snapshots
+the current configuration; the builder is not a reusable argument factory.
+
+#### After: agreed executable and argument syntax
+
+Configure a reusable executable, then group arguments by meaning for each child command:
+
+```csharp
+var dotnet = context.Executable("dotnet")
+    .Environment("DOTNET_NOLOGO", "1")
+    .Environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
+    .Environment("DOTNET_CLI_USE_MSBUILD_SERVER", "0")
+    .Timeout(context.GetValue(timeout));
+
+var metadata = await dotnet
+    .Arguments("msbuild", project.FullPath)
+    .Arguments("-nologo")
+    .Arguments("-getProperty:PackageId,Version,TargetFramework")
+    .Arguments("-property:Configuration=" + buildConfiguration)
+    .RunAndCaptureAsync(maxCharactersPerStream: 16 * 1024);
+
+await dotnet
+    .Arguments("build", solution.FullPath)
+    .Arguments("--configuration", buildConfiguration)
+    .Arguments("--disable-build-servers", "-m:1")
+    .Arguments("-flp:LogFile=" + evidence.File("build.log").FullPath + ";Verbosity=normal")
+    .RunAsync();
+```
+
+The same entry point works inline without a reusable local variable:
+
+```csharp
+await context.Executable("dotnet")
+    .Arguments("build", solution.FullPath)
+    .Arguments("--configuration", buildConfiguration)
+    .Arguments("--disable-build-servers", "-m:1")
+    .RunAsync();
+```
+
+`context.Executable("dotnet")` returns an immutable `Executable` bound to the current
+body. Its fluent settings return a new executable configuration. `Executable.Arguments(params string[] arguments)`
+returns a fresh `ProcessCommand` with copied defaults and argument tokens. Subsequent `ProcessCommand.Arguments(...)`
+calls append to that command using the existing behavior. Neither configuration nor argument calls launch a child.
+`RunAsync` or `RunAndCaptureAsync` starts it using the existing ownership and settlement rules. The executable retains
+configured values, not past operations, results, captures, or output streams.
+
+An option/value pair is two ordinary tokens in one call, not a new parser or automatic option formatting feature.
+One-token forms such as `-property:Configuration=Release` remain one token. Keep the existing support for empty
+string tokens, reject null/NUL tokens, and copy caller arrays before retaining them.
+
+The executable settings are environment edits, timeout, and an optional working directory. The normal
+default directory stays `context.RootDirectory`. Accepted exit codes and failure handlers remain child settings;
+capture bounds and echo remain execution choices at the call site, as in the current API.
+
+#### Per-child changes and precedence
+
+A child can explicitly override an executable default once without changing the next child:
+
+```csharp
+var probe = dotnet.Arguments("--version")
+    .Timeout(TimeSpan.FromSeconds(30));
+
+var sdk = await probe.RunAndCaptureAsync(maxCharactersPerStream: 1024);
+context.WriteLine(sdk.StandardOutput.Text.Trim());
+
+// A later dotnet.Arguments(...) still has the executable's configured timeout.
+```
+
+| Setting or operation | Proposed behavior for review |
+| --- | --- |
+| Environment | Inherit the host environment normally, apply executable edits, then explicit child edits. Copy configured edits; do not freeze the whole inherited environment when configuring the executable. |
+| Timeout | Child value overrides the executable value. It is a default, not an invocation-wide maximum. Existing positive-duration validation and shutdown/settlement semantics apply. |
+| Working directory | Invocation root, then optional executable directory, then explicit child directory. Resolve relative paths against the invocation root without changing host CWD. |
+| Duplicate settings | Each setting/name may be written once within an executable configuration chain and once within a child chain. A child override is a separate layer; a second explicit child write remains an error. |
+| Arguments | Every call on `Executable` starts a fresh `ProcessCommand`. Calls on that command append only to it, retaining the current token/no-shell contract. |
+| Failure and output | Keep default rejected-exit throwing, child-specific handlers, bounded capture, raw child streams, and explicit awaiting. Configuring an executable changes none of these policies. |
+| Lifetime | Executable and children belong to the originating body. They cannot launch after it ends, keep it open implicitly, or silently bind to another target/body. Configuring an executable/child does not start an operation. |
+
+Independent children can still run concurrently when explicitly awaited together. A child override must not leak into
+the executable, another child, or the parent environment. An executable timeout does not replace invocation cancellation.
+If a command option must act as a hard upper limit rather than a default, that is a separate policy to agree.
+
+#### SDK environment: explicit candidate, not a verified fix
+
+`RemoveEnvironment(params string[] names)` is implemented on both the executable configuration and a child command. Removal means absence
+in that child's environment block, distinct from setting an empty string. A variable set or removed explicitly by
+the child takes precedence over an executable edit of the same name; conflicting edits within one layer are rejected.
+
+An illustrative SDK-specific derivation would be:
+
+```csharp
+// Candidate only: the complete removal list must come from reproducing the recorded failure.
+var standaloneDotnet = dotnet.RemoveEnvironment("MSBuildSDKsPath");
+
+await standaloneDotnet
+    .Arguments("build", solution.FullPath)
+    .Arguments("--configuration", buildConfiguration)
+    .Arguments("--disable-build-servers", "-m:1")
+    .RunAsync();
+```
+
+The original `dotnet` configuration would still inherit that variable; the derived executable opts out for its children.
+Microsoft documents [MSBuildSDKsPath](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-reserved-and-well-known-properties)
+as an SDK lookup path. That makes it a candidate to investigate, not proof that removing this one variable fixes
+the [recorded outside-launch failure](../development/repository-workflow.md#verification-after-rootpath-cleanup).
+Inventory the actual inherited SDK/MSBuild variables and verify a real metadata/build operation before choosing a
+removal list. A successful `dotnet --version` alone would not establish that MSBuild loaded the correct SDK/tasks.
+
+Keep normal environment inheritance for generic processes. Preserve unrelated settings such as `PATH`, proxy and
+NuGet cache configuration. Do not automatically sanitize every executable named `dotnet` or remove all `DOTNET_*`
+variables: Microsoft gives [DOTNET_HOST_PATH](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables)
+a deliberate role for SDK-launched tools. A higher-level dotnet helper needs its own explicit environment policy.
+
+This proposal concerns children launched by Rafter. The SDK running the outer file app is selected before Rafter
+handles `--root`; child environment edits cannot retroactively change that host. The existing pinned-SDK/built-DLL
+launch workaround remains the verified approach until the new behavior is implemented and tested.
+
+#### Typed command helpers — agreed direction, 2026-10-27
+
+Build typed helpers on the generic executable API. Start with .NET; Git and npm are planned follow-ups, not part of
+this implementation increment. Helpers compose `Executable` and `ProcessCommand` and translate named methods into
+argument tokens. They must use the same launch, capture, failure, cancellation, timeout, and settlement pipeline.
+Retain `.Arguments(params string[])` as an escape hatch on both the reusable tool and each typed command.
+
+```csharp
+var dotnet = context.Dotnet()
+    .Timeout(TimeSpan.FromMinutes(5));
+
+await dotnet.Build(solution.FullPath)
+    .Configuration("Release")
+    .NoRestore()
+    .RunAsync();
+
+await dotnet.Publish(project.FullPath)
+    .Configuration("Release")
+    .Output(output.FullPath)
+    .RunAsync();
+```
+
+For this increment, add reusable `DotnetExecutable` plus distinct build, publish, and pack command types. Provide
+command-appropriate configuration/output options, no-restore/no-build options where valid,
+and build-server/max-CPU settings needed by the maintained workflow. MSBuild properties and file logger settings use
+the raw argument escape hatch in this first increment. Keep configuration names as strings
+to support custom build configurations. Raw MSBuild inspection and repository-specific native-MTP test arguments
+remain grouped `.Arguments(...)` calls; do not invent a universal typed test-runner policy in this increment.
+
+Keep the tool-specific implementation in its own source folder, with no new dependencies or package/project split.
+The typed adapter is a thin composition layer that can be extracted later; generic ownership remains in the runtime.
+Future Git/npm adapters should follow the same composition pattern after their concrete command syntax is reviewed.
+
+Implementation scope selected for the generic foundation: body-bound immutable executable settings; one explicit
+child override per setting/name; zero-argument execution through fresh commands; explicit child-only environment
+removal, with no automatic dotnet sanitization. Replace `context.Process(...)` in maintained callers. The recorded
+outside-launch SDK failure remains a separate investigation until a real reproduction establishes its policy.
+
+#### Generic implementation structure
+
+The entry-point name, chunked argument calls, and inline/reusable authoring forms are agreed. Implement them through
+the existing process pipeline rather than adding another launcher:
+
+1. Add the public `Executable` configuration type and `RafterContext.Executable(string executable)` entry point.
+   Share validation with `ProcessCommand`; use defensive copies for configuration collections.
+2. Keep executable defaults separate from explicit child settings. Copying defaults into today's single-assignment
+   fields would incorrectly make a valid child override look like a duplicate write. Merge the two layers into the
+   existing `ProcessSettings` snapshot immediately before execution.
+3. Keep `ProcessCommand` as the invocation builder with its existing chunked arguments, failure handlers, accepted
+   exit codes, and run/capture methods. Preserve its mutable append behavior and execution snapshots; saving a
+   `ProcessCommand` does not turn it into a reusable argument factory.
+4. Reuse `BodyProcesses`, `ProcessOperation`, and the native runner for execution and cleanup. Add no alternate
+   launch, stream, cancellation, timeout, or settlement path for reusable executables.
+5. Replace the current `context.Process(...)` entry point with `context.Executable(...)` in maintained examples,
+   consumers, tests, and current API guides. Preserve historical records and this before example. Do not retain an
+   alias by default; record the source-breaking rename. Replace the workflow's local Dotnet helper with the agreed
+   reusable configuration and grouped arguments.
+
+Selected scope for #60:
+
+1. **Lifetime and reuse scope.** Configuration is body-bound. Sharing outside the executing body or across targets
+   remains separate work. Input-dependent settings resolve explicitly from context; no `.Timeout(option)` binding.
+2. **Overrides.** Child settings take precedence over executable defaults; duplicate explicit writes within each
+   layer are rejected. This is distinct from two writes on today's command builder.
+3. **Zero-argument execution.** `Executable.RunAsync()` and `RunAndCaptureAsync(...)` forward through a fresh
+   zero-argument `ProcessCommand` each time. Both forms use the same pipeline and ownership rules.
+4. **Environment removal.** Explicit child-only removal is in scope. Automatic .NET-specific sanitization and a
+   verified SDK variable list remain follow-ups requiring reproduction.
+
+Issue #60 was created before code implementation. See the
+[authoring guide](../guides/executables-and-dotnet.md) for the local API and migration details.
+Acceptance should exercise argument grouping/order, caller-array isolation, reusable and inline calls, zero-argument
+execution, independent commands and overrides, concurrent children, body lifetime, unset versus empty variables,
+unchanged parent environment, help and invalid-input nonexecution, and actual inside/outside-checkout SDK selection
+plus metadata/build behavior. SDK-policy verification remains a follow-up rather than a claim of this increment. Then
+replace the workflow helper and rerun its success, build/test failure, timeout, optional-pack, and final-evidence
+scenarios. Local Windows verification is recorded in the
+[authoring guide](../guides/executables-and-dotnet.md#local-verification-2026-10-27): **830 passed, 0 failed,
+1 console-dependent skip**, fresh package consumers passed, and **43 redirected runtime cases** passed. The final
+Release build has no warnings/errors. Publication is authorized for PR review; these are local results, with PR CI
+still required before merging. Attached-console and live-editor checks were not run for this increment.
 
 ## Design approach and references
 
@@ -214,7 +460,8 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Output and diagnostics | Partial | Partial | Partial | Partial |
 | Failures | Partial | Partial | Partial | Partial |
 | External processes | ✓ | Partial | Partial | Partial |
-| Reusable process settings | — | — | — | — |
+| Reusable process settings | [Executable and chunked arguments](#process-authoring-draft-for-review) | Body-local immutable defaults, independent commands, and child overrides. | #60 implementation; PR delivery pending. | [Windows local checks](../guides/executables-and-dotnet.md#local-verification-2026-10-27); PR CI pending. |
+| Typed command helpers | [Typed .NET direction](#typed-command-helpers--agreed-direction-2026-10-27) | Build/publish/pack first; Git/npm follow later. | #60 .NET adapter; PR delivery pending. | [Real .NET and consumers](../guides/executables-and-dotnet.md#local-verification-2026-10-27); PR CI pending. |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
@@ -735,7 +982,8 @@ The runnable Windows examples are [examples/processes.cs](../../examples/process
 
 Agreed basic syntax:
 
-- `context.Process(executable)` selects the executable.
+- `context.Executable(executable)` selects reusable executable configuration. Its first `.Arguments(...)` call creates
+  an independent child command; see the [executable design](#process-authoring-draft-for-review) for defaults and reuse.
 - `.Arguments(...)` supplies separate argument tokens.
 - The process's `RunAsync()` starts and awaits the process, returning a process result whenever control returns normally
   to the body. The author can use or ignore that result. There is no separate result-returning execution method.
@@ -816,7 +1064,8 @@ Agreed process exception boundary:
 Open questions:
 
 - What additional executable-resolution controls, stream encodings, and other process settings should be exposed?
-- Should environment removal or starting with an empty environment be supported, and with what syntax?
+- Starting with an empty environment remains undesigned; explicit child-only `RemoveEnvironment(...)` is implemented
+  locally under #60.
 
 The command-level exception containment contract applies to the outer invocation. Process `RunAsync()` intentionally
 throws within the callback for the `Throw` action; these are separate API boundaries. The

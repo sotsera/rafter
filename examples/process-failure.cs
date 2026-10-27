@@ -10,7 +10,7 @@ var project = command.Option<string>("project", "The project to build.")
 
 return await command.RunAsync(args, async context =>
 {
-    var result = await context.Process("dotnet")
+    var result = await context.Executable("dotnet")
         .Arguments("build", context.GetValue(project))
         .OnFailure(_ => ProcessFailureAction.Fail)
         .RunAsync();

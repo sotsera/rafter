@@ -6,6 +6,12 @@ live echo. Its explicit positive limit counts UTF-16 code units per stream; clea
 exceptions expose bounded partial streams. Owned process execution currently requires Windows.
 This is a local development package for the first working examples milestone; it has not been published to NuGet.org.
 
+`context.Executable("tool")` replaces `context.Process("tool")`. Reusable executable settings are immutable;
+each `.Arguments(...)` call on the executable creates a fresh command, and further calls append argument chunks.
+Children can override defaults without changing siblings. `RemoveEnvironment(...)` explicitly removes child variables.
+`context.Dotnet()` adds typed `Build`, `Publish`, and `Pack` commands with configuration/output options and a raw
+`.Arguments(...)` escape hatch. All use the same owned process runner; Git/npm adapters remain future work.
+
 The runtime targets .NET 10. Verification targets SDK 10.0.402 on Windows x64 and Ubuntu 24.04 x64.
 External process ownership is implemented on Windows; native AOT remains unverified.
 

@@ -29,7 +29,8 @@ internal static class ProcessOperation
         WindowsProcess process;
         try
         {
-            process = WindowsProcess.Start(settings.Executable, settings.Arguments, settings.Directory, settings.Environment);
+            process = WindowsProcess.Start(settings.Executable, settings.Arguments, settings.Directory, settings.Environment,
+                removedEnvironment: settings.RemovedEnvironment);
         }
         catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
         {

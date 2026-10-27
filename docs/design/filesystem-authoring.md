@@ -26,7 +26,7 @@ var evidence = context.Directory("artifacts", "evidence", "workflows", "reposito
 await evidence.File("package-properties.json")
     .WriteAllTextAsync(metadata, context.CancellationToken);
 
-await context.Process("dotnet")
+await context.Executable("dotnet")
     .Arguments("build", solution.FullPath,
         "-flp:LogFile=" + evidence.File("build.log").FullPath + ";Verbosity=normal")
     .RunAsync();

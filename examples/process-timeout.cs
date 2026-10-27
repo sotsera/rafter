@@ -15,7 +15,7 @@ var timeout = command.Option<TimeSpan>("timeout", "Child execution deadline; shu
 
 return await command.RunAsync(args, async context =>
 {
-    await context.Process("dotnet")
+    await context.Executable("dotnet")
         .Arguments("build", context.GetValue(project))
         .Timeout(context.GetValue(timeout))
         .RunAsync();

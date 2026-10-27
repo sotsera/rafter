@@ -4,6 +4,10 @@ The fourteen implemented examples listed below run against the new runtime throu
 Windows; the target-only example prepares and prints a greeting without child processes. See the
 [design plan](../docs/design/example-design-plan.md) for accepted decisions and open topics.
 
+Process examples use `context.Executable(...)` with grouped argument tokens. The repository workflow uses reusable
+`context.Dotnet()` defaults and typed build/pack commands; see
+[executables and typed .NET commands](../docs/guides/executables-and-dotnet.md).
+
 `Directory.Build.targets` enables the same namespace import and analyzers as the
 [local NuGet package](../docs/guides/local-package.md). The examples therefore omit `using Sotsera.Rafter;`. Set
 `RafterImplicitUsings=false` to opt out and add the explicit import. When copying an example outside this checkout,

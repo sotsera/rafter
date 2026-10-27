@@ -6,7 +6,7 @@ var command = Rafter.Command("Display the installed .NET SDK version.");
 
 return await command.RunAsync(args, async context =>
 {
-    await context.Process("dotnet")
+    await context.Executable("dotnet")
         .Arguments("--version")
         .RunAsync();
 

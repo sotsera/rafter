@@ -14,7 +14,7 @@ var evidence = context.Directory("artifacts", "runs", runId)
 await evidence.File("metadata.json")
     .WriteAllTextAsync(metadata, context.CancellationToken);
 
-await context.Process("dotnet")
+await context.Executable("dotnet")
     .Arguments("build", context.File("src", "Project.csproj").FullPath)
     .RunAsync();
 ```

@@ -30,7 +30,7 @@ name.Required();
 name.Default("Ada");
 return await command.RunAsync(args, context =>
 {
-    _ = context.Process("must-never-launch").RunAsync();
+    _ = context.Executable("must-never-launch").RunAsync();
 });
 '@ | Set-Content -LiteralPath "$workspace/Program.cs" -Encoding utf8
 @'
