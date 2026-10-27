@@ -7,7 +7,7 @@ var command = Rafter.Command("Build the project or solution in the src directory
 
 return await command.RunAsync(args, async context =>
 {
-    await context.Process("dotnet")
+    await context.Executable("dotnet")
         .WorkingDirectory("src")
         .Environment("DOTNET_NOLOGO", "1")
         .Arguments("build")

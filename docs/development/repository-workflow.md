@@ -92,16 +92,22 @@ capability skips; inspect its TRX reports before treating a scenario as covered.
 - **The root/path and filesystem APIs merged through #50/#51.** The command binds `--root` and the invocation resolves
   it once; the script no longer captures CWD or repeats `.WorkingDirectory(repository)` on each child. The later
   filesystem cleanup replaces manual path composition/probes, directory creation, and text writes with the agreed
-  multi-segment helpers. Process configuration remains the next authoring discussion.
+  multi-segment helpers. The current local increment also uses reusable executable configuration and typed .NET commands.
 - Ordinary C# sequencing and `if (pack)` express this workflow clearly. There is no demonstrated need here for a
   new target condition API; later examples must establish skip/dependency behavior before adding one.
-- A local `Dotnet` function repeats environment and timeout settings. It keeps the example
-  coherent using existing APIs; it is evidence to consider when discussing reusable settings, not a requirement
-  to add another runtime abstraction now.
+- The local `Dotnet` function is replaced by immutable `context.Dotnet()` settings for
+  [issue #60](https://github.com/sotsera/rafter/issues/60). Build and pack use typed commands; metadata and native-MTP
+  test options use grouped raw arguments. See [executables and .NET](../guides/executables-and-dotnet.md).
 - Process awaits own shutdown/output delivery. `try/finally` owns the final evidence write. The script does not
   establish a shared-resource cleanup API or the behavior of multiple simultaneous cleanup failures.
 
 ## Historical local verification before delivery slicing
+
+The current executable/.NET authoring cleanup is verified separately for local issue #60 work:
+all five workflow cases passed within the **830 passed / 0 failed / 1 skipped** full regression. Typed build and pack
+replace the local helper, while metadata and native-MTP test arguments remain explicit chunks. See the
+[current verification record](../guides/executables-and-dotnet.md#local-verification-2026-10-27).
+The older observations below retain their original source revisions and counts.
 
 The [Windows workflow tests](../../tests/Rafter.WindowsTests/Consumers/RepositoryWorkflowTests.cs) use the actual
 file app in isolated workspaces. A small real solution containing the runtime and a sample test avoids recursively

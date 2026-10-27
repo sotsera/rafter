@@ -13,6 +13,12 @@ public static class Program
     {
         Console.OutputEncoding = new UTF8Encoding(false);
         Console.InputEncoding = Encoding.UTF8;
+        // Direct apphost invocations observe the argument vectors produced by typed tool adapters.
+        if (args.Length == 0 || args[0] is "build" or "publish" or "pack")
+        {
+            Console.Write(JsonSerializer.Serialize(args));
+            return 0;
+        }
         var runtime = args[0];
         var mode = args[1];
         switch (mode)
@@ -23,14 +29,14 @@ public static class Program
             case "stdin-host":
                 return await Rafter.Command("Preserve inherited input.").RunAsync(["--plain", "--quiet"], async context =>
                 {
-                    await context.Process("dotnet").Arguments("exec", "--runtimeconfig", runtime,
+                    await context.Executable("dotnet").Arguments("exec", "--runtimeconfig", runtime,
                         Assembly.GetExecutingAssembly().Location, runtime, "stdin").RunAsync();
                 });
             case "owned-host":
                 var command = Rafter.Command("Own a long-running fixture child.");
                 var result = await command.RunAsync(["--plain"], async context =>
                 {
-                    await context.Process("dotnet").Arguments("exec", "--runtimeconfig", runtime,
+                    await context.Executable("dotnet").Arguments("exec", "--runtimeconfig", runtime,
                         Assembly.GetExecutingAssembly().Location, runtime, "hold", args[2]).RunAsync();
                 });
                 if (args.Length > 3)
@@ -51,7 +57,7 @@ public static class Program
                 }
                 return await Rafter.Command("Clean up without a console.").RunAsync(["--quiet"], async context =>
                 {
-                    await context.Process("dotnet").Arguments("exec", "--runtimeconfig", runtime,
+                    await context.Executable("dotnet").Arguments("exec", "--runtimeconfig", runtime,
                         Assembly.GetExecutingAssembly().Location, runtime, "tree", args[2]).RunAsync();
                 });
             case "breakaway":
@@ -64,6 +70,14 @@ public static class Program
             case "environment":
                 Console.Write(JsonSerializer.Serialize(new[] { Directory.GetCurrentDirectory(),
                     Environment.GetEnvironmentVariable(args[2]) }));
+                return 0;
+            case "environment-state":
+                Console.Write(JsonSerializer.Serialize(new
+                {
+                    Directory = Directory.GetCurrentDirectory(),
+                    Value = Environment.GetEnvironmentVariable(args[2]),
+                    Present = Environment.GetEnvironmentVariables().Contains(args[2])
+                }));
                 return 0;
             case "output":
                 Console.Write("  first\n\nlast");

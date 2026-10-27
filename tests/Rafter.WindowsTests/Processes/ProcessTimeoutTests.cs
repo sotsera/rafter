@@ -217,7 +217,7 @@ public sealed class ProcessTimeoutTests
     }
 
     private static ProcessCommand Probe(RafterContext context, string mode, params string[] arguments)
-        => context.Process("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, arguments));
+        => context.Executable("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, arguments));
 
     private sealed class ExpiredClock(long started) : TimeProvider
     {

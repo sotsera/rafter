@@ -41,6 +41,8 @@ public sealed class RafterAuthoringAnalyzer : DiagnosticAnalyzer
         {
             var command = FindRafterType(start.Compilation, "Command");
             var process = FindRafterType(start.Compilation, "ProcessCommand");
+            var executable = FindRafterType(start.Compilation, "Executable");
+            var dotnetCommand = FindRafterType(start.Compilation, "DotnetCommand`1");
             var factory = FindRafterType(start.Compilation, "Rafter");
             var option = FindRafterType(start.Compilation, "Option`1");
             var valueOption = FindRafterType(start.Compilation, "ValueOption`1");
@@ -75,7 +77,9 @@ public sealed class RafterAuthoringAnalyzer : DiagnosticAnalyzer
                     AnalyzeOption(operationContext, invocation);
                 }
                 if (method.Name is "RunAsync" or "RunAndCaptureAsync" &&
-                    SymbolEqualityComparer.Default.Equals(method.ContainingType, process) &&
+                    (SymbolEqualityComparer.Default.Equals(owner, process) ||
+                        SymbolEqualityComparer.Default.Equals(owner, executable) ||
+                        SymbolEqualityComparer.Default.Equals(owner, dotnetCommand)) &&
                     IsDiscarded(invocation))
                 {
                     operationContext.ReportDiagnostic(Diagnostic.Create(_discardedProcess, invocation.Syntax.GetLocation()));

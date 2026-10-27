@@ -23,7 +23,7 @@ internal static class Scenario
             {
                 try
                 {
-                    var result = await context.Process("dotnet")
+                    var result = await context.Executable("dotnet")
                         .Arguments(typeof(Scenario).Assembly.Location, "capture-review-child", scenario)
                         .Environment("RAFTER_CAPTURE", "")
                         .RunAndCaptureAsync(1024);
@@ -45,7 +45,7 @@ internal static class Scenario
         {
             return await Rafter.Command("Parse captured JSON.").RunAsync(controls, async context =>
             {
-                var process = context.Process("dotnet").Arguments(typeof(Scenario).Assembly.Location, "capture-child", "7");
+                var process = context.Executable("dotnet").Arguments(typeof(Scenario).Assembly.Location, "capture-child", "7");
                 var result = await process.RunAndCaptureAsync(1024, onFailure: captured =>
                 {
                     if (captured.StandardError.Text != "private diagnostic")
@@ -120,7 +120,7 @@ internal static class Scenario
         {
             result = await command.RunAsync(controls, async context =>
             {
-                var process = await context.Process("dotnet").Arguments("--version").RunAsync();
+                var process = await context.Executable("dotnet").Arguments("--version").RunAsync();
                 context.WriteLine($"Process result: {process.ExitCode}:{process.Succeeded}");
             });
         }
@@ -327,13 +327,13 @@ internal static class Scenario
         {
             try
             {
-                await context.Process("dotnet").Arguments(typeof(Scenario).Assembly.Location, "timeout-child")
+                await context.Executable("dotnet").Arguments(typeof(Scenario).Assembly.Location, "timeout-child")
                     .Timeout(TimeSpan.FromSeconds(2)).RunAsync();
             }
             catch (ProcessTimeoutException exception) when (scenario == "process-timeout-recover")
             {
                 context.WriteLine($"Recovered from {exception.Executable} timeout: {exception.Timeout.TotalSeconds}s.");
-                var result = await context.Process("dotnet").Arguments("--version")
+                var result = await context.Executable("dotnet").Arguments("--version")
                     .Timeout(TimeSpan.MaxValue).RunAsync();
                 context.WriteLine($"Fallback: {result.Succeeded}.");
             }
@@ -354,7 +354,7 @@ internal static class Scenario
             .Run(async context =>
         {
             var executable = scenario == "review-launch" ? "rafter-missing-review-tool" : "dotnet";
-            var process = context.Process(executable)
+            var process = context.Executable(executable)
                 .Arguments(typeof(Scenario).Assembly.Location, "review-child", scenario is "review-help" or "review-success" ? "0" : "1")
                 .Environment("RAFTER_CAPTURE", "");
             if (scenario == "review-continue")

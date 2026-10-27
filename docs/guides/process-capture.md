@@ -6,7 +6,7 @@ The [runnable example](../../examples/process-capture.cs) captures a child's JSO
 and optionally displays the recorded mixed transcript.
 
 ```csharp
-var result = await context.Process("tool")
+var result = await context.Executable("tool")
     .Arguments("--json")
     .Timeout(TimeSpan.FromSeconds(10))
     .RunAndCaptureAsync(maxCharactersPerStream: 4096);
@@ -56,7 +56,7 @@ overflow can recover; an unhandled one produces invocation exit `1`. Catching ca
 Use the capture-specific callback to inspect streams without a cast:
 
 ```csharp
-var result = await context.Process("tool")
+var result = await context.Executable("tool")
     .RunAndCaptureAsync(4096, onFailure: captured =>
     {
         context.WriteLine(captured.StandardError.Text);

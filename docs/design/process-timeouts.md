@@ -26,7 +26,7 @@ not an API requirement. The rules below remain the agreed contract; verification
 The example builds a user-selected project with a declared timeout option:
 
 ```csharp
-await context.Process("dotnet")
+await context.Executable("dotnet")
     .Arguments("build", context.GetValue(project))
     .Timeout(context.GetValue(timeout))
     .RunAsync();

@@ -51,7 +51,7 @@ uses `System.Text.Json` in the script.
 Use `RunAndCaptureAsync(...)` to execute with captured output, alongside the existing `RunAsync()` for streamed output:
 
 ```csharp
-var result = await context.Process("tool")
+var result = await context.Executable("tool")
     .Arguments("--json")
     .Timeout(TimeSpan.FromSeconds(10))
     .RunAndCaptureAsync(maxCharactersPerStream: 1024, echo: false);
@@ -140,7 +140,7 @@ after a rejected exit and settlement. The agreed callback direction and selectio
 `Func<CapturedProcessResult, ProcessFailureAction>`:
 
 ```csharp
-var result = await context.Process("tool")
+var result = await context.Executable("tool")
     .Arguments("--json")
     .RunAndCaptureAsync(maxCharactersPerStream: 1024, onFailure: captured =>
     {

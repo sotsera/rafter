@@ -41,8 +41,8 @@ public sealed class RafterContext
     /// <summary>Combines path segments and selects a file relative to this invocation's root without performing I/O.</summary>
     public FilePath File(params string[] paths) => new(RootPaths.Combine(RootDirectory, paths));
 
-    /// <summary>Configures a child process owned by this body, with the invocation's selected root as its directory.</summary>
-    public ProcessCommand Process(string executable)
+    /// <summary>Configures a reusable executable owned by this body, with the invocation root as its default directory.</summary>
+    public Executable Executable(string executable)
     {
         return new(_processes ?? throw new InvalidOperationException("A process requires an executing body."),
             executable, RootDirectory);

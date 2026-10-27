@@ -16,7 +16,7 @@ public sealed class ProcessConfigurationTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync([], context =>
         {
-            var process = context.Process("must-not-launch");
+            var process = context.Executable("must-not-launch").Arguments();
             Task<CapturedProcessResult>? operation = null;
             Action invalid = () => operation = process.RunAndCaptureAsync(limit);
             invalid.Should().Throw<ArgumentOutOfRangeException>().Which.ParamName.Should().Be("maxCharactersPerStream");
@@ -32,7 +32,7 @@ public sealed class ProcessConfigurationTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync([], context =>
         {
-            var process = context.Process("must-not-launch").OnFailure(_ => ProcessFailureAction.Continue);
+            var process = context.Executable("must-not-launch").Arguments().OnFailure(_ => ProcessFailureAction.Continue);
             host.Signal();
             Action invalid = () => process.RunAndCaptureAsync(1, onFailure: _ => ProcessFailureAction.Continue)
                 .GetAwaiter().GetResult();
@@ -48,7 +48,7 @@ public sealed class ProcessConfigurationTests
         (await host.Command.RunAsync(["--quiet"], async context =>
         {
             host.Signal();
-            Func<Task> run = async () => { await context.Process("must-not-launch").RunAndCaptureAsync(8); };
+            Func<Task> run = async () => { await context.Executable("must-not-launch").Arguments().RunAndCaptureAsync(8); };
             var cancelled = (await run.Should().ThrowAsync<CapturedProcessCanceledException>()).Which;
             cancelled.PartialStandardOutput.Text.Should().BeEmpty();
             cancelled.PartialStandardError.Chunks.Should().BeEmpty();
@@ -70,9 +70,9 @@ public sealed class ProcessConfigurationTests
         {
             Action configure = kind switch
             {
-                0 => () => context.Process(" "),
-                1 => () => context.Process("dotnet").Arguments("nul\0token"),
-                _ => () => context.Process("dotnet").OnFailure(_ => ProcessFailureAction.Fail)
+                0 => () => context.Executable(" "),
+                1 => () => context.Executable("dotnet").Arguments().Arguments("nul\0token"),
+                _ => () => context.Executable("dotnet").Arguments().OnFailure(_ => ProcessFailureAction.Fail)
                     .OnFailure(_ => ProcessFailureAction.Continue)
             };
             configure.Should().Throw<Exception>();
@@ -96,7 +96,7 @@ public sealed class ProcessConfigurationTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync(["--quiet"], context =>
         {
-            var process = context.Process("dotnet");
+            var process = context.Executable("dotnet").Arguments();
             Action configure = kind switch
             {
                 0 => () => process.AcceptExitCodes(null!),
@@ -124,7 +124,7 @@ public sealed class ProcessConfigurationTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync(["--quiet"], context =>
         {
-            var process = context.Process("must-not-launch");
+            var process = context.Executable("must-not-launch").Arguments();
             Action invalid = () => process.Timeout(TimeSpan.FromTicks(ticks));
             invalid.Should().Throw<ArgumentOutOfRangeException>().Which.ParamName.Should().Be("timeout");
             process.Timeout(TimeSpan.MaxValue).Should().BeSameAs(process);
@@ -141,7 +141,7 @@ public sealed class ProcessConfigurationTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync(["--quiet"], context =>
         {
-            context.Process("must-not-launch").Timeout(TimeSpan.Zero);
+            context.Executable("must-not-launch").Arguments().Timeout(TimeSpan.Zero);
         })).Should().Be(1);
         host.Error.ToString().Should().Contain("ArgumentOutOfRangeException").And.NotContain("Process |");
     }

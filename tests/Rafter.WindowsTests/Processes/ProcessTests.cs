@@ -137,7 +137,7 @@ public sealed class ProcessTests
         {
             try
             {
-                await context.Process("rafter-missing-" + Guid.NewGuid()).OnFailure(_ =>
+                await context.Executable("rafter-missing-" + Guid.NewGuid()).Arguments().OnFailure(_ =>
                 {
                     handled = true;
                     return ProcessFailureAction.Continue;
@@ -158,7 +158,7 @@ public sealed class ProcessTests
         using var host = new ProcessHost();
         (await host.Command.RunAsync(["--verbose"], async context =>
         {
-            await context.Process("rafter-missing-tool").Arguments("private-token").RunAsync();
+            await context.Executable("rafter-missing-tool").Arguments("private-token").RunAsync();
         })).Should().Be(1);
         host.Error.ToString().Should().Contain("Process launch failed | rafter-missing-tool")
             .And.Contain("Working directory:").And.NotContain("private-token").And.NotContain("Win32Exception:");
@@ -496,7 +496,7 @@ public sealed class ProcessTests
         {
             foreach (var value in new[] { "first", "second" })
             {
-                await context.Process(executable).Arguments(WindowsProcessTests.ProbeArguments("environment", "PATH"))
+                await context.Executable(executable).Arguments(WindowsProcessTests.ProbeArguments("environment", "PATH"))
                     .Environment("PATH", value).RunAsync();
                 context.WriteLine();
             }
@@ -580,7 +580,7 @@ public sealed class ProcessTests
     }
 
     private static ProcessCommand Probe(RafterContext context, string mode, params string[] args)
-        => context.Process("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, args));
+        => context.Executable("dotnet").Arguments(WindowsProcessTests.ProbeArguments(mode, args));
 
     private static string TemporaryName() => Path.Combine(Path.GetTempPath(), "rafter-probe-" + Guid.NewGuid().ToString("N"));
 

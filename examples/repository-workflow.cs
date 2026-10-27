@@ -5,7 +5,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-// Revisit process setup as its authoring APIs evolve; see the development plan.
+// Typed .NET commands and raw argument chunks share the same owned process pipeline.
 var command = Rafter.Command("Build and test Rafter, inspect package metadata, and optionally pack locally.");
 
 var root = command.Option<string>("root", "Repository root; relative paths use the invocation directory.")
@@ -57,20 +57,19 @@ return await command.RunAsync(args, async context =>
         PackRequested = context.GetValue(pack)
     };
 
-    ProcessCommand Dotnet(params string[] arguments)
-    {
-        return context.Process("dotnet")
-            .Environment("DOTNET_NOLOGO", "1")
-            .Environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
-            .Environment("DOTNET_CLI_USE_MSBUILD_SERVER", "0")
-            .Timeout(context.GetValue(timeout))
-            .Arguments(arguments);
-    }
+    var dotnet = context.Dotnet()
+        .Environment("DOTNET_NOLOGO", "1")
+        .Environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
+        .Environment("DOTNET_CLI_USE_MSBUILD_SERVER", "0")
+        .Timeout(context.GetValue(timeout));
 
     try
     {
-        var metadata = await Dotnet("msbuild", project.FullPath, "-nologo", "-getProperty:PackageId,Version,TargetFramework",
-                "-property:Configuration=" + buildConfiguration)
+        var metadata = await dotnet
+            .Arguments("msbuild", project.FullPath)
+            .Arguments("-nologo")
+            .Arguments("-getProperty:PackageId,Version,TargetFramework")
+            .Arguments("-property:Configuration=" + buildConfiguration)
             .RunAndCaptureAsync(maxCharactersPerStream: 16 * 1024);
         using (var document = JsonDocument.Parse(metadata.StandardOutput.Text))
         {
@@ -84,30 +83,38 @@ return await command.RunAsync(args, async context =>
         record.CompletedStages.Add("inspect");
         context.WriteLine($"Package: {record.PackageId} {record.Version} ({record.TargetFramework})");
 
-        await Dotnet("build", solution.FullPath, "--configuration", buildConfiguration, "--disable-build-servers", "-m:1",
-                "-flp:LogFile=" + evidence.File("build.log").FullPath + ";Verbosity=normal")
+        await dotnet.Build(solution.FullPath)
+            .Configuration(buildConfiguration)
+            .DisableBuildServers()
+            .MaxCpuCount(1)
+            .Arguments("-flp:LogFile=" + evidence.File("build.log").FullPath + ";Verbosity=normal")
             .RunAsync();
         record.CompletedStages.Add("build");
 
-        var testArguments = new List<string>
-        {
-            "test", "--solution", solution.FullPath, "--configuration", buildConfiguration, "--no-build",
-            "--minimum-expected-tests", "1", "--max-parallel-test-modules", "1",
-            "--report-trx", "--results-directory", evidence.Directory("tests").FullPath
-        };
+        var tests = dotnet.Arguments("test")
+            .Arguments("--solution", solution.FullPath)
+            .Arguments("--configuration", buildConfiguration)
+            .Arguments("--no-build")
+            .Arguments("--minimum-expected-tests", "1")
+            .Arguments("--max-parallel-test-modules", "1")
+            .Arguments("--report-trx")
+            .Arguments("--results-directory", evidence.Directory("tests").FullPath);
         if (record.FullTests)
         {
-            testArguments.Add("-p:IncludeLongRunningTests=true");
+            tests.Arguments("-p:IncludeLongRunningTests=true");
         }
-        await Dotnet(testArguments.ToArray()).RunAsync();
+        await tests.RunAsync();
         record.CompletedStages.Add("test");
 
         if (record.PackRequested)
         {
             record.PackageDirectory = evidence.Directory("packages").FullPath;
-            await Dotnet("pack", project.FullPath, "--configuration", buildConfiguration, "--no-build", "--no-restore",
-                    "--output", record.PackageDirectory,
-                    "-flp:LogFile=" + evidence.File("pack.log").FullPath + ";Verbosity=normal")
+            await dotnet.Pack(project.FullPath)
+                .Configuration(buildConfiguration)
+                .NoBuild()
+                .NoRestore()
+                .Output(record.PackageDirectory)
+                .Arguments("-flp:LogFile=" + evidence.File("pack.log").FullPath + ";Verbosity=normal")
                 .RunAsync();
             record.CompletedStages.Add("pack");
             context.WriteLine($"Local packages: {record.PackageDirectory}");

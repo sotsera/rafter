@@ -45,17 +45,21 @@ public sealed class AuthoringAnalyzerTests
     }
 
     [Theory]
-    [InlineData("context.Process(\"tool\").RunAsync();")]
-    [InlineData("_ = context.Process(\"tool\").RunAsync();")]
-    [InlineData("_ = (context.Process(\"tool\").RunAsync());")]
-    [InlineData("context.Process(\"tool\").RunAsync().ConfigureAwait(false);")]
-    [InlineData("_ = context.Process(\"tool\").RunAsync().ConfigureAwait(false);")]
-    [InlineData("context?.Process(\"tool\").RunAsync();")]
-    [InlineData("System.Action action = () => context.Process(\"tool\").RunAsync();")]
-    [InlineData("context.Process(\"tool\").RunAndCaptureAsync(1024);")]
-    [InlineData("_ = context.Process(\"tool\").RunAndCaptureAsync(1024);")]
-    [InlineData("context.Process(\"tool\").RunAndCaptureAsync(1024).ConfigureAwait(false);")]
-    [InlineData("context?.Process(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("context.Executable(\"tool\").Arguments(\"one\").RunAsync();")]
+    [InlineData("context.Dotnet().Build().RunAsync();")]
+    [InlineData("_ = context.Dotnet().Publish().RunAndCaptureAsync(1024);")]
+    [InlineData("context.Dotnet().Pack().Arguments(\"--help\").RunAsync().ConfigureAwait(false);")]
+    [InlineData("context.Executable(\"tool\").RunAsync();")]
+    [InlineData("_ = context.Executable(\"tool\").RunAsync();")]
+    [InlineData("_ = (context.Executable(\"tool\").RunAsync());")]
+    [InlineData("context.Executable(\"tool\").RunAsync().ConfigureAwait(false);")]
+    [InlineData("_ = context.Executable(\"tool\").RunAsync().ConfigureAwait(false);")]
+    [InlineData("context?.Executable(\"tool\").RunAsync();")]
+    [InlineData("System.Action action = () => context.Executable(\"tool\").RunAsync();")]
+    [InlineData("context.Executable(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("_ = context.Executable(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("context.Executable(\"tool\").RunAndCaptureAsync(1024).ConfigureAwait(false);")]
+    [InlineData("context?.Executable(\"tool\").RunAndCaptureAsync(1024);")]
     public async Task Clearly_discarded_process_tasks_are_errors(string statement)
     {
         var source = $$"""
@@ -74,17 +78,20 @@ public sealed class AuthoringAnalyzerTests
     }
 
     [Theory]
-    [InlineData("await context.Process(\"tool\").RunAsync();")]
-    [InlineData("_ = await context.Process(\"tool\").RunAsync();")]
-    [InlineData("await context.Process(\"tool\").RunAsync().ConfigureAwait(false);")]
-    [InlineData("var task = context.Process(\"tool\").RunAsync(); await task;")]
-    [InlineData("await Task.WhenAll(context.Process(\"one\").RunAsync(), context.Process(\"two\").RunAsync());")]
-    [InlineData("Observe(context.Process(\"tool\").RunAsync());")]
-    [InlineData("Task<ProcessResult> _; _ = context.Process(\"tool\").RunAsync(); await _;")]
-    [InlineData("System.Func<Task<ProcessResult>> run = () => context.Process(\"tool\").RunAsync(); await run();")]
-    [InlineData("await context.Process(\"tool\").RunAndCaptureAsync(1024);")]
-    [InlineData("var task = context.Process(\"tool\").RunAndCaptureAsync(1024); await task;")]
-    [InlineData("System.Func<Task<CapturedProcessResult>> run = () => context.Process(\"tool\").RunAndCaptureAsync(1024); await run();")]
+    [InlineData("await context.Dotnet().Build().RunAsync();")]
+    [InlineData("var task = context.Dotnet().Publish().RunAndCaptureAsync(1024); await task;")]
+    [InlineData("await context.Dotnet().Pack().Arguments(\"--help\").RunAsync();")]
+    [InlineData("await context.Executable(\"tool\").RunAsync();")]
+    [InlineData("_ = await context.Executable(\"tool\").RunAsync();")]
+    [InlineData("await context.Executable(\"tool\").RunAsync().ConfigureAwait(false);")]
+    [InlineData("var task = context.Executable(\"tool\").RunAsync(); await task;")]
+    [InlineData("await Task.WhenAll(context.Executable(\"one\").RunAsync(), context.Executable(\"two\").RunAsync());")]
+    [InlineData("Observe(context.Executable(\"tool\").RunAsync());")]
+    [InlineData("Task<ProcessResult> _; _ = context.Executable(\"tool\").RunAsync(); await _;")]
+    [InlineData("System.Func<Task<ProcessResult>> run = () => context.Executable(\"tool\").RunAsync(); await run();")]
+    [InlineData("await context.Executable(\"tool\").RunAndCaptureAsync(1024);")]
+    [InlineData("var task = context.Executable(\"tool\").RunAndCaptureAsync(1024); await task;")]
+    [InlineData("System.Func<Task<CapturedProcessResult>> run = () => context.Executable(\"tool\").RunAndCaptureAsync(1024); await run();")]
     public async Task Valid_observation_and_helper_boundaries_are_not_diagnosed(string statement)
     {
         var source = $$"""
@@ -110,8 +117,8 @@ public sealed class AuthoringAnalyzerTests
             using System.Threading.Tasks;
             class Example
             {
-                Task<ProcessResult> Forward(RafterContext context) => context.Process("tool").RunAsync();
-                Task<ProcessResult> ForwardBlock(RafterContext context) { return context.Process("tool").RunAsync(); }
+                Task<ProcessResult> Forward(RafterContext context) => context.Executable("tool").RunAsync();
+                Task<ProcessResult> ForwardBlock(RafterContext context) { return context.Executable("tool").RunAsync(); }
                 void Other() { _ = Task.Delay(1); _ = RunAsync(); _ = Option<string?>(); }
                 Task RunAsync() => Task.CompletedTask;
                 T? Option<T>() => default;
@@ -127,7 +134,7 @@ public sealed class AuthoringAnalyzerTests
             using Sotsera.Rafter;
             class Example
             {
-                void Run(RafterContext context) { _ = context.Process("tool").RunAsync(); }
+                void Run(RafterContext context) { _ = context.Executable("tool").RunAsync(); }
             }
             """;
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,

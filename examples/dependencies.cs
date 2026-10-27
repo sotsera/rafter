@@ -12,7 +12,7 @@ var project = command.Option<string>("project", "The test project to build and r
 var build = command.Target("build", "Build the project.")
     .Run(async context =>
     {
-        await context.Process("dotnet")
+        await context.Executable("dotnet")
             .Arguments("build", context.GetValue(project))
             .RunAsync();
     });
@@ -21,7 +21,7 @@ var test = command.Target("test", "Run the tests after a successful build.")
     .DependsOn(build)
     .Run(async context =>
     {
-        await context.Process("dotnet")
+        await context.Executable("dotnet")
             .Arguments("test", "--project", context.GetValue(project), "--no-build")
             .RunAsync();
     });

@@ -9,34 +9,28 @@ public sealed class ProcessCommand
     private readonly BodyProcesses _body;
     private readonly string _executable;
     private readonly string _root;
+    private readonly ExecutableDefaults _defaults;
     private readonly List<string> _arguments = [];
-    private readonly Dictionary<string, string> _environment = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string?> _environment = new(StringComparer.OrdinalIgnoreCase);
     private int[]? _acceptedExitCodes;
     private string? _directory;
     private Func<ProcessResult, ProcessFailureAction>? _handler;
     private bool _hasHandler;
     private TimeSpan? _timeout;
 
-    internal ProcessCommand(BodyProcesses body, string executable, string root)
+    internal ProcessCommand(BodyProcesses body, string executable, string root, ExecutableDefaults defaults)
     {
-        CheckText(executable, nameof(executable));
+        ProcessConfiguration.CheckText(executable, nameof(executable));
         _body = body;
         _executable = executable;
         _root = root;
+        _defaults = defaults;
     }
 
     /// <summary>Appends separate argument tokens, with no shell interpretation.</summary>
     public ProcessCommand Arguments(params string[] arguments)
     {
-        ArgumentNullException.ThrowIfNull(arguments);
-        var copy = arguments.ToArray();
-        foreach (var argument in copy)
-        {
-            if (argument is null || argument.Contains('\0'))
-            {
-                throw new ArgumentException("Argument tokens must not be null or contain NUL.", nameof(arguments));
-            }
-        }
+        var copy = ProcessConfiguration.CopyArguments(arguments);
         lock (_gate)
         {
             _arguments.AddRange(copy);
@@ -82,7 +76,7 @@ public sealed class ProcessCommand
     /// <summary>Chooses this child's directory once. Relative paths resolve against the captured invocation root.</summary>
     public ProcessCommand WorkingDirectory(string path)
     {
-        CheckText(path, nameof(path));
+        ProcessConfiguration.CheckText(path, nameof(path));
         lock (_gate)
         {
             if (_directory is not null)
@@ -97,17 +91,30 @@ public sealed class ProcessCommand
     /// <summary>Overrides an inherited variable for this child. Each name may be configured once per child.</summary>
     public ProcessCommand Environment(string name, string value)
     {
-        CheckText(name, nameof(name));
-        ArgumentNullException.ThrowIfNull(value);
-        if (name.Contains('=') || value.Contains('\0'))
-        {
-            throw new ArgumentException("Environment names must not contain '='; values must not contain NUL.");
-        }
+        ProcessConfiguration.CheckEnvironment(name, value);
         lock (_gate)
         {
-            if (!_environment.TryAdd(name, value))
+            ProcessConfiguration.AddEnvironment(_environment, name, value);
+        }
+        return this;
+    }
+
+    /// <summary>Removes variables from this child's environment. May override executable defaults once per name.</summary>
+    public ProcessCommand RemoveEnvironment(params string[] names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        var copy = names.ToArray();
+        lock (_gate)
+        {
+            var changes = new Dictionary<string, string?>(_environment, StringComparer.OrdinalIgnoreCase);
+            foreach (var name in copy)
             {
-                throw new InvalidOperationException($"Environment variable '{name}' was already configured for this child.");
+                ProcessConfiguration.CheckEnvironmentName(name);
+                ProcessConfiguration.AddEnvironment(changes, name, null);
+            }
+            foreach (var name in copy)
+            {
+                _environment.Add(name, null);
             }
         }
         return this;
@@ -160,16 +167,16 @@ public sealed class ProcessCommand
     {
         var executable = _executable.IndexOfAny(['/', '\\', ':']) >= 0
             ? Path.GetFullPath(_executable, _root) : _executable;
-        return new(executable, _arguments.ToArray(), _directory ?? _root,
-            new Dictionary<string, string>(_environment, StringComparer.OrdinalIgnoreCase),
-            _acceptedExitCodes?.ToArray() ?? [0], handler, _timeout);
-    }
-
-    private static void CheckText(string value, string name)
-    {
-        if (string.IsNullOrWhiteSpace(value) || value.Contains('\0'))
+        var environment = new Dictionary<string, string?>(_defaults.Environment, StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in _environment)
         {
-            throw new ArgumentException("The value must contain non-whitespace text and must not contain NUL.", name);
+            environment[entry.Key] = entry.Value;
         }
+        var overrides = environment.Where(entry => entry.Value is not null)
+            .ToDictionary(entry => entry.Key, entry => entry.Value!, StringComparer.OrdinalIgnoreCase);
+        var removed = environment.Where(entry => entry.Value is null).Select(entry => entry.Key).ToArray();
+        return new(executable, _arguments.ToArray(), _directory ?? _defaults.Directory ?? _root,
+            overrides, _acceptedExitCodes?.ToArray() ?? [0], handler, _timeout ?? _defaults.Timeout,
+            RemovedEnvironment: removed);
     }
 }

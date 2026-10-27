@@ -15,7 +15,7 @@ The [process example](../../examples/processes.cs) uses the real Windows impleme
 ```csharp
 return await command.RunAsync(args, async context =>
 {
-    var result = await context.Process("dotnet")
+    var result = await context.Executable("dotnet")
         .Arguments("--version")
         .RunAsync();
 
@@ -23,8 +23,12 @@ return await command.RunAsync(args, async context =>
 });
 ```
 
+See [executables and typed .NET commands](executables-and-dotnet.md) for reusable defaults, argument grouping, and
+the source-breaking replacement of `context.Process(...)`. `Executable.Arguments(...)` creates a fresh command;
+repeated calls on that `ProcessCommand` append tokens.
+
 Arguments are separate tokens; no shell is inserted. Empty tokens, quotes, trailing backslashes, Unicode, and shell
-metacharacters are preserved. Repeated `Arguments` calls append tokens. Null arrays, null tokens, NUL characters,
+metacharacters are preserved. Null arrays, null tokens, NUL characters,
 and blank executable names are rejected before launch. Child output is currently decoded as UTF-8 with BOM detection;
 configurable encodings are not exposed yet. The child inherits standard input, or receives `NUL` when
 the host has no standard-input handle. Stdout and stderr remain separate; plain output preserves partial lines and
@@ -39,8 +43,9 @@ that list. Both reject a repeated call even when its value is unchanged. The acc
 `Environment(name, value)` permits one setting per name on each child builder. Repeating that name is an error, with
 case-insensitive comparison on Windows. A child may override a variable inherited from the script process; another
 child may choose a different value for the same name. Neither changes the host environment. Null values, blank names,
-`=` in names, and NUL characters are rejected; an empty value is passed as an empty child variable. Removal and a clean
-environment mode are deferred.
+`=` in names, and NUL characters are rejected; an empty value is passed as an empty child variable.
+`RemoveEnvironment(params string[] names)` explicitly removes child variables. Executable defaults and child edits
+form separate layers; a child can override a default once. Starting with a clean environment remains deferred.
 
 Executable paths containing a directory separator or drive prefix resolve against the captured root. Bare names use
 Windows direct-launch lookup, including the script process's PATH. A child PATH override affects that child's
@@ -66,7 +71,8 @@ for validation, recovery, cancellation arbitration, and reporting.
 Every body has its own operation tracker. It includes launch, output, cleanup, and the failure callback. Outstanding
 operations when the body finishes cause an invocation failure and must settle before later scheduling or final output.
 Awaited concurrent process calls, including `Task.WhenAll`, are supported. A captured context cannot start work after
-its owning body has finished. Detecting discarded tasks that already completed still needs the planned analyzer.
+its owning body has finished. RAF003 rejects clearly discarded execution tasks, including zero-argument executable
+calls and typed .NET commands; see [authoring diagnostics](authoring-diagnostics.md#raf003).
 
 ## Windows ownership
 

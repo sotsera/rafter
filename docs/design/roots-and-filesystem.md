@@ -77,7 +77,7 @@ return await command.RunAsync(args, async context =>
         throw new InvalidOperationException("The selected root must contain Rafter.slnx.");
     }
 
-    await context.Process("dotnet")
+    await context.Executable("dotnet")
         .Arguments("build", solution)
         .RunAsync();
 });

@@ -36,7 +36,7 @@ public sealed class RootProcessTests
         {
             (await command.RunAsync(["--quiet"], async context =>
             {
-                var probe = context.Process("dotnet").Arguments(WindowsProcessTests.ProbeArguments("environment", "RAFTER_MISSING_ROOT_VAR"));
+                var probe = context.Executable("dotnet").Arguments(WindowsProcessTests.ProbeArguments("environment", "RAFTER_MISSING_ROOT_VAR"));
                 if (childOverride)
                 {
                     probe.WorkingDirectory("nested");
@@ -44,7 +44,7 @@ public sealed class RootProcessTests
                 var captured = await probe.RunAndCaptureAsync(4096);
                 JsonSerializer.Deserialize<string?[]>(captured.StandardOutput.Text)![0]
                     .Should().Be(childOverride ? nested : selected);
-                var arguments = await context.Process("dotnet")
+                var arguments = await context.Executable("dotnet")
                     .Arguments(WindowsProcessTests.ProbeArguments("echo", "relative/input.txt"))
                     .RunAndCaptureAsync(4096);
                 JsonSerializer.Deserialize<string[]>(arguments.StandardOutput.Text).Should().Equal("relative/input.txt");
