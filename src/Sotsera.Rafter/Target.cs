@@ -15,6 +15,7 @@ public sealed class Target
     private string? _conditionDescription;
     private Func<RafterContext, bool>? _condition;
     private int _conditionCalls;
+    private CleanupDeclaration _cleanup = new();
 
     internal Target(object gate, string name, string description)
     {
@@ -75,12 +76,32 @@ public sealed class Target
         return this;
     }
 
+    /// <summary>Registers cleanup for an entered body, after its owned work settles and before dependants run.</summary>
+    public Target Cleanup(string description, Action<RafterContext> callback)
+    {
+        return Cleanup(description, callback is null ? null! : context =>
+        {
+            callback(context);
+            return Task.CompletedTask;
+        });
+    }
+
+    /// <summary>Registers one awaited cleanup. Skipped bodies/groups do not run cleanup. Its token is uncancelled.</summary>
+    public Target Cleanup(string description, Func<RafterContext, Task> callback)
+    {
+        lock (_gate)
+        {
+            _cleanup = new(description, callback, _cleanup.Calls + 1);
+        }
+        return this;
+    }
+
     internal TargetSnapshot Snapshot()
     {
         lock (_gate)
         {
             return new(this, _name, _description, _dependencies.Distinct().ToArray(), _body,
-                _bodyCalls, _nullDependencies, _conditionDescription, _condition, _conditionCalls);
+                _bodyCalls, _nullDependencies, _conditionDescription, _condition, _conditionCalls, _cleanup);
         }
     }
 }

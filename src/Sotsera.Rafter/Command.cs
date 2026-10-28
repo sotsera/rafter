@@ -12,6 +12,8 @@ public sealed class Command
     private readonly List<OptionDeclaration> _options = [];
     private readonly List<CombinedRule> _rules = [];
     private readonly List<Target> _targets = [];
+    private readonly List<StateDeclaration> _states = [];
+    private CleanupDeclaration _cleanup = new();
     private RootSelection _root = new();
 
     internal Command(string description, Func<InvocationHost>? captureHost = null)
@@ -64,6 +66,39 @@ public sealed class Command
         }
     }
 
+    /// <summary>Declares reference state initialized once after input/root preparation for each invocation.
+    /// The factory must return a fresh nonnull object; acquire resources in bodies, not factories.</summary>
+    public State<T> State<T>(Func<T> factory) where T : class
+    {
+        lock (_declarationGate)
+        {
+            var declaration = new StateDeclaration(typeof(T), factory is null ? null : () => factory());
+            _states.Add(declaration);
+            return new(declaration);
+        }
+    }
+
+    /// <summary>Registers command cleanup after entered work settles, including failure/cancellation.</summary>
+    public Command Cleanup(string description, Action<RafterContext> callback)
+    {
+        return Cleanup(description, callback is null ? null! : context =>
+        {
+            callback(context);
+            return Task.CompletedTask;
+        });
+    }
+
+    /// <summary>Registers one awaited cleanup with an uncancelled context, shared state, and no process body.
+    /// Help/invalid invocations and failed state initialization do not run cleanup.</summary>
+    public Command Cleanup(string description, Func<RafterContext, Task> callback)
+    {
+        lock (_declarationGate)
+        {
+            _cleanup = new(description, callback, _cleanup.Calls + 1);
+        }
+        return this;
+    }
+
     /// <summary>Adds a rule evaluated after all individual input rules succeed.</summary>
     public Command Validate(string description, Func<InputValidationContext, bool> predicate)
     {
@@ -100,6 +135,7 @@ public sealed class Command
         IDisposable? subscription = null;
         TargetExecution? targetExecution = null;
         ProcessInvocation? processes = null;
+        InvocationResources? resources = null;
         var code = 1;
         var executed = false;
         var reported = new HashSet<Exception>(ReferenceEqualityComparer.Instance);
@@ -148,6 +184,8 @@ public sealed class Command
             OptionSnapshot[] options;
             CombinedRule[] rules;
             TargetSnapshot[] targets;
+            StateDeclaration[] states;
+            CleanupDeclaration cleanup;
             RootSelection root;
             Target[]? entries = null;
             lock (_declarationGate)
@@ -155,6 +193,8 @@ public sealed class Command
                 options = _options.Select(option => option.Snapshot()).ToArray();
                 rules = _rules.ToArray();
                 targets = _targets.Select(target => target.Snapshot()).ToArray();
+                states = _states.ToArray();
+                cleanup = _cleanup;
                 root = _root;
                 if (targetInvocation)
                 {
@@ -162,6 +202,15 @@ public sealed class Command
                 }
             }
             var declarations = new List<string>();
+            cleanup.Validate("Command", declarations);
+            if (states.Any(state => state.Factory is null))
+            {
+                declarations.Add("State declarations require a non-null factory.");
+            }
+            if (states.Any(state => typeof(Task).IsAssignableFrom(state.Type)))
+            {
+                declarations.Add("State factories must return synchronous reference state, not Task objects.");
+            }
             if (string.IsNullOrWhiteSpace(_description))
             {
                 declarations.Add("Command description must contain non-whitespace text.");
@@ -209,7 +258,7 @@ public sealed class Command
             }
             else if (arguments.Help)
             {
-                output.Help(_description, options, rules, plan);
+                output.Help(_description, options, rules, plan, cleanup);
                 code = 0;
             }
             else
@@ -251,17 +300,27 @@ public sealed class Command
                         else
                         {
                             cancellation.Token.ThrowIfCancellationRequested();
-                            var context = new RafterContext(rootDirectory, output, cancellation.Token, arguments.Values, processes);
+                            resources = InvocationResources.Initialize(states);
+                            cancellation.Token.ThrowIfCancellationRequested();
+                            var context = new RafterContext(rootDirectory, output, cancellation.Token, arguments.Values,
+                                processes, resources: resources);
                             executed = true;
-                            output.Start(_description, plan);
-                            output.InputSources(options, arguments.Values);
-                            if (targetExecution is not null)
+                            try
                             {
-                                await targetExecution.RunAsync(context, output).ConfigureAwait(false);
+                                output.Start(_description, plan);
+                                output.InputSources(options, arguments.Values);
+                                if (targetExecution is not null)
+                                {
+                                    await targetExecution.RunAsync(context, output).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    await context.RunBodyAsync(body!, "The command body").ConfigureAwait(false);
+                                }
                             }
-                            else
+                            finally
                             {
-                                await context.RunBodyAsync(body!, "The command body").ConfigureAwait(false);
+                                await context.RunCleanupAsync(cleanup, "Command", commandScope: true).ConfigureAwait(false);
                             }
                             code = processes.Failed ? 1 : 0;
                         }
@@ -274,7 +333,7 @@ public sealed class Command
                     catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
                     {
                         Report(exception, targetExecution?.Current is { } current
-                            ? $"Target '{current.Name}'" : "Command body");
+                            ? $"Target '{current.Name}'" : executed ? "Command body" : "State initialization");
                     }
                 }
                 catch (Exception exception) when (ExceptionPolicy.IsRecoverable(exception))
@@ -305,6 +364,13 @@ public sealed class Command
 
         if (output is not null)
         {
+            if (resources is not null)
+            {
+                foreach (var diagnostic in resources.Diagnostics)
+                {
+                    Report(diagnostic.Exception, diagnostic.Scope);
+                }
+            }
             if (processes is { Failed: true })
             {
                 code = 1;

@@ -17,6 +17,7 @@ internal sealed class ProcessCompletionException(string executable, int? exitCod
     ProcessCaptureSnapshot? capture = null)
     : Exception($"{(terminationUnknown ? "Termination unknown" : "Output incomplete")} | {executable}", inner)
 {
+    public bool TerminationUnknown { get; } = terminationUnknown;
     public int? ExitCode { get; } = exitCode;
     public TimeSpan? Timeout { get; } = timeout;
     public TimeSpan? Elapsed { get; } = elapsed;

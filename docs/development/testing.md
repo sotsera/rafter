@@ -9,10 +9,10 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 726 | 0 |
-| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 19 | 32 |
-| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 80 | 43 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 825 | 75 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 773 | 0 |
+| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 19 | 34 |
+| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 80 | 45 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 872 | 79 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
@@ -41,6 +41,19 @@ The full local regression passed **899 tests, 0 failures, 1 console-dependent sk
 unit 726/0/0, integration 51/0/0, Windows 122/0/1 (passed/failed/skipped). All 43 redirected runtime cases passed.
 Final TRX reports are under `artifacts/test-results/conditional-full/`; raw logs/initial failures remain under
 `artifacts/evidence/conditional-targets/`. These are local Windows results; new hosted CI is not claimed.
+The local [#68 state/cleanup increment](../guides/targets.md#invocation-local-state-and-cleanup) adds 47 unit cases,
+two long-running portable consumers (the actual cleanup example as a file app and ordinary project), and two
+long-running Windows owned-child settlement cases. Existing isolated package consumers also execute state/cleanup.
+Unit coverage includes snapshots, repeated/overlapping runs, combined failures (including the same exception object),
+uncancelled cleanup, awaited callbacks, old body-executable rejection, cancellation-registration settlement, literal
+output/help, and controlled native-termination uncertainty. The native fixture retains its workspace if actual child
+settlement is not confirmed. Review on 2026-10-29 added rejection of Task results returned through object-typed state
+factories. The reviewed full local run passed **950 tests, 0 failures, 1 console-dependent skip** across **951 total**
+(unit 773/0/0, integration 53/0/0, Windows 124/0/1; passed/failed/skipped). All 43 redirected runtime cases passed.
+Review reports are under `artifacts/test-results/state-cleanup-review-full/`; logs are under
+`artifacts/evidence/state-cleanup/review-20261029/`. Earlier 2026-10-28 results remain under
+`artifacts/test-results/state-cleanup-full-final/` and `artifacts/evidence/state-cleanup/`. Hosted PR/main results are
+separate delivery checkpoints.
 Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.
@@ -53,7 +66,7 @@ project identifiers and a root-relative solution filename; the same file works w
 Normal CI runs this portable filter in **Linux portable evaluation** and **Windows portable evaluation**. The
 separate **Windows evaluation** job selects `Rafter.WindowsTests` directly, then checks packaging and redirected
 runtime output. Both Windows jobs execute concurrently on separate machines; their combined counts remain
-825 ordinary / 900 full for this local revision. Review all three checks. Solution/project wiring and existing
+872 ordinary / 951 full for this local revision. Review all three checks. Solution/project wiring and existing
 per-module execution policy are unchanged. The [scheduling record](ci-duration.md) retains the original
 740/807-case coverage and timing baseline; it is not a hosted result for this increment.
 The explicit cache-placement benchmark retains the original single Windows full-solution run; it skips both

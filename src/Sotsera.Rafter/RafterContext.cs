@@ -9,6 +9,7 @@ public sealed class RafterContext
     private readonly InputValues _values;
     private readonly ProcessInvocation _invocation;
     private readonly BodyProcesses? _processes;
+    private readonly InvocationResources? _resources;
 
     /// <summary>Signals that the invocation should stop and finish its cleanup.</summary>
     public CancellationToken CancellationToken { get; }
@@ -16,9 +17,11 @@ public sealed class RafterContext
     /// <summary>The absolute path base selected for this invocation, independent of later working-directory changes.</summary>
     public string RootDirectory { get; }
     internal bool ProcessFailure => _invocation.Failed;
+    internal bool ExecutionFailed => ProcessFailure || _resources?.Failed == true;
 
     internal RafterContext(string rootDirectory, InvocationOutput output, CancellationToken cancellationToken,
-        InputValues values, ProcessInvocation invocation, BodyProcesses? processes = null)
+        InputValues values, ProcessInvocation invocation, BodyProcesses? processes = null,
+        InvocationResources? resources = null)
     {
         RootDirectory = rootDirectory;
         _output = output;
@@ -26,6 +29,7 @@ public sealed class RafterContext
         CancellationToken = cancellationToken;
         _invocation = invocation;
         _processes = processes;
+        _resources = resources;
     }
 
     /// <summary>Writes a literal result line to stdout, preserving embedded newlines and indentation.</summary>
@@ -51,7 +55,8 @@ public sealed class RafterContext
     internal async Task RunBodyAsync(Func<RafterContext, Task> body, string name)
     {
         var processes = new BodyProcesses(_invocation, name);
-        var context = new RafterContext(RootDirectory, _output, CancellationToken, _values, _invocation, processes);
+        var context = new RafterContext(RootDirectory, _output, CancellationToken, _values, _invocation, processes,
+            _resources);
         try
         {
             var task = body(context) ?? throw new InvalidOperationException($"{name} returned a null task.");
@@ -61,6 +66,25 @@ public sealed class RafterContext
         {
             await processes.FinishAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Returns this invocation's state for a handle declared on its command. Does not call the factory.</summary>
+    public T GetState<T>(State<T> state) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        return (_resources ?? throw new InvalidOperationException("State is unavailable outside an initialized invocation."))
+            .Get(state);
+    }
+
+    internal Task RunCleanupAsync(CleanupDeclaration cleanup, string owner, bool commandScope = false)
+    {
+        if (cleanup.Calls == 0)
+        {
+            return Task.CompletedTask;
+        }
+        var context = new RafterContext(RootDirectory, _output, CancellationToken.None, _values, _invocation,
+            resources: _resources);
+        return _resources!.CleanupAsync(cleanup, owner, context, _invocation, commandScope);
     }
 
     /// <summary>Returns the value prepared before execution for a required or defaulted input.</summary>
