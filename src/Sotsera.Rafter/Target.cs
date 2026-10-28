@@ -12,6 +12,9 @@ public sealed class Target
     private Func<RafterContext, Task>? _body;
     private int _bodyCalls;
     private bool _nullDependencies;
+    private string? _conditionDescription;
+    private Func<RafterContext, bool>? _condition;
+    private int _conditionCalls;
 
     internal Target(object gate, string name, string description)
     {
@@ -33,6 +36,20 @@ public sealed class Target
             {
                 _dependencies.AddRange(dependencies);
             }
+        }
+        return this;
+    }
+
+    /// <summary>Runs this target's body only when the described synchronous condition is true.
+    /// Evaluated once after prerequisites; false skips only the body and allows dependants to continue.
+    /// Invalid, repeated, or group conditions are rejected by RunAsync before work.</summary>
+    public Target When(string description, Func<RafterContext, bool> predicate)
+    {
+        lock (_gate)
+        {
+            _conditionCalls++;
+            _conditionDescription = description;
+            _condition = predicate;
         }
         return this;
     }
@@ -63,7 +80,7 @@ public sealed class Target
         lock (_gate)
         {
             return new(this, _name, _description, _dependencies.Distinct().ToArray(), _body,
-                _bodyCalls, _nullDependencies);
+                _bodyCalls, _nullDependencies, _conditionDescription, _condition, _conditionCalls);
         }
     }
 }

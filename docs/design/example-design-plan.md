@@ -12,8 +12,8 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 | Area | Implemented now | Remaining boundary |
 | --- | --- | --- |
 | Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
-| Targets | Sequential dependency graphs, groups, multiple selected entries, and failure/cancellation handling. | Conditional execution and shared-resource cleanup APIs remain undesigned. |
-| Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, and typed .NET build/publish/pack merged through #61. | SDK environment policy and first Git/npm helpers are the current increment; Linux-native ownership and broader deadlines remain separate work. |
+| Targets | Sequential dependency graphs, groups, multiple selected entries, failure/cancellation handling, and locally verified conditional-body execution under #66. | Conditional delivery/user review remain pending; cleanup/shared-resource APIs remain undesigned. |
+| Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, typed .NET build/publish/pack, opt-in SDK environment isolation, and first Git/npm helpers merged through #65. | Further typed commands, Linux-native ownership, and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
 | Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
@@ -30,6 +30,14 @@ The focused delivery sequence is complete:
 | Windows cache measurement and package isolation | Merged in [PR #57](https://github.com/sotsera/rafter/pull/57), closing #56; default placement retained. | [Six-sample result](../development/ci-cache-measurements.md). |
 | Parallel Windows evaluation | Merged in [PR #59](https://github.com/sotsera/rafter/pull/59), closing #58. | [Duration, coverage, and runner-time tradeoff](../development/ci-duration.md). |
 | Reusable executables and typed .NET commands | Merged in [PR #61](https://github.com/sotsera/rafter/pull/61), closing #60; all three PR checks and main evaluation passed. | [Authoring and local verification](../guides/executables-and-dotnet.md). |
+| SDK environment isolation and typed Git/npm helpers | Merged in [PR #65](https://github.com/sotsera/rafter/pull/65), closing #62/#63/#64; all three PR checks passed. | [SDK policy](../guides/executables-and-dotnet.md#selecting-the-sdk-for-the-child-directory) and [Git/npm verification](../guides/git-and-npm.md#local-verification-2026-10-27). |
+
+PR #65 merged as `99358bb` on 2026-10-28. Its [PR evaluation](https://github.com/sotsera/rafter/actions/runs/40762862385)
+passed Linux portable, Windows portable, and Windows native/packaging/output checks. The
+[post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40764786597) also passed.
+Local verification for that delivery remains **866 passed, 0 failed,
+1 console-dependent skip** across 867 cases, plus **43 redirected runtime cases**. Conditional execution below is
+agreed and implemented locally under #66; those earlier results do not verify the new increment.
 
 The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
 full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
@@ -44,11 +52,12 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Deliver the reviewed SDK-environment and Git/npm increment below through a PR.** Local review on 2026-10-28
-found no blocking code issues; hosted checks and user review remain pending. PR #61 and its
-[main evaluation](https://github.com/sotsera/rafter/actions/runs/40518377761) passed. Keep independent validation,
-applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
-the deferred #46/#47 integration acceptance are merged.
+**Deliver the reviewed conditional-target increment below through a PR.** Local review on 2026-10-28 found no
+blocking code issues. Applicable hosted checks and user review remain delivery checkpoints. The user approved
+`.When(...)` and its body-only skip semantics on 2026-10-28, including block lambdas with an explicit `return`.
+Implementation is tracked by [#66](https://github.com/sotsera/rafter/issues/66), created before shipping-code changes.
+The SDK-environment and Git/npm increment merged through #65 with all PR and main checks passing. Cleanup/shared
+resources follow as a separate design topic. The complete workflow and deferred #46/#47 acceptance are merged.
 
 CI trigger/concurrency changes merged through [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54;
 its post-merge main evaluation passed. The cache-placement measurement under
@@ -64,19 +73,19 @@ took 8m56s, and latest merged main took 7m00s. All 740 ordinary / 807 full Windo
 The median summed Windows runner time increased to 9m49s versus 8m52s for the serial control. The scheduling record
 preserves this tradeoff and measurement limits. Final PR verification passed all three checks in 5m46s. The
 [executable and chunked-argument design](#process-authoring-draft-for-review) merged through #61 with all three PR
-checks and its main evaluation passing. The [current SDK/Git/npm increment](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27)
-is tracked by [#62](https://github.com/sotsera/rafter/issues/62), [#63](https://github.com/sotsera/rafter/issues/63), and
-[#64](https://github.com/sotsera/rafter/issues/64). Remote archive caching and later product topics remain proposals.
+checks and its main evaluation passing. The [SDK/Git/npm increment](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27)
+merged through #65, closing [#62](https://github.com/sotsera/rafter/issues/62),
+[#63](https://github.com/sotsera/rafter/issues/63), and [#64](https://github.com/sotsera/rafter/issues/64).
+Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver the reviewed #62 SDK policy. | Local review and mixed-SDK/metadata/resource checks passed; PR CI and user review pending. |
-| 2 | Deliver the reviewed #63 Git helpers with the shared tool layer. | Status/log, grouped arguments, capture, and disposable-repository checks passed; PR CI and user review pending. |
-| 3 | Deliver the reviewed #64 npm helpers with the shared tool layer. | Install/CI/scripts, forwarding, direct Node launch, failure/timeout settlement, and consumers passed; PR CI and user review pending. |
-| 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
-| 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
-| 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
-| 7 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
+| 1 | Deliver the [reviewed conditional-target increment](#conditional-targets--agreed-behavior-2026-10-28), issue #66. | Local review and full regression passed; PR CI and user review remain pending. |
+| 2 | Reconcile the conditional delivery after merging. | Verify applicable PR/main checks and record the merged revision before marking the delivery complete. |
+| 3 | Discuss cleanup/shared resources separately. | Use a concrete resource scenario to define acquisition, lifetime, cleanup eligibility, cancellation, and combined failures. |
+| 4 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
+| 5 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
+| 6 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
 The CI review found duplicate fork-push/upstream-PR evaluations for #49. The merged change removes `build/**` push
 evaluations and uses a workflow/event/PR concurrency group for PR runs. Main pushes and manual runs each use their
@@ -133,14 +142,15 @@ original Dotnet helper remains in the before example below for comparison, with 
 
 - #60 merged in #61, replacing repeated process configuration with `context.Dotnet()` and typed build/pack calls.
   All five migrated workflow scenarios and both platforms' applicable PR/main checks passed.
-- Address SDK-environment inheritance: an outside `dotnet run` can select a preview SDK and carry its MSBuild paths
-  into children using the repository's pinned SDK. The guide retains the observed failure and built-DLL workaround.
+- #62 merged in #65, adding explicit `.UseWorkingDirectorySdk()` to remove inherited SDK/MSBuild overrides from
+  children. The guide distinguishes controlled mixed-SDK reproduction from the current natural preview launch;
+  choosing the outer file-app SDK remains separate.
 - The first root/filesystem cleanup is implemented through #50/#51 and used by this example: directory/file
   composition, probes, evidence creation, and metadata/manifest writes use the agreed helpers.
 - Rerun workflow success, failure, timeout, root, optional-pack, and evidence checks after future cleanup. Preserve
   process/stream settlement and explicit cancellation choices for final evidence.
 
-The current #62 increment adds an explicit SDK policy and opts this workflow in. The
+The merged #62 increment adds an explicit SDK policy and opts this workflow in. The
 [design below](#process-authoring-draft-for-review) preserves the original syntax discussion and selected follow-up.
 
 ### Process authoring draft for review
@@ -392,8 +402,9 @@ Attached-console and live-editor checks were not run for that increment.
 The user authorized the SDK inheritance fix and the first Git/npm helpers after #61 merged. Issues
 [#62](https://github.com/sotsera/rafter/issues/62), [#63](https://github.com/sotsera/rafter/issues/63), and
 [#64](https://github.com/sotsera/rafter/issues/64) were created before shipping-code changes. Local review completed
-on 2026-10-28 with no blocking code issues. The delivery uses the existing process ownership pipeline;
-the unrelated `examples/environment.cs` working-tree state is excluded.
+on 2026-10-28 with no blocking code issues. [PR #65](https://github.com/sotsera/rafter/pull/65) merged after all three PR
+checks passed. The delivery uses the existing process ownership pipeline; the unrelated `examples/environment.cs`
+working-tree state was excluded and remains preserved.
 
 The installed 11.0.100-rc.3 preview no longer reproduces the earlier natural outside-launch injection: all inspected
 SDK variables were absent and a child resource build selected 10.0.403 successfully. A controlled host carrying
@@ -448,8 +459,184 @@ across 867 cases (unit 696, integration 49, Windows 122). Actual Git/frontend fi
 consumers passed. The Release solution and runtime consumer builds have no warnings/errors. See the
 [tool guide and retained failure history](../guides/git-and-npm.md#local-verification-2026-10-27). The original natural
 preview launch and controlled mixed-SDK failure remain distinct observations. Inside/outside policy builds and all
-**43 redirected runtime cases** also passed. The reviewed increment is prepared for PR delivery; hosted CI and user
-review remain pending. No Linux CI, attached-console, or live-editor result is claimed for this increment.
+**43 redirected runtime cases** also passed. PR #65 subsequently passed Linux portable, Windows portable, and Windows
+native evaluation and merged. The post-merge main run also passed. Linux-native execution,
+attached-console, and live-editor verification are not established by those checks.
+
+### Conditional targets — agreed behavior, 2026-10-28
+
+**Status: syntax and behavior agreed, implementation authorized on 2026-10-28.** The earlier draft below was
+approved by the user. [Issue #66](https://github.com/sotsera/rafter/issues/66) was created before shipping-code changes.
+`Target.When(string description, Func<RafterContext, bool> predicate)` is implemented and verified locally.
+The runnable [conditions.cs](../../examples/conditions.cs) uses the agreed workflow. Local review on 2026-10-28
+found no blocking code issues; applicable PR/main CI and user review remain delivery checkpoints.
+
+The concrete scenario is a Windows repository workflow: always build, optionally skip tests, and pack only when
+requested. Existing callbacks can express these branches with `if`, but the target still executes and is counted as
+completed. The agreed condition gives the framework an explicit skipped outcome and a description it can display.
+
+Agreed declaration, using the user's preferred multiline block form:
+
+```csharp
+var test = command.Target("test", "Run the ordinary repository tests.")
+    .DependsOn(build)
+    .When("Tests were not disabled with --skip-tests.", context =>
+    {
+        return !context.GetValue(skipTests);
+    })
+    .Run(context =>
+    {
+        context.WriteLine("Run the existing test body here.");
+    });
+```
+
+`When(description, predicate)` reads as a condition for running this target's body. The description states the
+condition; it is not an exception message or a promise that the predicate is true. Existing `.DependsOn(...)` and
+`.Run(...)` keep their meanings. Expression lambdas remain valid for simple predicates:
+
+```csharp
+.When("Packaging was requested with --pack.", context => context.GetValue(createPackages))
+```
+
+A block lambda must explicitly `return` its Boolean result. The implementation keeps both forms through the same
+delegate overload; there is no separate block-lambda API. The full example is:
+
+```csharp
+var command = Rafter.Command("Build, optionally test, and optionally pack this repository.");
+var root = command.Option<string>("root", "Repository root.").Default(".");
+var skipTests = command.Option<bool>("skip-tests", "Skip the test target.").Default(false);
+var createPackages = command.Option<bool>("pack", "Create local development packages.").Default(false);
+command.RootDirectory(root);
+
+var build = command.Target("build", "Build the repository in Release configuration.")
+    .Run(async context =>
+    {
+        await context.Dotnet()
+            .UseWorkingDirectorySdk()
+            .Timeout(TimeSpan.FromMinutes(5))
+            .Build("Rafter.slnx")
+            .Configuration("Release")
+            .DisableBuildServers()
+            .MaxCpuCount(1)
+            .RunAsync();
+    });
+
+var test = command.Target("test", "Run the ordinary repository tests.")
+    .DependsOn(build)
+    .When("Tests were not disabled with --skip-tests.", context =>
+    {
+        return !context.GetValue(skipTests);
+    })
+    .Run(async context =>
+    {
+        await context.Dotnet()
+            .UseWorkingDirectorySdk()
+            .Timeout(TimeSpan.FromMinutes(5))
+            .Arguments("test", "--solution", "Rafter.slnx")
+            .Arguments("--configuration", "Release", "--no-build")
+            .Arguments("--minimum-expected-tests", "1", "--max-parallel-test-modules", "1")
+            .RunAsync();
+    });
+
+var pack = command.Target("pack", "Create local development packages.")
+    .DependsOn(test)
+    .When("Packaging was requested with --pack.", context =>
+    {
+        return context.GetValue(createPackages);
+    })
+    .Run(async context =>
+    {
+        var packages = context.Directory("artifacts", "packages").EnsureExists();
+        await context.Dotnet()
+            .UseWorkingDirectorySdk()
+            .Timeout(TimeSpan.FromMinutes(5))
+            .Pack("src/Sotsera.Rafter/Sotsera.Rafter.csproj")
+            .Configuration("Release")
+            .NoBuild()
+            .Output(packages.FullPath)
+            .RunAsync();
+    });
+
+var verify = command.Target("verify", "Build, test when enabled, and pack when requested.")
+    .DependsOn(test, pack);
+
+return await command.RunAsync(args, verify);
+```
+
+Each body creates its own body-owned dotnet configuration. The test arguments follow this repository's native
+Microsoft.Testing.Platform setup and ordinary profile; this is not a universal typed `Dotnet.Test()` proposal.
+The root selects this checkout's solution and project paths. The runnable example has explicit per-child deadlines
+and disables build servers for the build stage. Its real consumer checks use a miniature disposable solution to
+avoid recursively running the outer workflow tests. The four combinations and prerequisite failure all passed.
+
+#### Agreed execution semantics
+
+1. Prepare and validate inputs and the complete static dependency graph using the existing rules. Conditions do not
+   hide invalid graphs, declaration errors, or invalid inputs. Help describes conditions without invoking predicates.
+2. Visit dependencies first. Evaluate a reachable target's synchronous predicate once, immediately before its body
+   would start, with validated inputs and after prior work has settled. Unreachable predicates do not run. Declaration
+   order of `.When(...)` and `.DependsOn(...)` does not change this timing.
+3. A false result skips only that body. Its prerequisites have already run, and its dependants may continue. Shared
+   targets are visited once, so a shared skipped target is not evaluated again. A new invocation evaluates it afresh.
+4. A skip is neither a completed body nor a failure. With all executed work successful, it leaves the invocation
+   successful. This preserves optional stages: `--pack --skip-tests` deliberately packs after skipping tests. A
+   dependency expresses ordering, not a guarantee that an artifact exists or that tests ran; required-artifact and
+   required-success policies are separate future decisions.
+5. An exception in a predicate is a failure attributed to that target, not a skip. Stop later scheduling. Invocation
+   cancellation also stops scheduling using the existing cancellation/failure precedence; it is not a false condition.
+   No later predicate is reached after an earlier unhandled dependency failure or cancellation.
+6. Start with one described synchronous predicate on a body target. Combine checks explicitly with ordinary C#
+   `&&`/`||`. Report declaration errors for null predicates, blank descriptions, repeated `.When(...)`, and conditions
+   on dependency-only groups, consistent with existing declaration validation. Async predicates, group/branch pruning,
+   multiple condition policies, parallel targets, and cleanup hooks remain outside this increment.
+
+Predicates should inspect prepared inputs or already available state. They are not another asynchronous work body
+or a place to start child processes. Ordinary bodies retain existing ownership and settlement behavior.
+
+Assuming successful executed work, the agreed outcome matrix is:
+
+| Inputs | Build | Test | Pack | Invocation summary |
+| --- | --- | --- | --- | --- |
+| Defaults | Run | Run | Skip | Success; 2 completed, 1 skipped body. |
+| `--skip-tests` | Run | Skip | Skip | Success; 1 completed, 2 skipped bodies. |
+| `--pack` | Run | Run | Run | Success; 3 completed, 0 skipped bodies. |
+| `--pack --skip-tests` | Run | Skip | Run | Success; 2 completed, 1 skipped body. |
+
+Lifecycle output uses stderr and shows a line such as
+`[test] Skipped: condition not met (Tests were not disabled with --skip-tests.)`.
+Do not emit a body-started/completed pair or a fabricated body duration for a skip. Track completed and skipped body
+counts separately; dependency-only groups retain their existing no-body-count behavior. Quiet hides routine skip
+lines and summaries, while help shows the condition description without claiming a runtime outcome. Existing
+successful summaries without skips retain their wording; summaries with skips append a separate skipped-body count.
+
+The user agreed `.When(description, predicate)`, dependency-first evaluation, body-only guards, and explicit test
+skipping permitting packing. Issue #66 verifies the outcome matrix, help/nonexecution, shared dependencies,
+declaration validation, predicate failure/cancellation (including cancellation requested during a false predicate),
+invocation isolation, and real file-app/project/package consumers. Predicates receive invocation context outside a
+body, so they cannot launch body-owned child processes. Caught output failures also remain failures, not skips.
+
+#### Local verification, 2026-10-28
+
+Release solution and runtime-consumer builds passed with **0 warnings and 0 errors**. The full Windows regression
+passed **899 tests, 0 failures, 1 existing console-dependent skip** across **900 total**: unit 726, integration 51,
+Windows 123 (122 passed, 1 skipped). All **43 redirected runtime cases** passed.
+
+Thirty new unit cases cover the agreed matrix, shared dependencies/order, invalid/unreachable declarations, help,
+invalid inputs/graphs, predicate failures/cancellation, snapshots, overlapping invocations, literal/quiet skip output,
+and body-only process access. Two real file-app/project consumers each exercise the four combinations, help, and
+quiet; existing isolated package consumers also execute/skip packaged conditions. The actual `conditions.cs`
+consumer builds/tests/packs a disposable miniature repository for all four combinations and verifies that a failed
+build prevents later condition evaluation and packing. It avoids recursively running the outer suites.
+
+Evidence is retained in `artifacts/evidence/conditional-targets/`; final full TRX reports are under
+`artifacts/test-results/conditional-full/`. The first unit run's presentation-assertion errors and mistaken minimum
+count remain recorded; corrected assertions account for wrapped help and distinguish invocation summaries from
+body statuses. No runtime assertion/deadline/timeout was weakened. No CI workflows, project wiring, filters,
+dependencies, shared consumer supervisor, or native process ownership implementation changed. New Linux CI,
+attached-console/live-editor, macOS, and AOT verification were not run for this increment.
+
+Cleanup/shared resources remain a subsequent example: establish resource acquisition and lifetime, including cleanup
+failure, before selecting an API. This increment does not add an always-run target or use skipped work as cleanup.
 
 ## Design approach and references
 
@@ -526,13 +713,13 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Input validation | ✓ | ✓ | ✓ | ✓ |
 | Environment inputs | ✓ | ✓ | ✓ | ✓ |
 | Targets and dependencies | ✓ | ✓ | ✓ | ✓ |
-| Conditional execution | — | — | — | — |
+| Conditional execution | [Build/test/optional-pack example](#conditional-targets--agreed-behavior-2026-10-28) | Agreed `.When(...)` body guard, block/expression lambdas, and skip semantics. | Implemented and locally reviewed under #66; prepared for PR delivery. | Full local 899 passed/0 failed/1 console skip; real consumers and 43 redirected cases passed. PR/main checks pending. |
 | Output and diagnostics | Partial | Partial | Partial | Partial |
 | Failures | Partial | Partial | Partial | Partial |
 | External processes | ✓ | Partial | Partial | Partial |
 | Reusable process settings | [Executable and chunked arguments](#process-authoring-draft-for-review) | Body-local immutable defaults, independent commands, and child overrides. | Merged #61, closing #60. | Local and applicable PR/main checks passed. |
-| Typed command helpers | [Typed .NET direction](#typed-command-helpers--agreed-direction-2026-10-27) | .NET build/publish/pack merged; first Git/npm helpers implemented. | .NET merged #61; reviewed #63/#64 adapters ready for PR. | [Full local regression and consumers passed](../guides/git-and-npm.md#local-verification-2026-10-27); PR CI/user review pending. |
-| SDK environment isolation | [Selected #62 policy](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27) | Explicit child-directory SDK selection without changing generic inheritance. | Reviewed opt-in policy and workflow migration ready for PR. | Cross-SDK reproduction/fix, full regression, and workflow checks passed locally; PR CI/user review pending. |
+| Typed command helpers | [Typed .NET direction](#typed-command-helpers--agreed-direction-2026-10-27) | .NET build/publish/pack and first Git/npm helpers implemented. | Merged through #61/#65, closing #60/#63/#64. | [Local regression and consumers passed](../guides/git-and-npm.md#local-verification-2026-10-27); all #65 PR/main checks passed. |
+| SDK environment isolation | [Selected #62 policy](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27) | Explicit child-directory SDK selection without changing generic inheritance. | Opt-in policy and workflow migration merged #65, closing #62. | Cross-SDK reproduction/fix and workflow checks passed locally; all PR/main checks passed. |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
@@ -1389,6 +1576,10 @@ Agreed nonempty invocation contract:
 The target and dependency design above is agreed. Callback-based graph execution is implemented and verified in the
 [target runtime record](../guides/targets.md); the build/test workflow is verified in the [process record](../guides/process-runtime.md).
 Analyzer coverage remains pending.
+
+The [agreed conditional-target extension](#conditional-targets--agreed-behavior-2026-10-28) adds `.When(...)` and
+body-only skips to this baseline under #66. Dependency-first ordering is preserved; skipped prerequisites allow
+dependants to continue, while failure and cancellation stop scheduling.
 
 ### Automatic namespace import
 

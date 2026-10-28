@@ -6,6 +6,11 @@ live echo. Its explicit positive limit counts UTF-16 code units per stream; clea
 exceptions expose bounded partial streams. Owned process execution currently requires Windows.
 This is a local development package for the first working examples milestone; it has not been published to NuGet.org.
 
+Targets support `.When(description, context => ...)` with a synchronous Boolean predicate. A block lambda uses
+an explicit `return`. Dependencies run first; false skips only the body and permits dependants to continue.
+Help describes conditions without evaluating them, lifecycle output distinguishes skipped bodies, and quiet hides
+routine skips. Conditions on groups, repeated conditions, and invalid descriptions/predicates are declaration errors.
+
 `context.Executable("tool")` replaces `context.Process("tool")`. Reusable executable settings are immutable;
 each `.Arguments(...)` call on the executable creates a fresh command, and further calls append argument chunks.
 Children can override defaults without changing siblings. `RemoveEnvironment(...)` explicitly removes child variables.

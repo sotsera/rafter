@@ -67,7 +67,69 @@ Quiet hides routine headings and successful statuses while retaining script outp
 stdout preserves script text without styling or presentation prefixes. Existing stream-specific color/NO_COLOR
 policies also apply to target output. Host writers remain open until invocation output settlement completes.
 
-## Verification
+## Conditional target bodies
+
+The local [#66 increment](https://github.com/sotsera/rafter/issues/66) adds a synchronous, described body guard:
+
+```csharp
+var pack = command.Target("pack", "Create local packages.")
+    .DependsOn(test)
+    .When("Packaging was requested with --pack.", context =>
+    {
+        return context.GetValue(createPackages);
+    })
+    .Run(async context =>
+    {
+        await context.Dotnet().UseWorkingDirectorySdk()
+            .Pack("src/Sotsera.Rafter/Sotsera.Rafter.csproj")
+            .Configuration("Release")
+            .RunAsync();
+    });
+```
+
+`When(string description, Func<RafterContext, bool> predicate)` also accepts an expression lambda such as
+`context => context.GetValue(createPackages)`. A block lambda requires an explicit Boolean `return`.
+The description states the condition and appears in help and skip output.
+
+Evaluate a condition once per reachable target per invocation, after its dependencies settle and before its body
+would start. False skips only the body: prerequisites have already run and dependants may continue. Shared targets
+are visited once; later invocations evaluate them anew. Fluent declaration order does not change timing. Conditions
+are included in declaration snapshots. A dependency expresses ordering, not proof that tests ran or an artifact exists.
+
+The [conditions.cs example](../../examples/conditions.cs) builds/tests by default and skips packaging. `--pack` opts
+into packages; `--skip-tests` disables tests. Both flags deliberately build, skip tests, and pack. See the
+[agreed behavior matrix](../design/example-design-plan.md#conditional-targets--agreed-behavior-2026-10-28).
+
+Predicate exceptions fail that target and stop later scheduling. Cancellation also stops scheduling, including when
+a predicate requests cancellation and returns false. Existing failure/cancellation precedence is preserved. Earlier
+unhandled prerequisite failures prevent later predicates from running. Predicates receive invocation context outside
+a body and cannot launch body-owned processes; use them for prepared inputs/already available state, and bodies for
+asynchronous work.
+
+Initial validation rejects null predicates, blank descriptions, repeated `When` calls, and conditions on dependency-only
+groups, even when unused or invoked with help/a command body. False conditions cannot hide invalid graphs or inputs.
+Combine checks with ordinary C# `&&`/`||`. Async predicates, conditional groups, branch pruning, and cleanup hooks remain
+outside this increment.
+
+Skipped bodies emit a literal lifecycle line on stderr, such as
+`[pack] Skipped: condition not met (Packaging was requested with --pack.)`. There is no body-start section, completion
+status, or fabricated body duration. Successful summaries append a separate skipped count when nonzero:
+`2 target bodies completed, 1 skipped`. Groups add no body counts. Quiet hides routine skips and successful summaries
+while retaining script output and failures. Help shows `When:` descriptions and planned body order without invoking
+predicates or claiming a runtime outcome.
+
+## Conditional verification, 2026-10-28
+
+The #66 increment passed a full local Windows regression: **899 passed, 0 failed, 1 existing console-dependent
+skip** across 900 cases (unit 726; integration 51; Windows 123). Release solution/runtime-consumer builds have
+0 warnings/errors, and all 43 redirected runtime cases passed. Thirty new unit cases cover skip, validation, help,
+ordering, snapshots/isolation, failures/cancellation, and output behavior. Real file-app/project/package consumers
+exercise the API; the actual example runs all four combinations and prerequisite failure on a disposable real
+build/test/pack solution. Evidence is retained under `artifacts/evidence/conditional-targets/` and
+`artifacts/test-results/conditional-full/`. Local review on 2026-10-28 found no blocking code issues. PR/main CI,
+new Linux checks, attached-console, live-editor, macOS, and AOT checks are not claimed for this increment.
+
+## Historical verification of the initial target slice
 
 [Target runtime tests](../../tests/Rafter.UnitTests/Targets/TargetTests.cs) exercise order, shared dependencies, repeated
 references, nested groups, a 12,000-level graph, all-declaration validation, cycles, ownership, awaited execution,
@@ -91,6 +153,7 @@ dependency suffixes, literal result prefixes, flat descriptions, per-body timing
 Automated redirected captures confirm clean stdout and lifecycle stderr; the narrow help checks use 48 columns.
 CI evidence is recorded in the implementation PR.
 
-External-process execution/settlement,
-ProcessFailureAction, analyzers, parallel targets, conditional execution, packaging, and Linux/macOS verification
-remain separate work. No dependency versions changed.
+At that initial source revision, external-process execution/settlement, ProcessFailureAction, analyzers, parallel
+targets, conditional execution, packaging, and Linux/macOS verification remained separate work. Later delivered
+capabilities are recorded in the development plan; conditional behavior is described above. No dependency versions
+changed in the initial target slice.

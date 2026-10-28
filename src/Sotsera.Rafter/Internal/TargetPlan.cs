@@ -1,7 +1,8 @@
 namespace Sotsera.Rafter.Internal;
 
 internal sealed record TargetSnapshot(Target Target, string Name, string Description, Target[] Dependencies,
-    Func<RafterContext, Task>? Body, int BodyCalls, bool NullDependencies);
+    Func<RafterContext, Task>? Body, int BodyCalls, bool NullDependencies,
+    string? ConditionDescription, Func<RafterContext, bool>? Condition, int ConditionCalls);
 
 internal sealed record TargetPlan(TargetSnapshot[] Entries, TargetSnapshot[] Order,
     IReadOnlyDictionary<Target, TargetSnapshot> Declarations)
@@ -47,6 +48,25 @@ internal sealed record TargetPlan(TargetSnapshot[] Entries, TargetSnapshot[] Ord
             if (target.NullDependencies)
             {
                 diagnostics.Add($"Target '{target.Name}' has a null dependency array.");
+            }
+            if (target.ConditionCalls > 1)
+            {
+                diagnostics.Add($"Target '{target.Name}' may declare its condition only once.");
+            }
+            if (target.ConditionCalls > 0)
+            {
+                if (string.IsNullOrWhiteSpace(target.ConditionDescription))
+                {
+                    diagnostics.Add($"Target '{target.Name}' requires a nonblank condition description.");
+                }
+                if (target.Condition is null)
+                {
+                    diagnostics.Add($"Target '{target.Name}' has a null condition predicate.");
+                }
+                if (target.BodyCalls == 0)
+                {
+                    diagnostics.Add($"Target '{target.Name}' requires a body to declare a condition; groups cannot be conditional.");
+                }
             }
             foreach (var dependency in target.Dependencies)
             {
