@@ -28,6 +28,7 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
 | Reusable executables, argument chunks, child overrides, and typed .NET build/publish/pack | [Executables and .NET](guides/executables-and-dotnet.md) |
+| Typed Git status/log, npm install/CI/scripts, and custom tool adapters | [Git and npm](guides/git-and-npm.md) |
 | Bounded process capture, ordered chunks, echo, and partial output | [Process capture](guides/process-capture.md) |
 | Compiler/editor authoring diagnostics | [Authoring diagnostics](guides/authoring-diagnostics.md) |
 | Human/plain output and help contracts | [Output design](design/output-design.md) |

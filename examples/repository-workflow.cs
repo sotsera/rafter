@@ -58,6 +58,7 @@ return await command.RunAsync(args, async context =>
     };
 
     var dotnet = context.Dotnet()
+        .UseWorkingDirectorySdk()
         .Environment("DOTNET_NOLOGO", "1")
         .Environment("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
         .Environment("DOTNET_CLI_USE_MSBUILD_SERVER", "0")

@@ -35,11 +35,14 @@ For a launch from another directory, supply the script's absolute path and `--ro
 dotnet run --file E:/Ghidello/Git/rafter.v2/rafter/examples/repository-workflow.cs -- --root E:/Ghidello/Git/rafter.v2/rafter --pack --plain
 ```
 
-The launch directory must select the pinned SDK: `--root` is processed after `dotnet run` has already selected its
-own SDK. Check `dotnet --version` there first. With other SDKs installed outside the checkout's `global.json` scope,
-build the file app from the checkout using the pinned SDK, then launch the DLL path printed by that build with
-`dotnet <built-workflow.dll> --root <repository>`. That direct DLL launch avoids the SDK environment injected by a
-different `dotnet run` host. An observed preview-SDK failure and successful direct launch are recorded below.
+`--root` is processed after `dotnet run` has selected the outer file-app SDK. The current local #62 cleanup opts its
+children into [UseWorkingDirectorySdk](../guides/executables-and-dotnet.md#selecting-the-sdk-for-the-child-directory),
+which removes documented inherited SDK/MSBuild overrides and lets the selected child directory govern SDK lookup.
+It does not choose the outer host SDK or guarantee that another host SDK can build the file app. Building in the
+checkout and launching the printed DLL path with `dotnet <built-workflow.dll> --root <repository>` remains the
+SDK-safe host workaround. The older observed preview-SDK failure is preserved below; the current installed preview
+does not reproduce its natural environment injection, while controlled contamination does reproduce and verify
+the child-side fix.
 
 Relative roots resolve against the invocation directory, never the script directory. `command.RootDirectory(root)`
 binds the prepared input; `context.RootDirectory` and `context.ResolvePath(...)` then serve ordinary file paths and
@@ -92,14 +95,33 @@ capability skips; inspect its TRX reports before treating a scenario as covered.
 - **The root/path and filesystem APIs merged through #50/#51.** The command binds `--root` and the invocation resolves
   it once; the script no longer captures CWD or repeats `.WorkingDirectory(repository)` on each child. The later
   filesystem cleanup replaces manual path composition/probes, directory creation, and text writes with the agreed
-  multi-segment helpers. The current local increment also uses reusable executable configuration and typed .NET commands.
+  multi-segment helpers. Reusable executable configuration and typed .NET commands merged in #61.
 - Ordinary C# sequencing and `if (pack)` express this workflow clearly. There is no demonstrated need here for a
   new target condition API; later examples must establish skip/dependency behavior before adding one.
-- The local `Dotnet` function is replaced by immutable `context.Dotnet()` settings for
+- The local `Dotnet` function was replaced by immutable `context.Dotnet()` settings for
   [issue #60](https://github.com/sotsera/rafter/issues/60). Build and pack use typed commands; metadata and native-MTP
   test options use grouped raw arguments. See [executables and .NET](../guides/executables-and-dotnet.md).
+- The local #62 increment opts into `.UseWorkingDirectorySdk()` without changing generic or default .NET inheritance.
+  Controlled SDK 11 targets under MSBuild 10 reproduced MSB4216/MSB4027; the policy restored real metadata/resource
+  builds under 10.0.403. Natural outside launch on the current preview also passed without injected overrides.
 - Process awaits own shutdown/output delivery. `try/finally` owns the final evidence write. The script does not
   establish a shared-resource cleanup API or the behavior of multiple simultaneous cleanup failures.
+
+## SDK policy verification, 2026-10-27
+
+The current local #62 increment opts the workflow into `.UseWorkingDirectorySdk()`. A controlled inherited SDK 11
+`MSBuildSDKsPath` loaded SDK 11 targets under MSBuild 10 and reproduced MSB4216/MSB4027 in a real resource project.
+The opt-in restored SDK 10.0.403 metadata/resource builds from both inside and outside the checkout. The natural
+outside launch on the currently installed preview had no inspected SDK overrides and succeeded without the policy;
+this is distinct from the older preview observation below, not evidence of continuing natural injection.
+
+The final full local regression passed **866 tests, 0 failures, 1 console-dependent skip** (867 total), including all
+five workflow success/failure/timeout/optional-pack scenarios. All **43 redirected runtime cases** passed. SDK probe
+logs and failed attempts remain in `artifacts/evidence/sdk-tools/`; final TRX reports are under
+`artifacts/test-results/sdk-tools-full-final/`. New Git/frontend file-app examples and fresh tool/package consumers
+also passed. See [the tool verification record](../guides/git-and-npm.md#local-verification-2026-10-27).
+These are local results for the reviewed PR increment; hosted CI remains pending. Linux CI, attached-console, and
+live-editor checks were not run locally for this increment.
 
 ## Historical local verification before delivery slicing
 

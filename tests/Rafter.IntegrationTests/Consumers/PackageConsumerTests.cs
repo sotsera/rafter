@@ -113,11 +113,16 @@ public sealed class PackageConsumerTests
                     }
                 }
                 context.Executable("dotnet").Timeout(TimeSpan.MaxValue);
-                var dotnet = context.Dotnet().Timeout(TimeSpan.MaxValue);
+                var dotnet = context.Dotnet().UseWorkingDirectorySdk().Timeout(TimeSpan.MaxValue);
                 dotnet.Build("sample.csproj").Configuration("Custom").NoRestore().DisableBuildServers().MaxCpuCount(1)
                     .Arguments("--nologo");
                 dotnet.Publish("sample.csproj").Configuration("Custom").NoBuild().Output("published");
                 dotnet.Pack("sample.csproj").Configuration("Custom").NoBuild().Output("packages");
+                context.Git().Status().Short().Branch().Porcelain();
+                context.Git().Log().MaxCount(1).Oneline();
+                context.Npm("node", "npm-cli.js").Install().NoAudit().NoFund().IgnoreScripts();
+                context.Npm("node", "npm-cli.js").Ci().NoAudit().NoFund().IgnoreScripts();
+                context.Npm("node", "npm-cli.js").RunScript("build").IfPresent().ScriptArguments("a b", "--mode", "production");
                 context.WriteLine($"Hello, {context.GetValue(name)}! {context.GetValue(configuration)}. "
                     + $"{context.GetValue(duration).Ticks} ticks.");
             });
@@ -202,6 +207,8 @@ public sealed class PackageConsumerTests
                 _ = context.Executable("must-never-launch").RunAndCaptureAsync(1024);
                 _ = context.Dotnet().Build().RunAsync();
                 _ = context.Dotnet().Publish().RunAndCaptureAsync(1024);
+                _ = context.Git().Status().RunAsync();
+                _ = context.Npm("node", "npm-cli.js").RunScript("build").RunAndCaptureAsync(1024);
             });
             """;
         await File.WriteAllTextAsync(sourcePath, directives + invalid, TestContext.Current.CancellationToken);

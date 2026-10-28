@@ -7,6 +7,13 @@ public sealed class DotnetExecutable
 
     internal DotnetExecutable(Executable executable) => _executable = executable;
 
+    /// <summary>Removes inherited MSBuild/SDK selection overrides so dotnet can select the SDK for the child directory.
+    /// Does not pin an SDK, remove DOTNET_HOST_PATH, or change the parent environment.</summary>
+    public DotnetExecutable UseWorkingDirectorySdk()
+        => new(_executable.RemoveEnvironment("MSBuildSDKsPath", "MSBUILD_EXE_PATH", "MSBuildExtensionsPath",
+            "DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR", "DOTNET_MSBUILD_SDK_RESOLVER_SDKS_VER",
+            "DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR"));
+
     /// <summary>Returns defaults with a child-only environment value.</summary>
     public DotnetExecutable Environment(string name, string value) => new(_executable.Environment(name, value));
 

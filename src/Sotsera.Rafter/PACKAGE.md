@@ -10,7 +10,9 @@ This is a local development package for the first working examples milestone; it
 each `.Arguments(...)` call on the executable creates a fresh command, and further calls append argument chunks.
 Children can override defaults without changing siblings. `RemoveEnvironment(...)` explicitly removes child variables.
 `context.Dotnet()` adds typed `Build`, `Publish`, and `Pack` commands with configuration/output options and a raw
-`.Arguments(...)` escape hatch. All use the same owned process runner; Git/npm adapters remain future work.
+`.Arguments(...)` escape hatch. `UseWorkingDirectorySdk()` explicitly removes inherited MSBuild/SDK selection
+overrides without changing normal inheritance by default. Typed Git status/log and npm install/CI/scripts use the
+same owned runner. npm launches Node plus npm-cli.js directly; package script shells remain npm's responsibility.
 
 The runtime targets .NET 10. Verification targets SDK 10.0.402 on Windows x64 and Ubuntu 24.04 x64.
 External process ownership is implemented on Windows; native AOT remains unverified.

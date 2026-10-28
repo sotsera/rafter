@@ -3,7 +3,7 @@
 This is the main development roadmap and record of example/API decisions. Start with the current position and next
 steps below; the topic inventory and detailed decisions preserve the reasoning behind the implementation.
 
-## Current position — 2026-10-27
+## Current position — 2026-10-28
 
 Rafter has a working Windows-first automation runtime and a portable command/input/target layer. The **First working
 examples** milestone is complete. Subsequent increments added environment inputs, named enums, exact durations,
@@ -13,7 +13,7 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 | --- | --- | --- |
 | Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
 | Targets | Sequential dependency graphs, groups, multiple selected entries, and failure/cancellation handling. | Conditional execution and shared-resource cleanup APIs remain undesigned. |
-| Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, and capture; reusable executables and typed .NET build/publish/pack are implemented and verified locally under #60. | Local review/PR CI for #60, SDK environment policy, Git/npm helpers, Linux-native ownership, and broader deadlines remain separate work. |
+| Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, and typed .NET build/publish/pack merged through #61. | SDK environment policy and first Git/npm helpers are the current increment; Linux-native ownership and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
 | Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
@@ -29,6 +29,7 @@ The focused delivery sequence is complete:
 | CI triggers and supersession | Merged in [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54. | [CI workflow record](../development/github-workflow.md#ci-efficiency-increment). |
 | Windows cache measurement and package isolation | Merged in [PR #57](https://github.com/sotsera/rafter/pull/57), closing #56; default placement retained. | [Six-sample result](../development/ci-cache-measurements.md). |
 | Parallel Windows evaluation | Merged in [PR #59](https://github.com/sotsera/rafter/pull/59), closing #58. | [Duration, coverage, and runner-time tradeoff](../development/ci-duration.md). |
+| Reusable executables and typed .NET commands | Merged in [PR #61](https://github.com/sotsera/rafter/pull/61), closing #60; all three PR checks and main evaluation passed. | [Authoring and local verification](../guides/executables-and-dotnet.md). |
 
 The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
 full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
@@ -43,7 +44,9 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Verify and locally review the executable/.NET increment tracked by [#60](https://github.com/sotsera/rafter/issues/60).** Keep independent validation,
+**Deliver the reviewed SDK-environment and Git/npm increment below through a PR.** Local review on 2026-10-28
+found no blocking code issues; hosted checks and user review remain pending. PR #61 and its
+[main evaluation](https://github.com/sotsera/rafter/actions/runs/40518377761) passed. Keep independent validation,
 applicable Windows/Linux CI, user review, and squash merging as the delivery checkpoints. The complete workflow and
 the deferred #46/#47 integration acceptance are merged.
 
@@ -59,17 +62,17 @@ in PR #59 runs them on separate Windows runners, retaining all cases and
 native isolation. Three complete hosted runs passed in 5m06s–6m00s (median 5m38s); the same-revision serial control
 took 8m56s, and latest merged main took 7m00s. All 740 ordinary / 807 full Windows case identities and outcomes match.
 The median summed Windows runner time increased to 9m49s versus 8m52s for the serial control. The scheduling record
-preserves this tradeoff and measurement limits. Final PR verification passed all three checks in 5m46s. The next
-product increment is the [executable and chunked-argument design](#process-authoring-draft-for-review); its entry-point
-and argument syntax plus typed-helper direction are agreed, with local implementation verified on Windows. SDK environment
-policy remains open. Remote archive
-caching and later product topics remain proposals.
+preserves this tradeoff and measurement limits. Final PR verification passed all three checks in 5m46s. The
+[executable and chunked-argument design](#process-authoring-draft-for-review) merged through #61 with all three PR
+checks and its main evaluation passing. The [current SDK/Git/npm increment](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27)
+is tracked by [#62](https://github.com/sotsera/rafter/issues/62), [#63](https://github.com/sotsera/rafter/issues/63), and
+[#64](https://github.com/sotsera/rafter/issues/64). Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Review and deliver [#60](https://github.com/sotsera/rafter/issues/60) through a focused PR. | Reusable executables, grouped arguments, typed .NET build/publish/pack, child overrides, and migrated workflow/consumers. Local checks passed; PR review and CI remain before merging. |
-| 2 | Investigate the SDK-environment boundary. | Reproduce inherited host SDK paths, select an evidence-based child environment policy, and separate child SDK selection from the SDK that launches the file app. Generic explicit removal does not itself resolve this. |
-| 3 | Extend typed tool helpers from concrete examples. | Git and npm use the same generic execution pipeline; review their command-specific syntax before separate implementation increments. |
+| 1 | Deliver the reviewed #62 SDK policy. | Local review and mixed-SDK/metadata/resource checks passed; PR CI and user review pending. |
+| 2 | Deliver the reviewed #63 Git helpers with the shared tool layer. | Status/log, grouped arguments, capture, and disposable-repository checks passed; PR CI and user review pending. |
+| 3 | Deliver the reviewed #64 npm helpers with the shared tool layer. | Install/CI/scripts, forwarding, direct Node launch, failure/timeout settlement, and consumers passed; PR CI and user review pending. |
 | 4 | Discuss conditional execution and cleanup/shared resources. | Define dependency/skip behavior and resource lifetime on success, failure, cancellation, and cleanup failure. Implement only a scope demonstrated by a real workflow. |
 | 5 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
 | 6 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
@@ -128,8 +131,8 @@ values, public publication, and Linux-native ownership remain separate work.
 Revisit [repository-workflow.cs](../../examples/repository-workflow.cs) as process-authoring APIs evolve. Its
 original Dotnet helper remains in the before example below for comparison, with these follow-ups:
 
-- The local #60 increment replaces repeated process configuration with `context.Dotnet()` and typed build/pack calls.
-  All five migrated workflow scenarios passed locally; review and PR CI remain before delivery.
+- #60 merged in #61, replacing repeated process configuration with `context.Dotnet()` and typed build/pack calls.
+  All five migrated workflow scenarios and both platforms' applicable PR/main checks passed.
 - Address SDK-environment inheritance: an outside `dotnet run` can select a preview SDK and carry its MSBuild paths
   into children using the repository's pinned SDK. The guide retains the observed failure and built-DLL workaround.
 - The first root/filesystem cleanup is implemented through #50/#51 and used by this example: directory/file
@@ -137,17 +140,17 @@ original Dotnet helper remains in the before example below for comparison, with 
 - Rerun workflow success, failure, timeout, root, optional-pack, and evidence checks after future cleanup. Preserve
   process/stream settlement and explicit cancellation choices for final evidence.
 
-Keep the SDK-environment follow-up visible after authoring cleanup. The
-[design below](#process-authoring-draft-for-review) records the agreed syntax and local implementation boundary.
+The current #62 increment adds an explicit SDK policy and opts this workflow in. The
+[design below](#process-authoring-draft-for-review) preserves the original syntax discussion and selected follow-up.
 
 ### Process authoring draft for review
 
-**Status: syntax and typed-helper direction agreed, 2026-10-27; implemented and verified locally under
-[issue #60](https://github.com/sotsera/rafter/issues/60).** Use
+**Status: syntax and typed-helper direction agreed, 2026-10-27; merged in
+[PR #61](https://github.com/sotsera/rafter/pull/61), closing [#60](https://github.com/sotsera/rafter/issues/60).** Use
 `context.Executable("dotnet")` for reusable executable configuration and repeated `.Arguments(...)` calls to group
 one, two, or many separate tokens. The same calls can form one inline chain for a single invocation. This replaces
-the earlier `ProcessTemplate(...).Create(...)` proposal. The local runtime provides `Executable`, explicit
-`RemoveEnvironment`, and the first typed .NET helpers. None is merged or published yet.
+the earlier `ProcessTemplate(...).Create(...)` proposal. The merged runtime provides `Executable`, explicit
+`RemoveEnvironment`, and the first typed .NET helpers. The SDK/Git/npm extension is described separately below.
 The maintained [repository workflow](../../examples/repository-workflow.cs) remains the runnable baseline.
 
 The immediate use case is one workflow body launching several independent `dotnet` children with the same environment
@@ -266,6 +269,9 @@ If a command option must act as a hard upper limit rather than a default, that i
 
 #### SDK environment: explicit candidate, not a verified fix
 
+This subsection preserves the #60 review candidate. The later #62 investigation below reproduces mixed targets and
+selects an explicit `UseWorkingDirectorySdk()` policy; use that section for current implementation status.
+
 `RemoveEnvironment(params string[] names)` is implemented on both the executable configuration and a child command. Removal means absence
 in that child's environment block, distinct from setting an empty string. A variable set or removed explicitly by
 the child takes precedence over an executable edit of the same name; conflicting edits within one layer are rejected.
@@ -301,8 +307,8 @@ launch workaround remains the verified approach until the new behavior is implem
 
 #### Typed command helpers — agreed direction, 2026-10-27
 
-Build typed helpers on the generic executable API. Start with .NET; Git and npm are planned follow-ups, not part of
-this implementation increment. Helpers compose `Executable` and `ProcessCommand` and translate named methods into
+The #60 increment established typed helpers on the generic executable API, starting with .NET. Git/npm are the
+current #63/#64 follow-ups described below. Helpers compose `Executable` and `ProcessCommand` and translate named methods into
 argument tokens. They must use the same launch, capture, failure, cancellation, timeout, and settlement pipeline.
 Retain `.Arguments(params string[])` as an escape hatch on both the reusable tool and each typed command.
 
@@ -378,8 +384,72 @@ replace the workflow helper and rerun its success, build/test failure, timeout, 
 scenarios. Local Windows verification is recorded in the
 [authoring guide](../guides/executables-and-dotnet.md#local-verification-2026-10-27): **830 passed, 0 failed,
 1 console-dependent skip**, fresh package consumers passed, and **43 redirected runtime cases** passed. The final
-Release build has no warnings/errors. Publication is authorized for PR review; these are local results, with PR CI
-still required before merging. Attached-console and live-editor checks were not run for this increment.
+Release build had no warnings/errors. #61 subsequently passed all applicable PR and main CI checks and merged.
+Attached-console and live-editor checks were not run for that increment.
+
+### SDK isolation and Git/npm helpers — selected increment, 2026-10-27
+
+The user authorized the SDK inheritance fix and the first Git/npm helpers after #61 merged. Issues
+[#62](https://github.com/sotsera/rafter/issues/62), [#63](https://github.com/sotsera/rafter/issues/63), and
+[#64](https://github.com/sotsera/rafter/issues/64) were created before shipping-code changes. Local review completed
+on 2026-10-28 with no blocking code issues. The delivery uses the existing process ownership pipeline;
+the unrelated `examples/environment.cs` working-tree state is excluded.
+
+The installed 11.0.100-rc.3 preview no longer reproduces the earlier natural outside-launch injection: all inspected
+SDK variables were absent and a child resource build selected 10.0.403 successfully. A controlled host carrying
+`MSBuildSDKsPath` from the installed preview does reproduce the recorded **MSB4216/MSB4027** errors: SDK 11 targets
+load under MSBuild 10. Keep both observations and their logs; do not claim the current preview still injects them.
+
+Selected authoring shape:
+
+```csharp
+var dotnet = context.Dotnet()
+    .UseWorkingDirectorySdk()
+    .Timeout(TimeSpan.FromMinutes(5));
+await dotnet.Build(solution.FullPath).Configuration("Release").RunAsync();
+
+var git = context.Git().WorkingDirectory(repository.FullPath);
+var status = await git.Status().Short().Branch().RunAndCaptureAsync(4096);
+var log = await git.Log().MaxCount(5).Oneline().RunAndCaptureAsync(4096);
+
+var npm = context.Npm().WorkingDirectory(frontend.FullPath);
+await npm.Ci().IgnoreScripts().RunAsync();
+await npm.RunScript("build").ScriptArguments("--mode", "production").RunAsync();
+```
+
+`UseWorkingDirectorySdk()` is explicit opt-in configuration, not a change to generic `Executable` or default
+`Dotnet()` inheritance. Remove inherited SDK/MSBuild selection overrides (`MSBuildSDKsPath`, `MSBUILD_EXE_PATH`,
+`MSBuildExtensionsPath`, and the three documented `DOTNET_MSBUILD_SDK_RESOLVER_*` variables). Preserve `DOTNET_HOST_PATH`,
+`DOTNET_ROOT*`, PATH, proxies, NuGet settings, and other normal variables. The working directory/global.json still
+chooses the SDK; the policy does not pin one or retroactively choose the outer file-app SDK. Explicit command-level
+environment edits can override removals; duplicate writes within one executable/command layer retain their errors.
+The repository workflow opts in. Cross-SDK reproduction and stable invalid-path regressions verify real
+metadata/build behavior, parent/sibling isolation, and root/directory behavior.
+
+Git starts with `Status()` (`Short`, `Branch`, `Porcelain`) and `Log()` (`MaxCount`, `Oneline`) plus raw `Arguments`.
+These helpers do not parse results, add shell execution, or contact a remote by themselves. Defer typed mutations,
+credentials, and network commands until demonstrated by another workflow.
+
+npm starts with `Install()`, `Ci()`, and `RunScript(name)`, common no-audit/no-fund/ignore-scripts options for install
+commands, and script-specific `IfPresent()`/`ScriptArguments(params string[])`. Script argument chunks add the `--`
+boundary once and retain token order. npm options must precede that boundary. Raw `Arguments` remains available.
+On Windows, execute Node with an explicit npm-cli.js path rather than invoking npm.cmd through a shell. Discover the
+standard paired Node/npm installation on PATH, or accept explicit Node/CLI paths for other managers. Document the
+supported layout and clear discovery failures. npm itself owns package-script shell behavior; do not claim that
+Rafter removes npm's script-shell semantics or automatically fixes an installed npm version's escaping rules.
+
+Common typed execution/settings methods may share one composition base so .NET, Git, and npm all delegate to
+`ProcessCommand`. Extend RAF003 to these execution surfaces. Add no runtime dependencies, packages, solution/test
+projects, or implicit installs. Verify fresh package/file-app/project consumption and real disposable Git/npm fixtures;
+keep process/stream settlement, failure/capture/timeout behavior, and caller-owned working directories unchanged.
+
+Local implementation and verification are complete for review: **866 passed, 0 failed, 1 console-dependent skip**
+across 867 cases (unit 696, integration 49, Windows 122). Actual Git/frontend file-app examples and fresh tool/package
+consumers passed. The Release solution and runtime consumer builds have no warnings/errors. See the
+[tool guide and retained failure history](../guides/git-and-npm.md#local-verification-2026-10-27). The original natural
+preview launch and controlled mixed-SDK failure remain distinct observations. Inside/outside policy builds and all
+**43 redirected runtime cases** also passed. The reviewed increment is prepared for PR delivery; hosted CI and user
+review remain pending. No Linux CI, attached-console, or live-editor result is claimed for this increment.
 
 ## Design approach and references
 
@@ -460,8 +530,9 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Output and diagnostics | Partial | Partial | Partial | Partial |
 | Failures | Partial | Partial | Partial | Partial |
 | External processes | ✓ | Partial | Partial | Partial |
-| Reusable process settings | [Executable and chunked arguments](#process-authoring-draft-for-review) | Body-local immutable defaults, independent commands, and child overrides. | #60 implementation; PR delivery pending. | [Windows local checks](../guides/executables-and-dotnet.md#local-verification-2026-10-27); PR CI pending. |
-| Typed command helpers | [Typed .NET direction](#typed-command-helpers--agreed-direction-2026-10-27) | Build/publish/pack first; Git/npm follow later. | #60 .NET adapter; PR delivery pending. | [Real .NET and consumers](../guides/executables-and-dotnet.md#local-verification-2026-10-27); PR CI pending. |
+| Reusable process settings | [Executable and chunked arguments](#process-authoring-draft-for-review) | Body-local immutable defaults, independent commands, and child overrides. | Merged #61, closing #60. | Local and applicable PR/main checks passed. |
+| Typed command helpers | [Typed .NET direction](#typed-command-helpers--agreed-direction-2026-10-27) | .NET build/publish/pack merged; first Git/npm helpers implemented. | .NET merged #61; reviewed #63/#64 adapters ready for PR. | [Full local regression and consumers passed](../guides/git-and-npm.md#local-verification-2026-10-27); PR CI/user review pending. |
+| SDK environment isolation | [Selected #62 policy](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27) | Explicit child-directory SDK selection without changing generic inheritance. | Reviewed opt-in policy and workflow migration ready for PR. | Cross-SDK reproduction/fix, full regression, and workflow checks passed locally; PR CI/user review pending. |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
 | Cleanup and shared resources | — | — | — | — |
