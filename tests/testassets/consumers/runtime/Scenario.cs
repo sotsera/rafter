@@ -6,6 +6,10 @@ internal static class Scenario
     {
         var scenario = args.FirstOrDefault() ?? "sync";
         var controls = args.Skip(1).ToArray();
+        if (scenario == "conditions")
+        {
+            return await ConditionalTargetsAsync(controls);
+        }
         if (scenario == "tools")
         {
             return await ToolsAsync(controls);
@@ -322,6 +326,33 @@ internal static class Scenario
                 Flag = actualFlag
             }));
         });
+    }
+
+    private static Task<int> ConditionalTargetsAsync(string[] controls)
+    {
+        var command = Rafter.Command("Exercise conditional targets.");
+        var skipTests = command.Option<bool>("skip-tests", "Skip tests.").Default(false);
+        var createPackages = command.Option<bool>("pack", "Pack.").Default(false);
+        var prepared = false;
+        var build = command.Target("build", "Build.").Run(context =>
+        {
+            prepared = true;
+            context.WriteLine("build executed");
+        });
+        var test = command.Target("test", "Test.").DependsOn(build)
+            .When("Tests enabled.", context =>
+            {
+                if (!prepared)
+                {
+                    throw new InvalidOperationException("Condition ran before its dependency.");
+                }
+                return !context.GetValue(skipTests);
+            }).Run(context => context.WriteLine("test executed"));
+        var pack = command.Target("pack", "Pack.").DependsOn(test)
+            .When("Packaging requested.", context => context.GetValue(createPackages))
+            .Run(context => context.WriteLine("pack executed"));
+        var verify = command.Target("verify", "Verify.").DependsOn(test, pack, build);
+        return command.RunAsync(controls, verify);
     }
 
     private static async Task<int> ToolsAsync(string[] controls)

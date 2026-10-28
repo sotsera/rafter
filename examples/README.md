@@ -1,6 +1,6 @@
 # Rafter examples
 
-The sixteen implemented examples listed below run against the new runtime through project references. The process examples currently require
+The seventeen implemented examples listed below run against the new runtime through project references. The process examples currently require
 Windows; the target-only example prepares and prints a greeting without child processes. See the
 [design plan](../docs/design/example-design-plan.md) for accepted decisions and open topics.
 
@@ -27,6 +27,7 @@ use a package reference with a configured local feed, or supply equivalent proje
 | [process-capture.cs](process-capture.cs) | Windows; captures its child's JSON. Optional `--echo`, `--show-order`, `--limit` (default 1024), and `--scenario Failure` / `Overflow` demonstrate capture behavior. See [process capture](../docs/guides/process-capture.md). |
 | [repository-workflow.cs](repository-workflow.cs) | Windows and the pinned SDK; build/test this checkout, inspect bounded MSBuild JSON, and optionally `--pack`. `--root` supports another invocation directory. See the [workflow guide](../docs/development/repository-workflow.md). |
 | [repository-status.cs](repository-status.cs) | Windows and Git on PATH; `--root` selects a repository with commits. Bounded status/log output, optional positive `--count`. |
+| [conditions.cs](conditions.cs) | Windows and the pinned SDK; `--root` selects this repository's layout. Build/test by default, `--skip-tests` skips tests, and `--pack` opts into local packages. Both flags deliberately build/skip tests/pack. See [conditional targets](../docs/guides/targets.md#conditional-target-bodies). |
 | [frontend.cs](frontend.cs) | Windows and a supported Node/npm installation on PATH; `--root` selects a package.json directory. Runs `--script` (default build); `--install` explicitly opts into npm ci and requires a compatible lockfile. |
 
 ## Running the workflow examples

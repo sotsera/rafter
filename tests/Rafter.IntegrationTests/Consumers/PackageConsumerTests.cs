@@ -94,6 +94,17 @@ public sealed class PackageConsumerTests
             var root = command.Option<string>("root", "Root.").Default(".");
             var write = command.Option<bool>("write", "Exercise packaged filesystem helpers.").Default(false);
             command.RootDirectory(root);
+            var enabled = command.Option<bool>("target-enabled", "Enable packaged target.").Default(false);
+            var target = command.Target("conditional", "Packaged conditional target.")
+                .When("Target enabled.", context =>
+                {
+                    return context.GetValue(enabled);
+                })
+                .Run(context => context.WriteLine("packaged target"));
+            if (args.Contains("--conditional-targets"))
+            {
+                return await command.RunAsync(args.Where(argument => argument != "--conditional-targets").ToArray(), target);
+            }
             return await command.RunAsync(args, async context =>
             {
                 var expectedRoot = Path.GetFullPath(context.GetValue(root), Directory.GetCurrentDirectory());
@@ -141,6 +152,14 @@ public sealed class PackageConsumerTests
         run.ExitCode.Should().Be(0);
         run.StandardOutput.Should().Be("Hello, Ada! Release. 300000000 ticks." + Environment.NewLine);
         run.StandardError.Should().BeEmpty();
+        var skipped = await consumer.RunAsync("--conditional-targets", "--quiet");
+        skipped.ExitCode.Should().Be(0);
+        skipped.StandardOutput.Should().BeEmpty();
+        skipped.StandardError.Should().BeEmpty();
+        var executed = await consumer.RunAsync("--conditional-targets", "--target-enabled", "--quiet");
+        executed.ExitCode.Should().Be(0);
+        executed.StandardOutput.Should().Be("packaged target" + Environment.NewLine);
+        executed.StandardError.Should().BeEmpty();
         var rootRun = await consumer.RunAsync("--quiet", "--root=missing-root");
         rootRun.ExitCode.Should().Be(0, rootRun.StandardError);
         rootRun.StandardOutput.Should().Be(run.StandardOutput);

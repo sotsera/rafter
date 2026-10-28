@@ -334,6 +334,10 @@ internal sealed class InvocationOutput
             var status = code == 0 ? "OK" : code == 130 ? "Cancelled" : "Failed";
             var detail = code == 0 ? $"{targets.CompletedBodies} target bodies completed"
                 : targets.Current is { } current ? $"stopped in {current.Name}" : "invocation";
+            if (code == 0 && targets.SkippedBodies > 0)
+            {
+                detail += $", {targets.SkippedBodies} skipped";
+            }
             label = $"[{status}] {targets.Plan.EntryNames} | {detail}";
         }
         _error.Framework("", Style.Plain);
@@ -364,6 +368,21 @@ internal sealed class InvocationOutput
         }
     }
 
+    public void TargetSkipped(TargetSnapshot target)
+    {
+        if (_arguments.Quiet)
+        {
+            return;
+        }
+        if (_targetStarted)
+        {
+            _error.Framework("", Style.Plain);
+        }
+        _targetStarted = true;
+        var text = $"[{target.Name}] Skipped: condition not met ({target.ConditionDescription})";
+        _error.Layout(new Paragraph(text, new Style(Color.Grey)) { Overflow = Overflow.Fold }, 0);
+    }
+
     public Task CompleteOutputAsync() => _output.CompleteAsync();
 
     public Task CompleteErrorAsync() => _error.CompleteAsync();
@@ -372,7 +391,10 @@ internal sealed class InvocationOutput
 
     private void TargetHelp(TargetPlan plan)
     {
-        _output.Layout(new Paragraph($"The script selects {plan.EntryNames}. Each target body runs once.")
+        var execution = plan.Order.Any(target => target.Condition is not null)
+            ? "Each eligible target body runs once; conditions are checked after dependencies."
+            : "Each target body runs once.";
+        _output.Layout(new Paragraph($"The script selects {plan.EntryNames}. {execution}")
             { Overflow = Overflow.Fold }, 2);
         foreach (var target in plan.Entries.Where(target => target.Body is null).Concat(plan.Order)
             .DistinctBy(target => target.Target))
@@ -381,6 +403,10 @@ internal sealed class InvocationOutput
             Heading(_output, target, plan.DependencySuffix(target), 2);
             var description = target.Description + (target.Body is null ? " (Group; no body.)" : "");
             _output.Layout(new Paragraph(description) { Overflow = Overflow.Fold }, 4);
+            if (target.ConditionDescription is { } conditionDescription)
+            {
+                _output.Layout(new Paragraph("When: " + conditionDescription) { Overflow = Overflow.Fold }, 4);
+            }
         }
         _output.Framework("", Style.Plain);
         var bodyOrder = string.Join(", ", plan.Order.Where(target => target.Body is not null).Select(target => target.Name));
