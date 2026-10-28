@@ -28,7 +28,8 @@ internal sealed class InvocationOutput
 
     public void WriteLine(string? text) => _output.Literal((text ?? "") + Environment.NewLine, "  | ");
 
-    public void Help(string description, OptionSnapshot[] options, CombinedRule[] rules, TargetPlan? plan = null)
+    public void Help(string description, OptionSnapshot[] options, CombinedRule[] rules, TargetPlan? plan = null,
+        CleanupDeclaration? cleanup = null)
     {
         _output.Framework(description, new Style(decoration: Decoration.Bold));
         _output.Framework("", Style.Plain);
@@ -59,6 +60,10 @@ internal sealed class InvocationOutput
         else
         {
             TargetHelp(plan);
+        }
+        if (cleanup is { Calls: > 0 })
+        {
+            _output.Layout(new Paragraph("Command cleanup: " + cleanup.Description) { Overflow = Overflow.Fold }, 2);
         }
         if (rules.Length > 0)
         {
@@ -383,6 +388,22 @@ internal sealed class InvocationOutput
         _error.Layout(new Paragraph(text, new Style(Color.Grey)) { Overflow = Overflow.Fold }, 0);
     }
 
+    public void CleanupStarted(string owner, string description)
+    {
+        if (!_arguments.Quiet)
+        {
+            _error.Framework($"[Cleanup] {owner} | {description}", Style.Plain);
+        }
+    }
+
+    public void CleanupCompleted(string owner)
+    {
+        if (!_arguments.Quiet)
+        {
+            _error.Framework($"[OK] Cleanup | {owner}", new Style(Color.Green));
+        }
+    }
+
     public Task CompleteOutputAsync() => _output.CompleteAsync();
 
     public Task CompleteErrorAsync() => _error.CompleteAsync();
@@ -406,6 +427,10 @@ internal sealed class InvocationOutput
             if (target.ConditionDescription is { } conditionDescription)
             {
                 _output.Layout(new Paragraph("When: " + conditionDescription) { Overflow = Overflow.Fold }, 4);
+            }
+            if (target.Cleanup.Calls > 0)
+            {
+                _output.Layout(new Paragraph("Cleanup: " + target.Cleanup.Description) { Overflow = Overflow.Fold }, 4);
             }
         }
         _output.Framework("", Style.Plain);

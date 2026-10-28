@@ -2,7 +2,7 @@ namespace Sotsera.Rafter.Internal;
 
 internal sealed record TargetSnapshot(Target Target, string Name, string Description, Target[] Dependencies,
     Func<RafterContext, Task>? Body, int BodyCalls, bool NullDependencies,
-    string? ConditionDescription, Func<RafterContext, bool>? Condition, int ConditionCalls);
+    string? ConditionDescription, Func<RafterContext, bool>? Condition, int ConditionCalls, CleanupDeclaration Cleanup);
 
 internal sealed record TargetPlan(TargetSnapshot[] Entries, TargetSnapshot[] Order,
     IReadOnlyDictionary<Target, TargetSnapshot> Declarations)
@@ -21,6 +21,7 @@ internal sealed record TargetPlan(TargetSnapshot[] Entries, TargetSnapshot[] Ord
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var target in targets)
         {
+            target.Cleanup.Validate($"Target '{target.Name}'", diagnostics, group: target.BodyCalls == 0);
             if (!DeclarationName.IsValid(target.Name))
             {
                 diagnostics.Add("Target names must start with a lowercase letter and use lowercase letters/digits and single hyphens.");

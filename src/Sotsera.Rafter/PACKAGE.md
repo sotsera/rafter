@@ -11,6 +11,14 @@ an explicit `return`. Dependencies run first; false skips only the body and perm
 Help describes conditions without evaluating them, lifecycle output distinguishes skipped bodies, and quiet hides
 routine skips. Conditions on groups, repeated conditions, and invalid descriptions/predicates are declaration errors.
 
+`command.State(() => new MyState())` declares a typed key with reference state initialized separately for each
+invocation after input/root preparation. `context.GetState(handle)` retrieves it in bodies and cleanup. State is not
+automatically disposed. Described command/target `.Cleanup(...)` callbacks release explicitly acquired resources
+after owned work settles, including failures/cancellation. Skipped targets do not clean up. Cleanup is awaited with
+an uncancelled token and no child-process launch; independent errors are retained. Uncertain native termination
+prevents unsafe resource cleanup and reports retention instead. Groups, stacked cleanup callbacks, and cleanup
+deadlines remain outside this increment.
+
 `context.Executable("tool")` replaces `context.Process("tool")`. Reusable executable settings are immutable;
 each `.Arguments(...)` call on the executable creates a fresh command, and further calls append argument chunks.
 Children can override defaults without changing siblings. `RemoveEnvironment(...)` explicitly removes child variables.

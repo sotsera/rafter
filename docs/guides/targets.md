@@ -129,6 +129,112 @@ build/test/pack solution. Evidence is retained under `artifacts/evidence/conditi
 `artifacts/test-results/conditional-full/`. Local review on 2026-10-28 found no blocking code issues. PR/main CI,
 new Linux checks, attached-console, live-editor, macOS, and AOT checks are not claimed for this increment.
 
+## Invocation-local state and cleanup
+
+The local [#68 increment](https://github.com/sotsera/rafter/issues/68) adds typed state shared by callbacks within
+one invocation, plus cleanup for an entered target body or the complete command:
+
+```csharp
+var resources = command.State(() => new WorkflowResources());
+
+command.Cleanup("Release shared resources.", context =>
+{
+    var state = context.GetState(resources);
+    // Release the resources this invocation recorded in state.
+});
+
+var prepare = command.Target("prepare", "Prepare workflow resources.")
+    .Run(context =>
+    {
+        var state = context.GetState(resources);
+        // Acquire resources here, recording ownership before later work can fail.
+    })
+    .Cleanup("Release preparation resources before dependants.", async context =>
+    {
+        var state = context.GetState(resources);
+        // Await asynchronous disposal here.
+        await Task.CompletedTask;
+    });
+```
+
+The full [cleanup.cs example](../../examples/cleanup.cs) creates a shared workspace/input and two target-local scratch
+files. Verification keeps a stream open until its async cleanup disposes it. `finish` reads the shared input after
+target cleanup; command cleanup then removes the disposable workspace. It exposes `--skip-verification`, `--fail`,
+and `--fail-cleanup` to demonstrate eligibility and combined errors. Standard `System.IO` handles reads/deletion.
+See the [agreed plan](../design/example-design-plan.md#cleanup-and-shared-resources--agreed-behavior-2026-10-28).
+
+### State ownership
+
+`command.State<T>(Func<T> factory)` returns a `State<T>` handle for a reference type. The handle is a typed key, not
+the object or its resource owner. Rafter calls every declared factory once after input validation and root selection,
+before entering normal work. `context.GetState(handle)` retrieves that invocation's value without calling the factory
+again. Bodies, predicates, and cleanup see the same value; repeated or overlapping invocations have separate storage.
+Factories must return fresh nonnull objects, allocate only state, and acquire no resources. Rafter does not clone
+caller objects or automatically dispose state; resource acquisition/release stays explicit in bodies/cleanup.
+
+Null factories and Task-valued state declarations are rejected before help/work. Factory exceptions, null results,
+and Task results hidden behind object/base return types fail initialization with exit 1 before any body or cleanup
+enters. Help and invalid inputs/declarations do not initialize
+state. Foreign handles, including declarations added after an invocation's snapshot, cannot be read from that
+invocation. Factories and cleanup declarations are snapshotted before input callbacks.
+
+### Cleanup boundaries
+
+Both `command.Cleanup` and `target.Cleanup` accept a required description plus either `Action<RafterContext>` or
+awaited `Func<RafterContext, Task>`. Only one callback per owner is supported. Null callbacks, blank descriptions,
+duplicates, and cleanup on dependency-only groups are declaration errors, including unused targets and help.
+
+Target cleanup becomes eligible immediately before the body is entered after a true condition. It runs once after
+that body and its owned processes/output settle, including body failure, partial acquisition, or cancellation.
+Unselected, unreachable, skipped, or predicate-failed targets never enter cleanup. Target cleanup completes before
+dependants start; cleanup failure stops normal scheduling. Command cleanup is still attempted after such failures,
+once all entered work and target cleanup have settled. It also supports ordinary command-body invocations. No cleanup
+runs for help, invalid declarations/inputs, cancelled initialization before work entry, or failed state initialization.
+
+Cleanup receives the same root, prepared values, and state, with `CancellationToken.None` and no executing process
+body. It cannot launch children through Rafter or reuse an executable whose original body has closed. Work cancellation
+does not cancel cleanup; await actual disposal/cleanup completion. There are no cleanup deadlines or forceful managed
+termination in this scope. A callback that does not settle keeps its invocation running. Scope and dispose work's
+cancellation registrations inside the body; detached work is not made safe by cleanup. Active cancellation callbacks
+are joined before cancelled-work cleanup, and the command cancellation scope is closed/joined before command cleanup
+so late interrupts cannot start old work callbacks against released shared resources.
+
+If process termination is uncertain, resource cleanup is not safely attempted: retain resources and report that
+diagnostic rather than deleting files potentially used by a live child. Verified process exit with an output failure
+does not itself mean uncertain native termination. Existing process ownership/reader settlement remains authoritative.
+
+Body and cleanup errors are retained separately with owner/description; a cleanup error never replaces the body
+exception. Success is 0; clean work cancellation with successful cleanup is 130; an independent work/cleanup error
+is 1; invalid declarations/inputs remain 2. A null cleanup Task is a cleanup failure. Lifecycle stderr distinguishes
+cleanup from normal body completion/skip counts. Quiet hides routine `[Cleanup]`/`[OK] Cleanup` statuses while retaining
+script output and failures. Help describes cleanup without invoking factories or callbacks. A failing cleanup heading
+does not prevent the resource-release callback from being attempted when process settlement is safe.
+
+### State/cleanup verification, 2026-10-28
+
+The final full local Windows regression passed **949 tests, 0 failures, 1 existing console-dependent skip**, across
+950 cases (unit 772; integration 53; Windows 125). Release solution/runtime-consumer builds have 0 warnings/errors;
+all 43 redirected runtime cases passed. Forty-six new unit cases cover the state/cleanup contracts. Two real consumers
+execute the actual example as a file app and ordinary project, including seven option combinations/help. Existing
+fresh package consumers exercise both cleanup scopes and shared state. Two native cases verify cleanup after a real
+child and its output settle, including abandoned work; controlled cases retain resources after uncertain termination.
+Separate occurrences retain cleanup diagnostics even if user code rethrows the same body exception object.
+
+Final reports are in `artifacts/test-results/state-cleanup-full-final/`; raw/earlier logs remain under
+`artifacts/evidence/state-cleanup/`. Only whitespace changed in the unit file after that run, followed by a clean
+build. These are historical implementation results; existing conditional-target results above also describe their
+original revision.
+
+### State/cleanup review, 2026-10-29
+
+Review added initialization-time rejection of Task results hidden behind object/base-typed state factories, with a
+regression confirming no work or cleanup is entered. No other blocking code findings remained. The reviewed full
+Windows suite passed **950 tests, 0 failures, 1 existing console-dependent skip**, across 951 cases (unit 773;
+integration 53; Windows 125). Release builds have no warnings/errors, and all 43 redirected runtime checks passed.
+Reports are under `artifacts/test-results/state-cleanup-review-full/`, with logs under
+`artifacts/evidence/state-cleanup/review-20261029/`. PR/main checks and user review remain delivery checkpoints;
+Linux-native ownership, attached-console/live-editor, macOS, and AOT are not established by these local results.
+
 ## Historical verification of the initial target slice
 
 [Target runtime tests](../../tests/Rafter.UnitTests/Targets/TargetTests.cs) exercise order, shared dependencies, repeated

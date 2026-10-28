@@ -95,12 +95,29 @@ public sealed class PackageConsumerTests
             var write = command.Option<bool>("write", "Exercise packaged filesystem helpers.").Default(false);
             command.RootDirectory(root);
             var enabled = command.Option<bool>("target-enabled", "Enable packaged target.").Default(false);
+            var state = command.State(() => new PackageState());
+            command.Cleanup("Validate shared packaged state.", context =>
+            {
+                var value = context.GetState(state);
+                if (value.Entered != value.Cleaned || context.CancellationToken.CanBeCanceled)
+                {
+                    throw new InvalidOperationException("Packaged cleanup did not share state or settle its target.");
+                }
+            });
             var target = command.Target("conditional", "Packaged conditional target.")
                 .When("Target enabled.", context =>
                 {
                     return context.GetValue(enabled);
                 })
-                .Run(context => context.WriteLine("packaged target"));
+                .Run(context =>
+                {
+                    context.GetState(state).Entered = true;
+                    context.WriteLine("packaged target");
+                })
+                .Cleanup("Release packaged target.", context =>
+                {
+                    context.GetState(state).Cleaned = true;
+                });
             if (args.Contains("--conditional-targets"))
             {
                 return await command.RunAsync(args.Where(argument => argument != "--conditional-targets").ToArray(), target);
@@ -141,6 +158,11 @@ public sealed class PackageConsumerTests
             {
                 Debug = 20,
                 Release = -1
+            }
+            sealed class PackageState
+            {
+                public bool Entered { get; set; }
+                public bool Cleaned { get; set; }
             }
             """;
         await File.WriteAllTextAsync(sourcePath, directives + valid, TestContext.Current.CancellationToken);

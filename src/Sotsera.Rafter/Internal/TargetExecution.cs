@@ -38,18 +38,31 @@ internal sealed class TargetExecution(TargetPlan plan)
             }
             output.TargetStarted(target, Plan.DependencySuffix(target));
             var elapsed = Stopwatch.StartNew();
-            await context.RunBodyAsync(target.Body, $"Target '{target.Name}'").ConfigureAwait(false);
-            if (context.ProcessFailure)
+            try
+            {
+                await context.RunBodyAsync(target.Body, $"Target '{target.Name}'").ConfigureAwait(false);
+                elapsed.Stop();
+                if (context.ProcessFailure)
+                {
+                    return;
+                }
+                if (output.Failure is { } failure)
+                {
+                    ExceptionDispatchInfo.Capture(failure).Throw();
+                }
+                context.CancellationToken.ThrowIfCancellationRequested();
+                CompletedBodies++;
+                output.TargetCompleted(target.Name, elapsed.Elapsed);
+            }
+            finally
+            {
+                await context.RunCleanupAsync(target.Cleanup, $"Target '{target.Name}'").ConfigureAwait(false);
+            }
+            if (context.ExecutionFailed)
             {
                 return;
             }
-            if (output.Failure is { } failure)
-            {
-                ExceptionDispatchInfo.Capture(failure).Throw();
-            }
             context.CancellationToken.ThrowIfCancellationRequested();
-            CompletedBodies++;
-            output.TargetCompleted(target.Name, elapsed.Elapsed);
             Current = null;
         }
     }

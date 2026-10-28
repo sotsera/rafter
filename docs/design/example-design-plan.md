@@ -3,7 +3,7 @@
 This is the main development roadmap and record of example/API decisions. Start with the current position and next
 steps below; the topic inventory and detailed decisions preserve the reasoning behind the implementation.
 
-## Current position — 2026-10-28
+## Current position — 2026-10-29
 
 Rafter has a working Windows-first automation runtime and a portable command/input/target layer. The **First working
 examples** milestone is complete. Subsequent increments added environment inputs, named enums, exact durations,
@@ -12,7 +12,7 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 | Area | Implemented now | Remaining boundary |
 | --- | --- | --- |
 | Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
-| Targets | Sequential dependency graphs, groups, multiple selected entries, failure/cancellation handling, and locally verified conditional-body execution under #66. | Conditional delivery/user review remain pending; cleanup/shared-resource APIs remain undesigned. |
+| Targets | Sequential graphs, groups, selected entries, failure/cancellation, and conditional bodies merged through #67; invocation-local state and cleanup are reviewed and verified locally under #68. | State/cleanup PR checks, user review, and delivery remain pending. |
 | Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, typed .NET build/publish/pack, opt-in SDK environment isolation, and first Git/npm helpers merged through #65. | Further typed commands, Linux-native ownership, and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
@@ -31,13 +31,21 @@ The focused delivery sequence is complete:
 | Parallel Windows evaluation | Merged in [PR #59](https://github.com/sotsera/rafter/pull/59), closing #58. | [Duration, coverage, and runner-time tradeoff](../development/ci-duration.md). |
 | Reusable executables and typed .NET commands | Merged in [PR #61](https://github.com/sotsera/rafter/pull/61), closing #60; all three PR checks and main evaluation passed. | [Authoring and local verification](../guides/executables-and-dotnet.md). |
 | SDK environment isolation and typed Git/npm helpers | Merged in [PR #65](https://github.com/sotsera/rafter/pull/65), closing #62/#63/#64; all three PR checks passed. | [SDK policy](../guides/executables-and-dotnet.md#selecting-the-sdk-for-the-child-directory) and [Git/npm verification](../guides/git-and-npm.md#local-verification-2026-10-27). |
+| Conditional target bodies | Merged in [PR #67](https://github.com/sotsera/rafter/pull/67), closing #66; all three PR checks and main evaluation passed. | [When/skip guide](../guides/targets.md#conditional-target-bodies) and [agreed example](#conditional-targets--agreed-behavior-2026-10-28). |
+
+PR #67 merged as `a4bf05f` on 2026-10-28. Its
+[PR evaluation](https://github.com/sotsera/rafter/actions/runs/40770128830) passed Linux portable, Windows portable,
+and Windows native/packaging/output checks. The
+[post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40775813526) also passed.
+The delivered increment passed **899 tests, 0 failures, 1 console-dependent skip** locally across 900 cases,
+plus **43 redirected runtime cases**. The later cleanup increment has its own verification below.
 
 PR #65 merged as `99358bb` on 2026-10-28. Its [PR evaluation](https://github.com/sotsera/rafter/actions/runs/40762862385)
 passed Linux portable, Windows portable, and Windows native/packaging/output checks. The
 [post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40764786597) also passed.
 Local verification for that delivery remains **866 passed, 0 failed,
-1 console-dependent skip** across 867 cases, plus **43 redirected runtime cases**. Conditional execution below is
-agreed and implemented locally under #66; those earlier results do not verify the new increment.
+1 console-dependent skip** across 867 cases, plus **43 redirected runtime cases**. The later conditional increment
+merged in #67; its own verification is recorded separately below.
 
 The post-merge [main CI run](https://github.com/sotsera/rafter/actions/runs/40221671404), for `d8e27a2`, passed Windows
 full **806 tests, 0 failures, 1 console-dependent skip**, portable Linux full **710 tests, 0 failures, 0 skips**,
@@ -52,12 +60,13 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Deliver the reviewed conditional-target increment below through a PR.** Local review on 2026-10-28 found no
-blocking code issues. Applicable hosted checks and user review remain delivery checkpoints. The user approved
-`.When(...)` and its body-only skip semantics on 2026-10-28, including block lambdas with an explicit `return`.
-Implementation is tracked by [#66](https://github.com/sotsera/rafter/issues/66), created before shipping-code changes.
-The SDK-environment and Git/npm increment merged through #65 with all PR and main checks passing. Cleanup/shared
-resources follow as a separate design topic. The complete workflow and deferred #46/#47 acceptance are merged.
+**Deliver the reviewed and locally verified state/cleanup increment below through a PR.** Review on 2026-10-29
+found and fixed a validation gap: Task values returned through object-typed factories now fail initialization before
+work/cleanup. The user approved retaining invocation-local
+state and authorized implementation on 2026-10-28. [Issue #68](https://github.com/sotsera/rafter/issues/68) was created
+before shipping-code changes. Conditional targets merged through #67 with all PR/main checks passing; SDK/Git/npm
+#65 and the complete workflow/deferred #46/#47 acceptance are also merged. PR/main checks and user review remain
+delivery checkpoints; independent cleanup deadlines and child-process launch remain separate work.
 
 CI trigger/concurrency changes merged through [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54;
 its post-merge main evaluation passed. The cache-placement measurement under
@@ -80,12 +89,11 @@ Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver the [reviewed conditional-target increment](#conditional-targets--agreed-behavior-2026-10-28), issue #66. | Local review and full regression passed; PR CI and user review remain pending. |
-| 2 | Reconcile the conditional delivery after merging. | Verify applicable PR/main checks and record the merged revision before marking the delivery complete. |
-| 3 | Discuss cleanup/shared resources separately. | Use a concrete resource scenario to define acquisition, lifetime, cleanup eligibility, cancellation, and combined failures. |
-| 4 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
-| 5 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
-| 6 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
+| 1 | Deliver the [reviewed cleanup/shared-resource increment](#cleanup-and-shared-resources--agreed-behavior-2026-10-28), issue #68. | Local validation passed, including the review regression; applicable PR/main checks and user review remain pending. |
+| 2 | Reconcile the cleanup delivery after merging. | Record the merged revision and applicable PR/main results before marking delivery complete. |
+| 3 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
+| 4 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
+| 5 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
 The CI review found duplicate fork-push/upstream-PR evaluations for #49. The merged change removes `build/**` push
 evaluations and uses a workflow/event/PR concurrency group for PR runs. Main pushes and manual runs each use their
@@ -467,9 +475,9 @@ attached-console, and live-editor verification are not established by those chec
 
 **Status: syntax and behavior agreed, implementation authorized on 2026-10-28.** The earlier draft below was
 approved by the user. [Issue #66](https://github.com/sotsera/rafter/issues/66) was created before shipping-code changes.
-`Target.When(string description, Func<RafterContext, bool> predicate)` is implemented and verified locally.
-The runnable [conditions.cs](../../examples/conditions.cs) uses the agreed workflow. Local review on 2026-10-28
-found no blocking code issues; applicable PR/main CI and user review remain delivery checkpoints.
+`Target.When(string description, Func<RafterContext, bool> predicate)` merged through
+[PR #67](https://github.com/sotsera/rafter/pull/67), closing #66. The runnable [conditions.cs](../../examples/conditions.cs)
+uses the agreed workflow. All three PR checks and the post-merge main evaluation passed after local review.
 
 The concrete scenario is a Windows repository workflow: always build, optionally skip tests, and pack only when
 requested. Existing callbacks can express these branches with `if`, but the target still executes and is counted as
@@ -632,11 +640,277 @@ Evidence is retained in `artifacts/evidence/conditional-targets/`; final full TR
 `artifacts/test-results/conditional-full/`. The first unit run's presentation-assertion errors and mistaken minimum
 count remain recorded; corrected assertions account for wrapped help and distinguish invocation summaries from
 body statuses. No runtime assertion/deadline/timeout was weakened. No CI workflows, project wiring, filters,
-dependencies, shared consumer supervisor, or native process ownership implementation changed. New Linux CI,
-attached-console/live-editor, macOS, and AOT verification were not run for this increment.
+dependencies, shared consumer supervisor, or native process ownership implementation changed. Subsequent PR #67
+passed Linux portable, Windows portable, and Windows native evaluation and merged. The post-merge main run also
+passed. Linux-native process ownership, attached-console/live-editor, macOS, and AOT remain unverified for
+this increment.
 
-Cleanup/shared resources remain a subsequent example: establish resource acquisition and lifetime, including cleanup
-failure, before selecting an API. This increment does not add an always-run target or use skipped work as cleanup.
+Cleanup/shared resources are specified separately below. The conditional increment adds no always-run target or cleanup
+hook and does not use skipped work as cleanup.
+
+### Cleanup and shared resources — agreed behavior, 2026-10-28
+
+**Status: invocation-local state and cleanup syntax/behavior agreed; implementation authorized on 2026-10-28.**
+The user explicitly retained the typed invocation-local state facility after reviewing its purpose. Issue
+[#68](https://github.com/sotsera/rafter/issues/68) was created before shipping-code changes. `Command.State(...)`,
+`context.GetState(...)`, and command/target `.Cleanup(...)` are implemented and verified locally.
+[cleanup.cs](../../examples/cleanup.cs) is the runnable version of the full example below. Review on 2026-10-29
+added runtime Task-result validation for object-typed factories; applicable PR/main checks and user review remain
+delivery checkpoints.
+
+The scenario has three targets. `prepare` creates a disposable workspace containing one shared input and one local
+preparation file. Its cleanup removes the local file before another target starts. `verify` uses the shared input and
+owns a separate verification file and open stream; its asynchronous cleanup closes the stream before deleting that
+file, even if verification throws. `finish` still reads the shared input after target cleanup. Command cleanup removes
+the workspace after all entered work has settled.
+
+The `--skip-verification`, `--fail`, and `--fail-cleanup` options expose the important paths without needing a network
+service or external tool. Reads/deletes use existing `System.IO` APIs; new filesystem convenience methods are a
+separate discussion. Declaration performs no I/O.
+
+#### Full example
+
+```csharp
+var command = Rafter.Command("Share a temporary workspace and release resources at their owning scope.");
+var skipVerification = command.Option<bool>("skip-verification", "Skip verification.").Default(false);
+var fail = command.Option<bool>("fail", "Fail inside verification.").Default(false);
+var failCleanup = command.Option<bool>("fail-cleanup", "Fail after releasing verification resources.").Default(false);
+
+// A typed handle, with a fresh state object for each invocation.
+var resources = command.State(() => new WorkflowResources());
+
+command.Cleanup("Release the shared workspace after all entered work settles.", context =>
+{
+    var state = context.GetState(resources);
+    if (state.Workspace is { } workspace && workspace.Exists())
+    {
+        System.IO.Directory.Delete(workspace.FullPath, recursive: true);
+        state.Workspace = null;
+        context.WriteLine("Shared workspace released.");
+    }
+});
+
+var prepare = command.Target("prepare", "Prepare shared input and target-local scratch data.")
+    .Run(async context =>
+    {
+        var state = context.GetState(resources);
+
+        // Record ownership before I/O so cleanup can handle partial preparation.
+        state.Workspace = context.Directory("artifacts", "work", "cleanup-" + Guid.NewGuid().ToString("N"));
+        var workspace = state.Workspace.EnsureExists();
+
+        state.PreparationFile = workspace.File("prepare.tmp");
+        await state.PreparationFile.WriteAllTextAsync("Preparation scratch data.", context.CancellationToken);
+        await workspace.File("input.txt").WriteAllTextAsync("Shared workflow input.", context.CancellationToken);
+        context.WriteLine("Shared input prepared.");
+    })
+    .Cleanup("Release preparation scratch data before the next target.", context =>
+    {
+        var state = context.GetState(resources);
+        if (state.PreparationFile is { } file)
+        {
+            System.IO.File.Delete(file.FullPath);
+            state.PreparationFile = null;
+            context.WriteLine("Preparation resources released.");
+        }
+    });
+
+var verify = command.Target("verify", "Read the shared input and optionally demonstrate failure.")
+    .DependsOn(prepare)
+    .When("Verification was not disabled with --skip-verification.", context =>
+    {
+        return !context.GetValue(skipVerification);
+    })
+    .Run(async context =>
+    {
+        var state = context.GetState(resources);
+        var workspace = state.Workspace
+            ?? throw new InvalidOperationException("The prepare target did not supply a workspace.");
+
+        state.VerificationFile = workspace.File("verify.tmp");
+        state.VerificationStream = System.IO.File.Create(state.VerificationFile.FullPath);
+        await state.VerificationStream.WriteAsync("Verification scratch data."u8.ToArray(), context.CancellationToken);
+        var input = await System.IO.File.ReadAllTextAsync(workspace.File("input.txt").FullPath,
+            context.CancellationToken);
+        context.WriteLine("Verified: " + input);
+
+        if (context.GetValue(fail))
+        {
+            throw new InvalidOperationException("Requested verification failure.");
+        }
+    })
+    .Cleanup("Release verification scratch data, including after a failed body.", async context =>
+    {
+        var state = context.GetState(resources);
+        if (state.VerificationStream is { } stream)
+        {
+            await stream.DisposeAsync();
+            state.VerificationStream = null;
+        }
+        if (state.VerificationFile is { } file)
+        {
+            System.IO.File.Delete(file.FullPath);
+            state.VerificationFile = null;
+            context.WriteLine("Verification resources released.");
+        }
+
+        if (context.GetValue(failCleanup))
+        {
+            throw new IOException("Requested verification cleanup failure.");
+        }
+    });
+
+var finish = command.Target("finish", "Use the shared input after target-local resources are released.")
+    .DependsOn(verify)
+    .Run(async context =>
+    {
+        var state = context.GetState(resources);
+        var workspace = state.Workspace
+            ?? throw new InvalidOperationException("The prepare target did not supply a workspace.");
+        var input = await System.IO.File.ReadAllTextAsync(workspace.File("input.txt").FullPath,
+            context.CancellationToken);
+        context.WriteLine("Finished with: " + input);
+    });
+
+return await command.RunAsync(args, finish);
+
+sealed class WorkflowResources
+{
+    public DirectoryPath? Workspace { get; set; }
+    public FilePath? PreparationFile { get; set; }
+    public FilePath? VerificationFile { get; set; }
+    public System.IO.FileStream? VerificationStream { get; set; }
+}
+```
+
+The `resources` declaration is a handle, not a mutable object shared between invocations. Each callback obtains the
+current invocation's `WorkflowResources` using `context.GetState(resources)`. Nullable properties represent partial
+acquisition explicitly; there is no captured mutable workspace and no null-forgiving read of an unprepared value.
+All recursive deletion is confined to this example's newly allocated disposable workspace under `artifacts/work`;
+the invocation root and retained evidence directories are not cleanup targets.
+
+#### Agreed first API surface
+
+- `command.State(() => new WorkflowResources())` declares a typed invocation-local state factory. The factory only
+  allocates empty state; resource acquisition belongs in bodies. Run factories once after successful input/root
+  preparation and before entering the command work scope. Help and invalid invocations never run them. Factory
+  failure stops initialization before bodies or cleanup; factories must not acquire resources that need cleanup.
+- `context.GetState(handle)` returns the same typed object in bodies and cleanup for one invocation. Reject foreign
+  handles, null factories, and null state results; do not put values on the reusable declaration or share them between
+  concurrent invocations. The first scope supports reference types (`State<T> where T : class`), rejecting Task-valued
+  factories as declarations rather than silently starting asynchronous factory work. A Task returned through an
+  object/base-typed factory is rejected during initialization, before entering work or cleanup. State is not an input type and
+  is not automatically disposed. The caller supplies a fresh object from the factory; framework storage never clones
+  caller objects or silently shares state between invocations.
+- `command.Cleanup(description, callback)` registers command-scope cleanup. `target.Cleanup(description, callback)`
+  registers body-scope cleanup. Provide synchronous `Action<RafterContext>` and awaited `Func<RafterContext, Task>`
+  overloads, each returning its declaring owner for fluent configuration. Cleanup descriptions are required.
+- Start with one callback per owner. Treat null callbacks, blank descriptions, repeated cleanup declarations, and
+  cleanup on dependency-only groups as declaration errors, including unused declarations and help. Snapshot state
+  factories and cleanup callbacks with the command/target declarations. Multiple callbacks and registration-stack
+  ordering are deferred; ordinary C# can sequence cleanup operations inside a callback.
+
+The `State`/`GetState` and `Cleanup` names, callback shapes, and one-callback scope are selected for this increment.
+Invocation-local state is included because cross-target captured variables would otherwise leak between
+repeated or overlapping runs. It does not propose a general resource container, lazy service resolver, or automatic
+disposal protocol. The resource ownership stays visible in the script.
+
+#### Agreed lifecycle and failure rules
+
+1. A target's cleanup becomes eligible immediately before its body is entered, after a true condition. Invoke it once
+   after that body and all of its owned operations have actually settled. It also runs after partial resource acquisition,
+   body failure, or cancellation. A false condition, predicate failure, unselected target, or unreached body does not
+   make that target's cleanup eligible. Do not reevaluate `.When(...)` for cleanup.
+2. Command cleanup becomes eligible when normal execution enters the command work scope, after prepared inputs,
+   root, and state initialization. It runs once after all entered target work and target cleanup have settled, or after
+   a command body and its owned operations settle. No cleanup runs for help, invalid declarations/inputs, or failed
+   state initialization. If cancellation happens after scope entry but before the first body, command cleanup may
+   still run against empty state; null checks must make partial/empty ownership harmless.
+3. Target cleanup completes before dependants start. A failed target cleanup stops ordinary target scheduling, even
+   when the body succeeded. Command cleanup is still attempted after that failure. Work failures and cleanup failures
+   are reported separately, with the owner and cleanup description; never replace a body failure with the last cleanup
+   exception or report success because a failure was handled in `finally`.
+4. The cleanup context has the same root, prepared inputs, and invocation-local state. Its cancellation token starts
+   uncancelled and is not linked to the already-cancelled work token, so cancellation of work does not prevent release.
+   Both synchronous and asynchronous callbacks are awaited through their actual completion. This first increment has
+   no cleanup deadline or forceful termination: a cleanup that does not settle keeps the invocation running. Independent
+   cooperative cleanup deadlines and repeat-interrupt behavior need a separate scope decision. There is no child-process
+   execution inside cleanup in this first increment; a later scope must define fresh cleanup process ownership.
+   Do not silently reuse ordinary body ownership or allow old body executables to outlive their bodies.
+   Scope/dispose work's cancellation registrations inside its body. Active cancellation callbacks are joined before
+   cancelled-work cleanup; command cancellation is closed/joined before command cleanup so a late interrupt cannot
+   start old work callbacks against released shared resources. Cleanup does not make detached user work safe.
+5. If owned native work has uncertain termination/settlement, do not delete resources that may still be in use. Retain
+   the workspace and report cleanup as not safely attempted, alongside the existing failure/uncertainty. A timeout or
+   cancellation notification alone never makes resource cleanup safe. The managed-file example above does not verify
+   this native integration requirement; it needs explicit acceptance coverage before implementation can claim support.
+6. Preserve invocation outcome precedence: success is `0` only when work and eligible cleanup succeed; a clean work
+   cancellation with successful cleanup is `130`; any independent work/cleanup failure is `1`. Declaration/input errors
+   remain `2` and do not acquire resources. Cleanup errors after cancellation take failure precedence. Groups add no
+   cleanup/body count; cleanup status is separate from completed/skipped normal target bodies.
+
+Illustrative successful ordering is `prepare body → prepare cleanup → verify body → verify cleanup → finish body →
+command cleanup`. With `--skip-verification`, both the verify body and its cleanup are skipped, but `prepare` and
+its cleanup still run, `finish` can read the shared input, and command cleanup finally releases the workspace.
+
+| Scenario | Eligible target cleanup | `finish` | Command cleanup | Agreed outcome |
+| --- | --- | --- | --- | --- |
+| Defaults | Prepare, then verify | Runs after verify cleanup | Releases shared workspace | `0` |
+| `--skip-verification` | Prepare only | Runs with the prepared shared input | Releases shared workspace | `0` |
+| `--fail` | Prepare, then verify after its failed body | Does not run | Still releases shared workspace | `1`; original body failure retained |
+| `--fail-cleanup` | Prepare, then verify; verify cleanup fails after release | Does not run | Still attempted | `1`; cleanup failure identified |
+| `--fail --fail-cleanup` | Both eligible; retain verify's body and cleanup failures | Does not run | Still attempted | `1`; both failures reported |
+| `--skip-verification --fail-cleanup` | Prepare only; verify cleanup never becomes eligible | Runs | Releases shared workspace | `0` |
+| Command cleanup fails | Eligible target cleanup has already completed | Has run if normal work succeeded | Failure is reported; unreleased workspace may remain | `1`; command cleanup identified |
+| Partial preparation failure/cancellation | Prepare cleanup handles any recorded local path | Does not run | Handles any recorded workspace | `1` for failure, `130` for clean cancellation |
+| Work cancellation after verify starts | Verify cleanup runs after actual work settlement | Does not run | Still attempted with uncancelled cleanup token | `130` if cleanup succeeds; otherwise `1` |
+
+Help describes cleanup scope without running state factories, bodies, or cleanup. Lifecycle cleanup
+headings/results go to stderr and identify target versus command scope. Quiet hides routine cleanup statuses but
+retains failures and literal `context.WriteLine` output from callbacks. Routine statuses identify `[Cleanup]` and
+`[OK] Cleanup` with the owner. Failures include owner and cleanup description. State declarations do not acquire
+their own help/input presentation in this scope. The example's printed lines remain literal script output.
+
+#### Local verification, 2026-10-28
+
+The final full Windows regression passed **949 tests, 0 failures, 1 existing console-dependent skip** across
+**950 total**: unit 772, integration 53, Windows 125 (124 passed, 1 skipped). Release solution/runtime-consumer builds
+have **0 warnings and 0 errors**. All **43 redirected runtime cases** passed.
+
+Forty-six new unit cases cover typed state, distinct handle identity, initialization/validation, no automatic disposal,
+snapshots, repeated/overlapping runs, eligibility/order, awaited async cleanup, combined failures, uncancelled cleanup,
+cancellation callbacks, closed body executables, literal/help/quiet output, and controlled termination uncertainty.
+Real file-app and ordinary-project consumers each execute the actual example's seven option combinations and help,
+including asynchronous stream disposal before workspace deletion. Fresh isolated package consumers exercise state
+and both cleanup scopes. Two native cases verify that target/command cleanup follow a real child's settlement for
+normal and abandoned work. The native fixture retains its directory if settlement is not confirmed.
+
+Code review found one diagnostic edge: reusing the same exception instance in work and cleanup could let the existing
+de-duplication hide a cleanup scope. Each cleanup callback failure now records its own exception occurrence with the
+original error retained, and a regression verifies both cleanup scopes plus the body. The complete suite passed again
+after that fix. Earlier passing runs remain evidence of their original revisions; no test/runtime assertion, timeout,
+or deadline was weakened. An initial test build's missing cancellation-token warnings were corrected.
+
+Final TRX reports are under `artifacts/test-results/state-cleanup-full-final/`; raw logs and earlier attempts remain
+under `artifacts/evidence/state-cleanup/`. A final unit-test formatting pass changed only whitespace, verified against
+its retained source, and the final build was clean. No dependencies, SDK pins, CI workflows, test-project/filter wiring,
+or shared consumer supervisor changed. Native launch/shutdown behavior is unchanged; the existing termination-unknown
+signal is exposed internally so resource cleanup can respect it. New Linux CI, attached-console/live-editor, macOS,
+and AOT checks were not run for this increment. These results describe the implementation before the review below.
+
+#### Review and verification, 2026-10-29
+
+Review found that an object-typed state factory could return a Task and bypass declared-type validation. Initialization
+now rejects that result before entering work or cleanup; a regression verifies the factory runs once and neither
+callback is entered. Factories must still allocate empty state without asynchronous work or resource acquisition.
+No other blocking code findings remained after review.
+
+The reviewed revision passed **950 tests, 0 failures, 1 existing console-dependent skip**, across **951 total**:
+unit 773, integration 53, Windows 125 (124 passed, 1 skipped). Release solution/runtime-consumer builds have no
+warnings or errors, and all **43 redirected runtime cases** passed. This includes the actual example as a file app
+and ordinary project, fresh package consumers, and both real owned-child cleanup cases. Reports are under
+`artifacts/test-results/state-cleanup-review-full/`; review logs are under
+`artifacts/evidence/state-cleanup/review-20261029/`. Hosted PR/main checks and user review remain delivery checkpoints.
 
 ## Design approach and references
 
@@ -713,7 +987,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | Input validation | ✓ | ✓ | ✓ | ✓ |
 | Environment inputs | ✓ | ✓ | ✓ | ✓ |
 | Targets and dependencies | ✓ | ✓ | ✓ | ✓ |
-| Conditional execution | [Build/test/optional-pack example](#conditional-targets--agreed-behavior-2026-10-28) | Agreed `.When(...)` body guard, block/expression lambdas, and skip semantics. | Implemented and locally reviewed under #66; prepared for PR delivery. | Full local 899 passed/0 failed/1 console skip; real consumers and 43 redirected cases passed. PR/main checks pending. |
+| Conditional execution | [Build/test/optional-pack example](#conditional-targets--agreed-behavior-2026-10-28) | Agreed `.When(...)` body guard, block/expression lambdas, and skip semantics. | Merged #67, closing #66. | Full local 899 passed/0 failed/1 console skip; real consumers/43 redirected cases and all PR/main checks passed. |
 | Output and diagnostics | Partial | Partial | Partial | Partial |
 | Failures | Partial | Partial | Partial | Partial |
 | External processes | ✓ | Partial | Partial | Partial |
@@ -722,7 +996,7 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | SDK environment isolation | [Selected #62 policy](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27) | Explicit child-directory SDK selection without changing generic inheritance. | Opt-in policy and workflow migration merged #65, closing #62. | Cross-SDK reproduction/fix and workflow checks passed locally; all PR/main checks passed. |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
-| Cleanup and shared resources | — | — | — | — |
+| Cleanup and shared resources | [Full prepare/verify/finish example](#cleanup-and-shared-resources--agreed-behavior-2026-10-28) | Agreed invocation-local state and target/command cleanup with explicit settlement, cancellation, and failure rules. | Implemented locally under #68; uncommitted. | Full local 949 passed/0 failed/1 console skip; actual consumers and 43 redirected cases passed. New hosted checks pending delivery. |
 | Sensitive values | — | — | — | — |
 | Complete workflow | ✓ | Existing API; agreed scenario | Merged #53, closing #52 | Windows consumers and actual repository; see guide |
 
