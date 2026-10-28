@@ -9,10 +9,10 @@ Linux-native process ownership and macOS remain unverified.
 
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
-| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 680 | 0 |
-| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 16 | 30 |
-| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 67 | 38 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 763 | 68 |
+| [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 696 | 0 |
+| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 19 | 30 |
+| [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 80 | 42 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 795 | 72 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
@@ -27,6 +27,12 @@ native consumer probes; this scheduling boundary does not change runtime timeout
 The local [#60 executable/.NET increment](../guides/executables-and-dotnet.md) adds 16 portable unit/analyzer cases,
 seven short native cases, and one long-running real .NET build/publish/pack case. Its full Windows regression passed
 **830 tests, 0 failures, 1 console-dependent skip**; the 46 integration and 680 unit cases passed without skips.
+The current [SDK/Git/npm increment](../guides/git-and-npm.md) adds 16 unit/analyzer, three portable discovery,
+13 short native, and four long native/consumer cases. Its full local Windows run passed **866 tests, 0 failures,
+1 console-dependent skip**, with **867 total** (unit 696, integration 49, Windows 122).
+Discovery filesystem probes belong to IntegrationTests. Native cases use disposable repositories, offline npm
+fixtures, and stable invalid-SDK overrides so CI needs no second SDK. The real npm timeout and SDK build cases
+retain the long-running opt-in, and heavy file-app/project tool consumers use the existing nonparallel native collection.
 Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.
@@ -39,8 +45,8 @@ project identifiers and a root-relative solution filename; the same file works w
 Normal CI runs this portable filter in **Linux portable evaluation** and **Windows portable evaluation**. The
 separate **Windows evaluation** job selects `Rafter.WindowsTests` directly, then checks packaging and redirected
 runtime output. Both Windows jobs execute concurrently on separate machines; their combined counts remain
-763 ordinary / 831 full for this local revision. Review all three checks. Solution/project wiring, native collections,
-and per-module execution policy are unchanged by #60. The [scheduling record](ci-duration.md) retains the original
+795 ordinary / 867 full for this local revision. Review all three checks. Solution/project wiring and existing
+per-module execution policy are unchanged. The [scheduling record](ci-duration.md) retains the original
 740/807-case coverage and timing baseline; it is not a hosted result for this increment.
 The explicit cache-placement benchmark retains the original single Windows full-solution run; it skips both
 portable jobs only for manual `default`/`runner-temp` experiment modes.

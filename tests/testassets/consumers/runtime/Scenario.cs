@@ -6,6 +6,10 @@ internal static class Scenario
     {
         var scenario = args.FirstOrDefault() ?? "sync";
         var controls = args.Skip(1).ToArray();
+        if (scenario == "tools")
+        {
+            return await ToolsAsync(controls);
+        }
         if (scenario == "capture-review-child")
         {
             if (controls[0] is "review-capture-overflow" or "review-capture-caught")
@@ -317,6 +321,36 @@ internal static class Scenario
                 Count = actualCount,
                 Flag = actualFlag
             }));
+        });
+    }
+
+    private static async Task<int> ToolsAsync(string[] controls)
+    {
+        return await Rafter.Command("Exercise typed SDK, Git, and npm helpers.").RunAsync(controls, async context =>
+        {
+            var package = context.Directory("tool consumer").EnsureExists();
+            await package.File("package.json").WriteAllTextAsync(
+                "{\"name\":\"rafter-consumer\",\"version\":\"1.0.0\",\"private\":true,\"scripts\":{\"build\":\"node echo.cjs\"}}",
+                context.CancellationToken);
+            await package.File("echo.cjs").WriteAllTextAsync("console.log(JSON.stringify(process.argv.slice(2))); ",
+                context.CancellationToken);
+            var template = package.Directory("empty-template").EnsureExists();
+            var git = context.Git().WorkingDirectory(package.FullPath);
+            await git.Arguments("init", "--quiet", "--template=" + template.FullPath).RunAsync();
+            var status = await git.Status().Short().Branch().RunAndCaptureAsync(4096);
+            if (!status.StandardOutput.Text.Contains("package.json", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Typed Git status did not observe the package fixture.");
+            }
+            var script = await context.Npm().WorkingDirectory(package.FullPath).RunScript("build")
+                .Arguments("--silent").ScriptArguments("--mode", "a value").RunAndCaptureAsync(4096);
+            var values = System.Text.Json.JsonSerializer.Deserialize<string[]>(script.StandardOutput.Text);
+            if (values is null || !values.SequenceEqual(new[] { "--mode", "a value" }))
+            {
+                throw new InvalidOperationException("Typed npm script arguments did not round trip.");
+            }
+            var sdk = await context.Dotnet().UseWorkingDirectorySdk().Arguments("--version").RunAndCaptureAsync(1024);
+            context.WriteLine("Tool adapters passed: " + sdk.StandardOutput.Text.Trim());
         });
     }
 

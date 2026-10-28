@@ -63,9 +63,8 @@ await tool.Arguments("work").RunAsync();
 The environment is inherited at launch, then executable edits and child edits are applied in order.
 `RemoveEnvironment(params string[] names)` removes a variable entirely; `Environment(name, "")` keeps an empty value.
 Set/remove conflicts within one layer are errors. Removal validates the entire batch before changing a child command.
-No automatic .NET SDK sanitization is performed. The
-[outside-launch SDK caveat](../development/repository-workflow.md#verification-after-rootpath-cleanup) remains open;
-environment removal alone does not establish a complete SDK-selection policy.
+No automatic .NET SDK sanitization is performed. The explicit `DotnetExecutable.UseWorkingDirectorySdk()` policy
+below addresses inherited SDK-selection overrides; ordinary generic and typed .NET inheritance is unchanged.
 
 The default directory is the invocation root. Both executable and child relative directories resolve against that
 root; neither changes host CWD. Timeout defaults apply per process and do not replace invocation cancellation.
@@ -138,9 +137,49 @@ await dotnet.Build(solution.FullPath)
 ```
 
 The [repository workflow](../../examples/repository-workflow.cs) uses typed build/pack and grouped raw metadata/test
-arguments. Typed test-runner policy and Git/npm helpers remain future increments. Tool adapters compose public
-generic commands; there is no separate launcher or SDK package dependency. RAF003 recognizes discarded execution
-tasks on generic commands, executable zero-argument methods, and typed .NET commands.
+arguments. A typed test-runner policy remains a future increment. The current local
+[Git/npm helpers](git-and-npm.md) compose the same generic API. There is no separate launcher or SDK package dependency.
+RAF003 recognizes discarded execution tasks on generic commands, executable zero-argument methods, and typed tools.
+
+## Selecting the SDK for the child directory
+
+The local [#62 increment](https://github.com/sotsera/rafter/issues/62) adds an explicit opt-in:
+
+```csharp
+var dotnet = context.Dotnet()
+    .UseWorkingDirectorySdk()
+    .WorkingDirectory(repository.FullPath);
+
+await dotnet.Build(solution.FullPath).Configuration("Release").RunAsync();
+```
+
+The policy removes these inherited overrides only in child environments:
+
+- `MSBuildSDKsPath`
+- `MSBUILD_EXE_PATH`
+- `MSBuildExtensionsPath`
+- `DOTNET_MSBUILD_SDK_RESOLVER_SDKS_DIR`
+- `DOTNET_MSBUILD_SDK_RESOLVER_SDKS_VER`
+- `DOTNET_MSBUILD_SDK_RESOLVER_CLI_DIR`
+
+The selection roles follow Microsoft's [MSBuild properties](https://learn.microsoft.com/en-us/visualstudio/msbuild/msbuild-reserved-and-well-known-properties)
+and [SDK resolver environment overrides](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-environment-variables).
+`DOTNET_HOST_PATH`, `DOTNET_ROOT*`, PATH, proxies, NuGet settings, and other normal environment variables remain
+inherited. The parent and sibling executables are unchanged. No SDK is pinned by this method: dotnet still selects
+one using the child's working directory/global.json and normal host configuration. The policy cannot choose the SDK
+that already built/launched the outer file app.
+
+Removals occupy the executable's environment configuration layer, so applying the policy twice or separately
+setting/removing the same names in that layer is an error. A child command can explicitly override a removal once
+with its own `Environment(...)` setting. Default `context.Dotnet()` and generic executables keep ordinary inheritance.
+The repository workflow opts in.
+
+The recorded older preview-SDK launch failed with MSB4216/MSB4027. On the currently installed 11.0.100-rc.3 preview,
+a natural outside-checkout launch had none of the inspected injected values and built correctly under SDK 10.0.403.
+A controlled inherited `MSBuildSDKsPath` from SDK 11 reproduced the original two errors and showed SDK 11 targets
+under MSBuild 10; the new policy restored SDK 10 metadata and a real resource build. Both observations are retained
+under `artifacts/evidence/sdk-tools/`. The regression suite uses a deliberately invalid inherited path so CI does not
+need a second SDK. This proves isolation of the documented overrides, not arbitrary SDK-host compatibility.
 
 ## Local verification, 2026-10-27
 

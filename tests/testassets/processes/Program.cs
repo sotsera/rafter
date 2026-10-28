@@ -14,7 +14,8 @@ public static class Program
         Console.OutputEncoding = new UTF8Encoding(false);
         Console.InputEncoding = Encoding.UTF8;
         // Direct apphost invocations observe the argument vectors produced by typed tool adapters.
-        if (args.Length == 0 || args[0] is "build" or "publish" or "pack")
+        if (args.Length == 0 || args[0] is "build" or "publish" or "pack" or "status" or "log"
+            || args[0].EndsWith("npm-cli.js", StringComparison.OrdinalIgnoreCase))
         {
             Console.Write(JsonSerializer.Serialize(args));
             return 0;
