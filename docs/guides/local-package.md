@@ -1,8 +1,9 @@
-# Local package
+# Preview package
 
-The runtime and first C# authoring diagnostics are packed together as `Sotsera.Rafter` for
-[issue #17](https://github.com/sotsera/rafter/issues/17). The initial version is `0.1.0-local`; this is a local development
-artifact, not a public release or a commitment to release-version numbering. Nothing is published to NuGet.org.
+The runtime, XML API documentation, and four C# authoring diagnostics are packed together as `Sotsera.Rafter`.
+The prepared version is `0.1.0-preview.1`, tracked by [issue #72](https://github.com/sotsera/rafter/issues/72).
+It is available from a locally built feed; this preparation does not publish it to NuGet.org. See the
+[release notes](../../CHANGELOG.md) and [preview compatibility policy](../development/releases.md).
 
 ## Build and consume
 
@@ -37,7 +38,7 @@ named public package cannot substitute for this development artifact.
 Create `hello.cs` outside a project directory:
 
 ```csharp
-#:package Sotsera.Rafter@0.1.0-local
+#:package Sotsera.Rafter@0.1.0-preview.1
 #:property PublishAot=false
 
 var command = Rafter.Command("Say hello.");
@@ -48,7 +49,7 @@ return await command.RunAsync(args, context =>
 ```
 
 Run `dotnet run --file hello.cs -- --quiet`. A regular net10.0 C# project instead adds
-`<PackageReference Include="Sotsera.Rafter" Version="0.1.0-local" />` and uses the same code without directives.
+`<PackageReference Include="Sotsera.Rafter" Version="0.1.0-preview.1" />` and uses the same code without directives.
 Fresh package-only project/file-app consumers are also verified by the full portable suite on Ubuntu 24.04 x64;
 see the [testing guide](../development/testing.md#linux-ci-scope). Owned processes require Windows, and AOT remains unverified.
 
@@ -69,18 +70,20 @@ Explicit imports remain valid when automatic imports are enabled too.
 
 Project references do not carry NuGet build/analyzer assets. The repository's
 [`examples/Directory.Build.targets`](../../examples/Directory.Build.targets) imports the same namespace target and loads
-the analyzer built by the runtime project reference, giving the eight development examples the same authoring behavior.
+the analyzer built by the runtime project reference, giving all nineteen development examples the same authoring behavior.
 This setup uses the repository's standard `bin/$(Configuration)/netstandard2.0` layout. Custom output layouts and unrelated
 project-reference consumers need their own explicit analyzer reference/import configuration.
 
 ## Package contents and verification
 
-The package contains the net10.0 runtime, the separate netstandard2.0 C# analyzer, the namespace target, and a package
-README. Its only direct runtime package dependencies remain Spectre.Console 0.57.2 and System.CommandLine 2.0.13;
+The package contains the net10.0 runtime and adjacent XML API documentation, the separate netstandard2.0 C# analyzer,
+the namespace target, and a package README. Its only direct runtime package dependencies remain
+Spectre.Console 0.57.2 and System.CommandLine 2.0.13;
 compatible higher versions can resolve normally. Roslyn, xUnit, MTP, and AwesomeAssertions are not consumer dependencies.
 
 The automated package test builds the actual nupkg and verifies its manifest/files, then restores and executes both a
-fresh file app and a regular project with no Rafter source/project references. It checks diagnostics, import opt-out,
+fresh file app and a regular project with no Rafter source/project references. It checks XML documentation lookup
+in both fresh caches, diagnostics, import opt-out,
 runtime checks with diagnostics disabled, design-time asset resolution, and the import boundary through a project reference.
 CI retains a separately packed artifact under `packages/` alongside test reports. The diagnostic reference records
 the limits of static coverage; the [milestone review](../history/milestone-review.md) records live VS Code diagnostics and completion.

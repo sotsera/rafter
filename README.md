@@ -1,94 +1,61 @@
 # Rafter by Sotsera
 
-Rafter is being built afresh through small C# automation examples.
+Rafter is a C# automation toolkit centered on small .NET 10 file-based applications. It provides typed inputs,
+sequential targets, explicit cleanup, and owned Windows child processes, with generated help and authoring diagnostics.
 
-The **First working examples** milestone is complete for the selected Windows x64 baseline. Read the
-[completion summary](docs/history/milestone-review.md) for delivered capabilities, the 413-test baseline, and platform limits.
-The [repository review](docs/development/repository-review.md) maps the folders and records proposed organization improvements.
+The first preview, **0.1.0-preview.1**, is being prepared under
+[issue #72](https://github.com/sotsera/rafter/issues/72). Build it locally using the
+[package guide](docs/guides/local-package.md); public publication is a separate release step. Read the
+[release notes](CHANGELOG.md) and [preview compatibility policy](docs/development/releases.md) before adopting it.
 
-Open [Rafter.slnx](Rafter.slnx) from this repository root to work on the runtime, analyzers, and main test suite.
-Use the [documentation index](docs/README.md) for current guides, development commands, and historical evaluations.
-The [testing guide](docs/development/testing.md) covers the unit/integration/Windows suites and their run profiles.
-CI verifies the full Windows suite and the portable suite on Ubuntu 24.04 x64; Linux process ownership remains separate work.
+## Try an example
 
-The first [runtime slice](docs/guides/minimal-runtime.md) runs body-only commands with validation, help, direct output,
-exception containment, and cooperative managed cancellation. Try the real [minimal example](examples/minimal.cs):
+Install the stable .NET 10 SDK selected by [global.json](global.json), then run from this repository root:
 
 ```powershell
 dotnet run --file examples/minimal.cs -- --help
-dotnet run --file examples/minimal.cs -- --quiet
-```
-
-The [typed-input slice](docs/guides/typed-inputs.md) adds string, integer, and Boolean options, aliases, required/default
-policies, typed value lookup, individual and combined validation, and generated help. Try the runnable examples:
-
-```powershell
 dotnet run --file examples/options.cs -- --name Ada --repeat 2
-dotnet run --file examples/validation.cs -- --minimum 3 --maximum 5
+dotnet run --file examples/redaction.cs -- --quiet
 ```
 
-The [environment-input API](docs/guides/environment-inputs.md) adds explicit `.FromEnvironment(...)` fallbacks and
-source diagnostics. Command-line values take priority, and `GetValue` retains the prepared value throughout a run.
+The [nineteen runnable examples](examples/README.md) use project references and automatically load the namespace
+import and analyzers. Process examples require Windows and their listed external tools. For an independent file
+app or ordinary project outside the checkout, follow the [fresh package consumer steps](docs/guides/local-package.md).
 
-[Enum inputs](docs/guides/enum-inputs.md) add named choices with case-insensitive matching, named defaults, and
-allowed-values help. Try `dotnet run --file examples/enums.cs -- --configuration debug` or use `--help` to see the choices.
+## Authoring capabilities
 
-[Duration inputs](docs/guides/duration-inputs.md) accept explicit units and compounds such as `250ms` and `1h30m`,
-with exact conversion and compact defaults in help. The [duration example](examples/durations.cs) prints prepared
-values without starting timers or imposing execution deadlines.
+| Area | Current guides |
+| --- | --- |
+| Commands, help, validation, and typed values | [Runtime](docs/guides/minimal-runtime.md), [inputs](docs/guides/typed-inputs.md), [enums](docs/guides/enum-inputs.md), [durations](docs/guides/duration-inputs.md) |
+| Environment fallbacks and sensitive string presentation | [Environment](docs/guides/environment-inputs.md), [sensitive inputs](docs/guides/sensitive-inputs.md) |
+| Sequential targets, conditions, invocation-local state, and cleanup | [Targets](docs/guides/targets.md) |
+| Invocation roots and explicit filesystem operations | [Roots and paths](docs/guides/roots-and-paths.md), [filesystem](docs/guides/filesystem.md) |
+| Owned processes, timeouts, bounded capture, and reusable tool commands | [Processes](docs/guides/process-runtime.md), [timeouts](docs/guides/process-timeouts.md), [capture](docs/guides/process-capture.md), [.NET](docs/guides/executables-and-dotnet.md), [Git/npm](docs/guides/git-and-npm.md) |
+| Compiler diagnostics, automatic imports, and API documentation | [Authoring diagnostics](docs/guides/authoring-diagnostics.md), [package](docs/guides/local-package.md) |
 
-The [target slice](docs/guides/targets.md) adds sequential targets, dependency groups, graph validation, and target-aware
-help/output. Try its callback-based [example](examples/targets.cs):
+Sensitive input masking preserves raw value access and covers known exact values in Rafter's presentation.
+Direct console/file writes, live child output, and capture echo remain outside that protection.
+Cleanup is awaited after owned work settles, but has no independent deadline and cannot launch child processes.
 
-```powershell
-dotnet run --file examples/targets.cs -- --name Ada
-dotnet run --file examples/targets.cs -- --help
-```
+## Platform and verification scope
 
-The [root/path API](docs/guides/roots-and-paths.md) exposes `context.RootDirectory` and `context.ResolvePath(path)`.
-Select a command root with `command.RootDirectory(...)` using a literal or a prepared string option; resolved file
-paths and child directories share that base without changing the host working directory.
+Owned external processes require Windows. CI verifies portable commands, inputs, targets, and consumers on Windows
+and Ubuntu 24.04 x64; portable Linux success does not establish Linux-native process ownership. macOS and native
+AOT remain unverified. See [testing](docs/development/testing.md) and the
+[SDK/platform baseline](docs/development/sdk-and-platform-baseline.md) for the precise boundaries.
 
-The [filesystem helpers](docs/guides/filesystem.md) add `context.Directory("artifacts", runId)` and
-`context.File(...)`, with explicit existence probes, directory creation, and caller-awaited UTF-8 text writes.
+Sensitive inputs merged in [PR #71](https://github.com/sotsera/rafter/pull/71); its three PR checks and
+[merged-main evaluation](https://github.com/sotsera/rafter/actions/runs/40907617601) passed. Current priorities live in
+the [development plan](docs/design/example-design-plan.md#next-steps). Earlier milestone test counts remain in the
+[historical completion summary](docs/history/milestone-review.md), rather than describing the current inventory.
 
-The [process runtime](docs/guides/process-runtime.md) adds owned Windows child processes, separate output streams,
-child directory/environment settings, failure actions, and cancellation with descendant cleanup:
+## Develop Rafter
 
-```powershell
-dotnet run --file examples/processes.cs -- --quiet
-dotnet run --file examples/dependencies.cs -- --project tests/testassets/workflows/sample-tests/BuildSample.Tests.csproj
-```
+Open [Rafter.slnx](Rafter.slnx) from this repository root. The two production projects contain the runtime and
+ authoring analyzer; tests are split into unit, portable integration, and Windows suites. The
+[repository workflow example](docs/development/repository-workflow.md) exercises build, tests, optional packaging,
+and retained evidence. Use the [documentation index](docs/README.md), [verification tools](tools/README.md),
+[contribution guidance](AGENTS.md), and [GitHub workflow](docs/development/github-workflow.md).
 
-[Process capture](docs/guides/process-capture.md) adds explicit bounded stdout/stderr capture, optional live echo,
-ordered chunks, and partial diagnostics on clean overflow, timeout, and cancellation.
-Try `dotnet run --file examples/process-capture.cs -- --quiet` to capture and parse a child's JSON.
-
-All thirteen examples now run through project references with [authoring diagnostics](docs/guides/authoring-diagnostics.md)
-and an automatic namespace import. The [local package](docs/guides/local-package.md) provides the same authoring support to
-fresh file apps and regular projects; public publication and process ownership on other platforms remain separate work.
-Authoring diagnostics also catch repeated or conflicting option presence policies in supported straight-line code.
-See [example prerequisites](examples/README.md) before running build-oriented scripts.
-
-The [milestone review](docs/history/milestone-review.md) records actual Windows terminal output and live VS Code diagnostics
-and completion. Writes to a shared terminal are coordinated so stdout/stderr cannot split a Rafter prefix or style sequence.
-
-The [.NET 10 evaluation harness](docs/history/evaluation-harness.md) runs real file-based and project-consumer checks
-through xUnit v3 and Microsoft.Testing.Platform. It also verifies the runtime through a production project reference.
-The [parser evaluation](docs/history/parser-evaluation.md) records executable System.CommandLine compatibility checks and
-the recommended internal adapter.
-The [renderer evaluation](docs/history/renderer-evaluation.md) records real terminal checks, captured help, and the comparison
-between Spectre.Console, its Ansi-only package, and framework output.
-
-See the [example design plan](docs/design/example-design-plan.md) for the working approach, topic checklist, and open questions.
-The [first working examples record](docs/history/first-working-examples.md) preserves the delivered scope and its design decisions.
-The [dependency review](docs/history/dependency-decisions.md) lists candidate packages and the checks needed before adoption.
-The [SDK and platform review](docs/development/sdk-and-platform-baseline.md) recommends the build baseline and verification order.
-The [GitHub workflow](docs/development/github-workflow.md) identifies upstream, the development fork, and the published evaluation issues.
-The [dotnet/skills review](docs/history/dotnet-skills-review.md) recommends task-specific guidance and records adoption caveats.
-The [skills setup](docs/development/dotnet-skills-setup.md) records the installed project-local skills, verification, and updates.
-The [output and help design](docs/design/output-design.md) records the current agreed presentation and remaining questions.
-Explore the [current output preview](docs/design/output-preview.html) for illustrative success, failure, and cancellation transcripts.
-The agreed [root and path behavior](docs/guides/roots-and-paths.md) explains the default invocation directory and explicit roots.
-The previous implementation's scripts are preserved in [reference/examples](reference/examples/).
-Its output previews and accompanying notes are preserved in [reference/output](reference/output/README.md).
+The previous implementation is preserved only as [reference examples](reference/examples/README.md) and
+[output snapshots](reference/output/README.md); it is not a build dependency or a promise of API compatibility.

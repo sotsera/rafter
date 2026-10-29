@@ -10,9 +10,9 @@ Linux-native process ownership and macOS remain unverified.
 | Project | Responsibility | Ordinary cases | Long-running cases |
 | --- | --- | ---: | ---: |
 | [Rafter.UnitTests](../../tests/Rafter.UnitTests/Rafter.UnitTests.csproj) | In-process command/input/target/root-path contracts, filesystem composition, compiler analyzer checks, dependency contracts, rendering coordination, process configuration, and controlled supervision without child launch. | 813 | 0 |
-| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 19 | 36 |
+| [Rafter.IntegrationTests](../../tests/Rafter.IntegrationTests/Rafter.IntegrationTests.csproj) | Real host working-directory/root behavior and filesystem I/O plus file-app/project/compiler/package consumers. | 19 | 38 |
 | [Rafter.WindowsTests](../../tests/Rafter.WindowsTests/Rafter.WindowsTests.csproj) | Windows process ownership, handles, pipes, cancellation, timeouts, capture, process consumers, verification supervision, and the repository workflow. | 84 | 45 |
-| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 916 | 81 |
+| Total | Counts include theory rows; they describe this revision rather than a permanent test-count contract. | 916 | 83 |
 
 The current counts include the environment, enum, duration, process-timeout, and capture increments through
 [issue #44](https://github.com/sotsera/rafter/issues/44), plus the [review fixes](code-review-2026-10-23.md).
@@ -66,8 +66,11 @@ Reports are under `artifacts/test-results/sensitive-inputs-full/`, with logs und
 Review added two regression rows proving repeated primary/alias sensitive CLI arguments still mask all recognized
 values in diagnostics. All **813 unit cases passed** after those additions, including all 40 sensitive-input cases.
 Shipping runtime/example/native/consumer code is unchanged from the full 995-case run; its recorded counts remain
-historical. The current inventory is 997 cases. Review logs/reports are under
+historical. That revision had 997 cases. Review logs/reports are under
 `artifacts/evidence/sensitive-inputs/review/` and `artifacts/test-results/sensitive-inputs-review-all-unit/`.
+Preview preparation under #72 adds two long-running isolated builds that verify public API additions/removals fail
+without an inventory update, bringing the current inventory to 999. The existing package test also checks packaged
+XML documentation in fresh file-app/project caches.
 Deliberate native timeout/failed-termination waits are long-running; controlled
 clock/observation checks stay in the fast portable unit suite.
 The migration and initial Linux observations below retain their original counts for those earlier source revisions.
@@ -80,7 +83,7 @@ project identifiers and a root-relative solution filename; the same file works w
 Normal CI runs this portable filter in **Linux portable evaluation** and **Windows portable evaluation**. The
 separate **Windows evaluation** job selects `Rafter.WindowsTests` directly, then checks packaging and redirected
 runtime output. Both Windows jobs execute concurrently on separate machines; their combined counts remain
-916 ordinary / 997 full for this local revision. Review all three checks. Solution/project wiring and existing
+916 ordinary / 999 full for this local revision. Review all three checks. Solution/project wiring and existing
 per-module execution policy are unchanged. The [scheduling record](ci-duration.md) retains the original
 740/807-case coverage and timing baseline; it is not a hosted result for this increment.
 The explicit cache-placement benchmark retains the original single Windows full-solution run; it skips both

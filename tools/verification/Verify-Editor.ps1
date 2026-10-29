@@ -19,7 +19,7 @@ Copy-Item -LiteralPath (Join-Path $repository 'global.json') -Destination "$work
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Sotsera.Rafter" Version="0.1.0-local" />
+    <PackageReference Include="Sotsera.Rafter" Version="0.1.0-preview.1" />
   </ItemGroup>
 </Project>
 '@ | Set-Content -LiteralPath "$workspace/EditorProbe.csproj" -Encoding utf8
@@ -52,7 +52,7 @@ New-Item -ItemType Directory -Path $fileApp -Force | Out-Null
 foreach ($name in @('global.json', 'NuGet.Config', 'Directory.Build.props', 'Directory.Build.targets', 'Directory.Packages.props')) {
     Copy-Item -LiteralPath "$workspace/$name" -Destination "$fileApp/$name"
 }
-$fileSource = "#:package Sotsera.Rafter@0.1.0-local`n#:property PublishAot=false`n#:property Nullable=enable`n" +
+$fileSource = "#:package Sotsera.Rafter@0.1.0-preview.1`n#:property PublishAot=false`n#:property Nullable=enable`n" +
     (Get-Content -LiteralPath "$workspace/Program.cs" -Raw)
 $fileSource | Set-Content -LiteralPath "$fileApp/probe.cs" -Encoding utf8
 dotnet restore "$fileApp/probe.cs"

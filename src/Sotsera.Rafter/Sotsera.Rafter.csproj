@@ -4,9 +4,12 @@
     <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591;RS0016;RS0017</WarningsAsErrors>
 
     <IsPackable>true</IsPackable>
-    <Version>0.1.0-local</Version>
+    <Version>0.1.0-preview.1</Version>
+    <EnablePackageValidation>true</EnablePackageValidation>
     <Authors>Alessandro Ghidini</Authors>
     <Description>C# automation scripts with typed inputs, target dependencies, and owned process execution.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -16,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Spectre.Console" />
     <PackageReference Include="System.CommandLine" />
   </ItemGroup>

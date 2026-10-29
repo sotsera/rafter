@@ -58,7 +58,7 @@ and full profiles. The two Windows jobs run concurrently on separate machines; t
 owns their coverage and measurement details. All three checks must pass under the working delivery rules.
 The manual cache experiment retains its single Windows full-solution workload. Record results for the PR's actual head
 revision. Inspect skips and failed jobs explicitly; a portable Linux pass does not establish native Linux ownership
-or macOS support. These are working delivery rules; this update does not change GitHub protection settings.
+or macOS support. These checks are now enforced by the protection rule described below.
 
 ## CI-efficiency increment
 
@@ -139,3 +139,21 @@ Later feature issues should follow the [design plan](../design/example-design-pl
 The planning documents, syntax drafts, and historical references accompany issue #1's evaluation harness PR.
 Issue references must point to the published PR commit until it merges, then may use main. The harness verifies its
 own SDK/test/consumer environment; runtime implementation and individual dependency evaluations remain separate work.
+
+## Main protection enabled 2026-10-29
+
+Under [issue #72](https://github.com/sotsera/rafter/issues/72), the existing
+[protect-main rule](https://github.com/sotsera/rafter/rules/25405853) was activated after PR #71 and its
+[merged-main evaluation](https://github.com/sotsera/rafter/actions/runs/40907617601) passed. GitHub's branch and
+applied-rules endpoints confirmed `main` is protected.
+
+The default branch now requires a pull request, resolved review threads, and these checks from the GitHub Actions
+integration (app ID 15368): **Windows evaluation**, **Windows portable evaluation**, and **Linux portable evaluation**.
+Strict status checks require the branch to be up to date. Deletion, force pushes, and nonlinear history are blocked;
+squash is the only allowed PR merge method. There are no bypass actors and no required approving-review count,
+code-owner approval, or last-push approval. Human review remains part of the working delivery process.
+
+The disabled rule had also contained a signed-commit requirement. It was omitted from activation because signing
+was not part of the agreed workflow. No signing requirement or publication automation was introduced.
+The initial protection state described earlier is historical; this section records the current enforced state.
+The before-state and exact update payload are retained locally in `artifacts/evidence/preview-readiness/`.
