@@ -4,7 +4,10 @@ Rafter runs small C# automation scripts with descriptions, typed inputs, target 
 `ProcessCommand.RunAndCaptureAsync(...)` adds bounded decoded stdout/stderr, immutable ordered chunks, and optional
 live echo. Its explicit positive limit counts UTF-16 code units per stream; clean overflow, timeout, and cancellation
 exceptions expose bounded partial streams. Owned process execution currently requires Windows.
-This is a local development package for the first working examples milestone; it has not been published to NuGet.org.
+This is the first prepared preview of the rebuilt toolkit. See the
+[release notes](https://github.com/sotsera/rafter/blob/main/CHANGELOG.md) and
+[preview compatibility policy](https://github.com/sotsera/rafter/blob/main/docs/development/releases.md).
+Consume this preparation from a local feed; publication is a separate release action.
 
 Targets support `.When(description, context => ...)` with a synchronous Boolean predicate. A block lambda uses
 an explicit `return`. Dependencies run first; false skips only the body and permits dependants to continue.
@@ -48,7 +51,7 @@ Expiry initiates shutdown and output settlement, then throws `ProcessTimeoutExce
 settled timeout for recovery. Unhandled timeouts return invocation exit `1`, separately from Ctrl+C cancellation.
 
 ```csharp
-#:package Sotsera.Rafter@0.1.0-local
+#:package Sotsera.Rafter@0.1.0-preview.1
 #:property PublishAot=false
 
 var command = Rafter.Command("Say hello.");
@@ -66,5 +69,7 @@ Direct C# consumers receive an automatic `Sotsera.Rafter` namespace import. Set 
 the project or a file-app property directive to opt out, then add `using Sotsera.Rafter;` explicitly.
 
 The bundled C# analyzer rejects constant blank descriptions (RAF001), warns about nullable option type arguments
-(RAF002), and rejects clearly discarded process tasks (RAF003). Runtime validation remains active when static analysis
+(RAF002), rejects clearly discarded process tasks (RAF003), and rejects repeated/conflicting option presence
+policies in supported straight-line code (RAF004). XML API documentation accompanies the runtime for editor lookup.
+Runtime validation remains active when static analysis
 cannot establish a declaration's value or when diagnostics are disabled. Roslyn and test tooling are not runtime dependencies.

@@ -11,11 +11,11 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 
 | Area | Implemented now | Remaining boundary |
 | --- | --- | --- |
-| Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation; sensitive string inputs and presentation masking implemented locally under #70. | Sensitive-input verification/review/delivery, further input types, and asynchronous resolution remain separate checkpoints. |
+| Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, validation, and sensitive string presentation masking merged through #71. | Further input types and asynchronous resolution remain separate checkpoints. |
 | Targets | Sequential graphs, groups, selected entries, failure/cancellation, conditional bodies, invocation-local state, and target/command cleanup merged through #69. | Cleanup deadlines and child-process launch remain separate work. |
 | Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, typed .NET build/publish/pack, opt-in SDK environment isolation, and first Git/npm helpers merged through #65. | Further typed commands, Linux-native ownership, and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
-| Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
+| Authoring and packaging | Four analyzer diagnostics, automatic imports, nineteen runnable examples, and fresh local-package consumers. | Preview preparation under #72 adds packaged XML documentation, API inventory checks, versioning, and onboarding; public distribution follows review. |
 | Verification | Unit, integration, Windows, package-consumer, and terminal/editor checks; Windows and Ubuntu CI. | Portable Linux results do not establish Linux process ownership. macOS and native AOT remain unverified. |
 
 The focused delivery sequence is complete:
@@ -33,6 +33,12 @@ The focused delivery sequence is complete:
 | SDK environment isolation and typed Git/npm helpers | Merged in [PR #65](https://github.com/sotsera/rafter/pull/65), closing #62/#63/#64; all three PR checks passed. | [SDK policy](../guides/executables-and-dotnet.md#selecting-the-sdk-for-the-child-directory) and [Git/npm verification](../guides/git-and-npm.md#local-verification-2026-10-27). |
 | Conditional target bodies | Merged in [PR #67](https://github.com/sotsera/rafter/pull/67), closing #66; all three PR checks and main evaluation passed. | [When/skip guide](../guides/targets.md#conditional-target-bodies) and [agreed example](#conditional-targets--agreed-behavior-2026-10-28). |
 | Invocation-local state and cleanup | Merged in [PR #69](https://github.com/sotsera/rafter/pull/69), closing #68; all three PR checks and main evaluation passed. | [State/cleanup guide](../guides/targets.md#invocation-local-state-and-cleanup) and [agreed behavior](#cleanup-and-shared-resources--agreed-behavior-2026-10-28). |
+
+PR #71 merged as `256edf9` on 2026-10-29 (Europe/Rome), closing #70. Its
+[PR evaluation](https://github.com/sotsera/rafter/actions/runs/40882456012) and
+[post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40907617601) passed all three checks,
+including full portable/native coverage, package consumers, packaging, and redirected runtime output.
+The 995-case full local run and later 813-case unit run below remain records of their own revisions.
 
 PR #69 merged as `4881223` on 2026-10-29 (Europe/Rome), closing #68. Its
 [PR evaluation](https://github.com/sotsera/rafter/actions/runs/40787006506) passed all three checks. The
@@ -67,8 +73,13 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Deliver the [reviewed sensitive-input/redaction implementation](#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29)
-under issue #70 through a PR.**
+**Prepare the first preview package and onboarding path under
+[issue #72](https://github.com/sotsera/rafter/issues/72).**
+Sensitive inputs merged through #71; PR and main checks passed. The accepted preview scope includes XML API
+documentation, explicit preview versioning/release notes, an automated public API inventory check, fresh package
+consumers, and current documentation. See the [release policy](../development/releases.md). The existing main
+protection rule now enforces the three established CI checks; its exact settings are in the
+[GitHub workflow](../development/github-workflow.md#main-protection-enabled-2026-10-29).
 State/cleanup merged through #69 after user review; all three PR checks and its main evaluation passed.
 Review also fixed Task results hidden behind object-typed state factories. Conditional targets through #67,
 SDK/Git/npm through #65, and the complete workflow/deferred #46/#47 acceptance are merged. Sensitive-value syntax
@@ -97,8 +108,8 @@ Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver the [reviewed sensitive-input/redaction increment](#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29). | Local code review and verification passed; user review and PR/main checks remain delivery checkpoints. |
-| 2 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
+| 1 | Prepare a usable preview package and onboarding path under #72. | Review XML documentation, preview versioning/release notes, API inventory checks, and fresh outside-checkout consumers. |
+| 2 | Review and explicitly release the verified preview. | Publish the package from the reviewed merged revision, retain its hash and evidence, and record the shipped API baseline. |
 | 3 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
 The CI review found duplicate fork-push/upstream-PR evaluations for #49. The merged change removes `build/**` push
@@ -921,11 +932,11 @@ merged as `4881223`, closing #68. Its post-merge main evaluation passed, as reco
 
 ### Sensitive inputs and redaction — agreed behavior, 2026-10-29
 
-**Status: syntax and behavior agreed; implementation authorized on 2026-10-29.** The user approved this
+**Status: merged in [PR #71](https://github.com/sotsera/rafter/pull/71), closing #70, on 2026-10-29.** The user approved this
 full example and the behavior below. [Issue #70](https://github.com/sotsera/rafter/issues/70) was created before
-shipping-code changes. `.Sensitive()` and presentation masking are now implemented locally, with the runnable
-[redaction.cs example](../../examples/redaction.cs). Local verification below passed; user review and hosted delivery
-remain separate checkpoints.
+shipping-code changes. `.Sensitive()` and presentation masking are delivered with the runnable
+[redaction.cs example](../../examples/redaction.cs). Local verification below, all three PR checks, and the
+merged-main evaluation passed; current delivery links are recorded above.
 The historical [redaction reference](../../reference/examples/redaction.cs) supplies a use case, without establishing
 requirements for the new implementation. The [sensitive-input guide](../guides/sensitive-inputs.md) describes the
 implemented API and its explicit output boundaries.
@@ -1107,10 +1118,10 @@ Review found no blocking runtime issues. Two additional regression rows verify t
 using either the primary option or alias, still mask all recognized values appearing in diagnostics despite invalid
 input. All **813 unit cases passed**, including all 40 sensitive-input cases. The review build has no warnings/errors;
 documentation/link and whitespace checks passed. Shipping runtime/example/consumer/native code is unchanged from the
-full 995-case run and 43 redirected checks above. The current inventory is 916 ordinary / 81 long-running / 997 full
+full 995-case run and 43 redirected checks above. At this review the inventory was 916 ordinary / 81 long-running / 997 full
 cases; the earlier full-run count remains a record of its tested revision. Review logs are under
 `artifacts/evidence/sensitive-inputs/review/` and reports under `artifacts/test-results/sensitive-inputs-review-all-unit/`.
-The increment is reviewed for PR delivery; hosted checks and user review remain separate checkpoints.
+The increment subsequently merged through #71 after review; PR/main checks passed as recorded in the current position.
 
 ## Design approach and references
 

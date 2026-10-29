@@ -9,6 +9,45 @@ namespace Rafter.IntegrationTests.Consumers;
 [Trait("LongRunning", "true")]
 public sealed class PackageConsumerTests
 {
+    [Theory]
+    [InlineData(true, "RS0016")]
+    [InlineData(false, "RS0017")]
+    public async Task Public_api_changes_require_an_explicit_inventory_update(bool addMember, string diagnostic)
+    {
+        const string project = "src/Sotsera.Rafter/Sotsera.Rafter.csproj";
+        using var builder = new IsolatedConsumer("project", TestContext.Current.TestOutputHelper!, project);
+        var source = """
+            namespace Sotsera.Rafter;
+
+            /// <summary>Declares commands for small automation scripts.</summary>
+            public static class Rafter
+            {
+            }
+            """;
+        if (addMember)
+        {
+            source = """
+                namespace Sotsera.Rafter;
+
+                /// <summary>Declares commands for small automation scripts.</summary>
+                public static class Rafter
+                {
+                    /// <summary>Declares a command.</summary>
+                    public static Command Command(string description) => new(description);
+
+                    /// <summary>A deliberate unreviewed API addition.</summary>
+                    public static void CompatibilityProbe() { }
+                }
+                """;
+        }
+        await File.WriteAllTextAsync(Path.Combine(builder.WorkingDirectory, "src/Sotsera.Rafter/Rafter.cs"),
+            source, TestContext.Current.CancellationToken);
+        var build = await builder.ExecuteAsync("build", project, "--configuration", "Release", "--disable-build-servers");
+        build.ExitCode.Should().NotBe(0);
+        (build.StandardOutput + build.StandardError).Should().Contain("error " + diagnostic)
+            .And.NotContain("AD0001").And.NotContain("CS8032").And.NotContain("CS9057");
+    }
+
     [Fact]
     public async Task Local_package_delivers_runtime_and_analyzers_to_fresh_project_and_file_app_consumers()
     {
@@ -18,7 +57,7 @@ public sealed class PackageConsumerTests
         var pack = await builder.ExecuteAsync("pack", "src/Sotsera.Rafter/Sotsera.Rafter.csproj",
             "--configuration", "Release", "--output", feed, "--disable-build-servers");
         pack.ExitCode.Should().Be(0, "{0}\n{1}", pack.StandardOutput, pack.StandardError);
-        var package = Path.Combine(feed, "Sotsera.Rafter.0.1.0-local.nupkg");
+        var package = Path.Combine(feed, "Sotsera.Rafter.0.1.0-preview.1.nupkg");
         VerifyPackage(package);
 
         await VerifyConsumerAsync("project", feed);
@@ -30,10 +69,13 @@ public sealed class PackageConsumerTests
         using var zip = ZipFile.OpenRead(package);
         var files = zip.Entries.Select(entry => entry.FullName).ToArray();
         files.Should().Contain("lib/net10.0/Sotsera.Rafter.dll")
+            .And.Contain("lib/net10.0/Sotsera.Rafter.xml")
             .And.Contain("analyzers/dotnet/cs/Sotsera.Rafter.Analyzers.dll").And.Contain("README.md")
             .And.Contain("build/net10.0/Sotsera.Rafter.targets");
         files.Should().NotContain(file => file.StartsWith("buildTransitive/", StringComparison.Ordinal));
         files.Where(file => file.EndsWith(".dll", StringComparison.Ordinal)).Should().HaveCount(2);
+        using var documentationStream = zip.GetEntry("lib/net10.0/Sotsera.Rafter.xml")!.Open();
+        VerifyDocumentation(XDocument.Load(documentationStream));
         using var manifestStream = zip.GetEntry("Sotsera.Rafter.nuspec")!.Open();
         var manifest = XDocument.Load(manifestStream);
         var dependencies = manifest.Descendants().Where(element => element.Name.LocalName == "dependency").ToArray();
@@ -41,6 +83,19 @@ public sealed class PackageConsumerTests
             .Should().BeEquivalentTo("Spectre.Console", "System.CommandLine");
         dependencies.Should().OnlyContain(element => !element.Attribute("version")!.Value.StartsWith('['),
             "runtime dependency minimums must allow compatible consumer resolution");
+    }
+
+    private static void VerifyDocumentation(XDocument documentation)
+    {
+        documentation.Root!.Element("assembly")!.Element("name")!.Value.Should().Be("Sotsera.Rafter");
+        var members = documentation.Descendants("member")
+            .ToDictionary(member => member.Attribute("name")!.Value);
+        members["M:Sotsera.Rafter.Rafter.Command(System.String)"].Element("summary")!.Value
+            .Should().Contain("Declares a command");
+        members["M:Sotsera.Rafter.RafterContext.WriteLine(System.String)"].Element("summary")!.Value
+            .Should().Contain("sensitive input values are masked");
+        members["P:Sotsera.Rafter.ProcessCaptureLimitException.Limit"].Element("summary")!.Value
+            .Should().Contain("UTF-16");
     }
 
     private static async Task VerifyConsumerAsync(string kind, string feed)
@@ -74,7 +129,7 @@ public sealed class PackageConsumerTests
                     <ImplicitUsings>enable</ImplicitUsings>
                   </PropertyGroup>
                   <ItemGroup>
-                    <PackageReference Include="Sotsera.Rafter" Version="0.1.0-local" />
+                    <PackageReference Include="Sotsera.Rafter" Version="0.1.0-preview.1" />
                   </ItemGroup>
                 </Project>
                 """, TestContext.Current.CancellationToken);
@@ -82,7 +137,7 @@ public sealed class PackageConsumerTests
 
         var sourcePath = Path.Combine(consumer.WorkingDirectory, "consumer.cs");
         var directives = kind == "file-app"
-            ? "#:package Sotsera.Rafter@0.1.0-local\n#:property PublishAot=false\n#:property Nullable=enable\n"
+            ? "#:package Sotsera.Rafter@0.1.0-preview.1\n#:property PublishAot=false\n#:property Nullable=enable\n"
             : "";
         const string valid = """
             var command = Rafter.Command("Package consumer.");
@@ -184,6 +239,11 @@ public sealed class PackageConsumerTests
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_CONFIGURATION"] = null;
         consumer.EnvironmentOverrides["RAFTER_PACKAGE_DURATION"] = null;
         await consumer.BuildAsync();
+        // Look up documentation next to the restored compile asset, as an editor does. This cache is fresh
+        // and contains only packages; a source checkout's generated XML cannot satisfy this check.
+        var packageLibrary = Path.Combine(cache, "sotsera.rafter", "0.1.0-preview.1", "lib", "net10.0");
+        File.Exists(Path.Combine(packageLibrary, "Sotsera.Rafter.dll")).Should().BeTrue();
+        VerifyDocumentation(XDocument.Load(Path.Combine(packageLibrary, "Sotsera.Rafter.xml")));
         var run = await consumer.RunAsync("--quiet");
         run.ExitCode.Should().Be(0);
         run.StandardOutput.Should().Be("Hello, Ada! Release. 300000000 ticks." + Environment.NewLine);
@@ -298,7 +358,7 @@ public sealed class PackageConsumerTests
         policyValidation.StandardOutput.Should().BeEmpty();
 
         // The consumer has no project/source references to Rafter and restores its own fresh package cache.
-        Directory.Exists(Path.Combine(cache, "sotsera.rafter", "0.1.0-local")).Should().BeTrue();
+        Directory.Exists(Path.Combine(cache, "sotsera.rafter", "0.1.0-preview.1")).Should().BeTrue();
         Directory.EnumerateDirectories(cache).Select(Path.GetFileName)
             .Should().NotContain(name => name!.StartsWith("microsoft.codeanalysis", StringComparison.OrdinalIgnoreCase));
         if (kind == "project")
@@ -321,10 +381,10 @@ public sealed class PackageConsumerTests
         await File.WriteAllTextAsync(Path.Combine(bridge, "Bridge.csproj"), """
             <Project Sdk="Microsoft.NET.Sdk">
               <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
-              <ItemGroup><PackageReference Include="Sotsera.Rafter" Version="0.1.0-local" /></ItemGroup>
+              <ItemGroup><PackageReference Include="Sotsera.Rafter" Version="0.1.0-preview.1" /></ItemGroup>
             </Project>
             """, TestContext.Current.CancellationToken);
-        var transitiveProject = project.Replace("<PackageReference Include=\"Sotsera.Rafter\" Version=\"0.1.0-local\" />",
+        var transitiveProject = project.Replace("<PackageReference Include=\"Sotsera.Rafter\" Version=\"0.1.0-preview.1\" />",
             "<ProjectReference Include=\"bridge/Bridge.csproj\" />")
             .Replace("<OutputType>Exe</OutputType>", "<OutputType>Exe</OutputType><EnableDefaultCompileItems>false</EnableDefaultCompileItems>")
             .Replace("<ItemGroup>", "<ItemGroup><Compile Include=\"consumer.cs\" />");

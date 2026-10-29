@@ -1,5 +1,8 @@
 # Sensitive inputs and redaction
 
+Delivered in [PR #71](https://github.com/sotsera/rafter/pull/71), closing #70. All three PR checks and the
+[merged-main evaluation](https://github.com/sotsera/rafter/actions/runs/40907617601) passed for `256edf9`.
+
 Mark a string input with `.Sensitive()` to mask its known values when Rafter presents text:
 
 ```csharp
@@ -83,4 +86,5 @@ or attached-console/live-editor behavior.
 Code review found no blocking runtime issues and added two regression rows for repeated primary/alias sensitive CLI
 arguments. All **813 unit cases passed** afterward, including all 40 sensitive-input cases; runtime code is unchanged
 from the full regression above. Review evidence is under `artifacts/evidence/sensitive-inputs/review/` and
-`artifacts/test-results/sensitive-inputs-review-all-unit/`. The increment is reviewed for PR delivery.
+`artifacts/test-results/sensitive-inputs-review-all-unit/`. The increment subsequently merged through #71;
+its PR/main verification is linked at the top of this guide.

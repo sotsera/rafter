@@ -1,0 +1,198 @@
+#nullable enable
+Sotsera.Rafter.CapturedChunk
+Sotsera.Rafter.CapturedChunk.Order.get -> long
+Sotsera.Rafter.CapturedChunk.Text.get -> string!
+Sotsera.Rafter.CapturedProcessCanceledException
+Sotsera.Rafter.CapturedProcessCanceledException.CaptureLimit.get -> int
+Sotsera.Rafter.CapturedProcessCanceledException.Executable.get -> string!
+Sotsera.Rafter.CapturedProcessCanceledException.ObservedExitCode.get -> int?
+Sotsera.Rafter.CapturedProcessCanceledException.OverflowedStream.get -> Sotsera.Rafter.ProcessOutputStream?
+Sotsera.Rafter.CapturedProcessCanceledException.PartialStandardError.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedProcessCanceledException.PartialStandardOutput.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedProcessResult
+Sotsera.Rafter.CapturedProcessResult.StandardError.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedProcessResult.StandardOutput.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedProcessTimeoutException
+Sotsera.Rafter.CapturedProcessTimeoutException.CaptureLimit.get -> int
+Sotsera.Rafter.CapturedProcessTimeoutException.OverflowedStream.get -> Sotsera.Rafter.ProcessOutputStream?
+Sotsera.Rafter.CapturedProcessTimeoutException.PartialStandardError.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedProcessTimeoutException.PartialStandardOutput.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.CapturedStream
+Sotsera.Rafter.CapturedStream.Chunks.get -> System.Collections.Generic.IReadOnlyList<Sotsera.Rafter.CapturedChunk!>!
+Sotsera.Rafter.CapturedStream.Text.get -> string!
+Sotsera.Rafter.Command
+Sotsera.Rafter.Command.Cleanup(string! description, System.Action<Sotsera.Rafter.RafterContext!>! callback) -> Sotsera.Rafter.Command!
+Sotsera.Rafter.Command.Cleanup(string! description, System.Func<Sotsera.Rafter.RafterContext!, System.Threading.Tasks.Task!>! callback) -> Sotsera.Rafter.Command!
+Sotsera.Rafter.Command.Option<T>(string! name, string! description) -> Sotsera.Rafter.Option<T>!
+Sotsera.Rafter.Command.RootDirectory(Sotsera.Rafter.ValueOption<string!>! option) -> Sotsera.Rafter.Command!
+Sotsera.Rafter.Command.RootDirectory(string! path) -> Sotsera.Rafter.Command!
+Sotsera.Rafter.Command.RunAsync(string![]! args, Sotsera.Rafter.Target! target, params Sotsera.Rafter.Target![]! additionalTargets) -> System.Threading.Tasks.Task<int>!
+Sotsera.Rafter.Command.RunAsync(string![]! args, System.Action<Sotsera.Rafter.RafterContext!>! body) -> System.Threading.Tasks.Task<int>!
+Sotsera.Rafter.Command.RunAsync(string![]! args, System.Func<Sotsera.Rafter.RafterContext!, System.Threading.Tasks.Task!>! body) -> System.Threading.Tasks.Task<int>!
+Sotsera.Rafter.Command.State<T>(System.Func<T!>! factory) -> Sotsera.Rafter.State<T!>!
+Sotsera.Rafter.Command.Target(string! name, string! description) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Command.Validate(string! description, System.Func<Sotsera.Rafter.InputValidationContext!, bool>! predicate) -> Sotsera.Rafter.Command!
+Sotsera.Rafter.DirectoryPath
+Sotsera.Rafter.DirectoryPath.Directory(params string![]! paths) -> Sotsera.Rafter.DirectoryPath!
+Sotsera.Rafter.DirectoryPath.EnsureExists() -> Sotsera.Rafter.DirectoryPath!
+Sotsera.Rafter.DirectoryPath.Exists() -> bool
+Sotsera.Rafter.DirectoryPath.File(params string![]! paths) -> Sotsera.Rafter.FilePath!
+Sotsera.Rafter.DirectoryPath.FullPath.get -> string!
+Sotsera.Rafter.DotnetBuildCommand
+Sotsera.Rafter.DotnetBuildCommand.MaxCpuCount(int count) -> Sotsera.Rafter.DotnetBuildCommand!
+Sotsera.Rafter.DotnetCommand<TCommand>
+Sotsera.Rafter.DotnetCommand<TCommand>.Configuration(string! configuration) -> TCommand!
+Sotsera.Rafter.DotnetCommand<TCommand>.DisableBuildServers() -> TCommand!
+Sotsera.Rafter.DotnetCommand<TCommand>.NoRestore() -> TCommand!
+Sotsera.Rafter.DotnetCommand<TCommand>.Output(string! path) -> TCommand!
+Sotsera.Rafter.DotnetExecutable
+Sotsera.Rafter.DotnetExecutable.Arguments(params string![]! arguments) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.DotnetExecutable.Build(string? path = null) -> Sotsera.Rafter.DotnetBuildCommand!
+Sotsera.Rafter.DotnetExecutable.Environment(string! name, string! value) -> Sotsera.Rafter.DotnetExecutable!
+Sotsera.Rafter.DotnetExecutable.Pack(string? path = null) -> Sotsera.Rafter.DotnetPackCommand!
+Sotsera.Rafter.DotnetExecutable.Publish(string? path = null) -> Sotsera.Rafter.DotnetPublishCommand!
+Sotsera.Rafter.DotnetExecutable.RemoveEnvironment(params string![]! names) -> Sotsera.Rafter.DotnetExecutable!
+Sotsera.Rafter.DotnetExecutable.Timeout(System.TimeSpan timeout) -> Sotsera.Rafter.DotnetExecutable!
+Sotsera.Rafter.DotnetExecutable.UseWorkingDirectorySdk() -> Sotsera.Rafter.DotnetExecutable!
+Sotsera.Rafter.DotnetExecutable.WorkingDirectory(string! path) -> Sotsera.Rafter.DotnetExecutable!
+Sotsera.Rafter.DotnetExtensions
+Sotsera.Rafter.DotnetPackCommand
+Sotsera.Rafter.DotnetPackCommand.NoBuild() -> Sotsera.Rafter.DotnetPackCommand!
+Sotsera.Rafter.DotnetPublishCommand
+Sotsera.Rafter.DotnetPublishCommand.NoBuild() -> Sotsera.Rafter.DotnetPublishCommand!
+Sotsera.Rafter.Executable
+Sotsera.Rafter.Executable.Arguments(params string![]! arguments) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.Executable.Environment(string! name, string! value) -> Sotsera.Rafter.Executable!
+Sotsera.Rafter.Executable.RemoveEnvironment(params string![]! names) -> Sotsera.Rafter.Executable!
+Sotsera.Rafter.Executable.RunAndCaptureAsync(int maxCharactersPerStream, bool echo = false, System.Func<Sotsera.Rafter.CapturedProcessResult!, Sotsera.Rafter.ProcessFailureAction>? onFailure = null) -> System.Threading.Tasks.Task<Sotsera.Rafter.CapturedProcessResult!>!
+Sotsera.Rafter.Executable.RunAsync() -> System.Threading.Tasks.Task<Sotsera.Rafter.ProcessResult!>!
+Sotsera.Rafter.Executable.Timeout(System.TimeSpan timeout) -> Sotsera.Rafter.Executable!
+Sotsera.Rafter.Executable.WorkingDirectory(string! path) -> Sotsera.Rafter.Executable!
+Sotsera.Rafter.FilePath
+Sotsera.Rafter.FilePath.Exists() -> bool
+Sotsera.Rafter.FilePath.FullPath.get -> string!
+Sotsera.Rafter.FilePath.WriteAllTextAsync(string! contents, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Sotsera.Rafter.GitExecutable
+Sotsera.Rafter.GitExecutable.Arguments(params string![]! arguments) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.GitExecutable.Environment(string! name, string! value) -> Sotsera.Rafter.GitExecutable!
+Sotsera.Rafter.GitExecutable.Log() -> Sotsera.Rafter.GitLogCommand!
+Sotsera.Rafter.GitExecutable.RemoveEnvironment(params string![]! names) -> Sotsera.Rafter.GitExecutable!
+Sotsera.Rafter.GitExecutable.Status() -> Sotsera.Rafter.GitStatusCommand!
+Sotsera.Rafter.GitExecutable.Timeout(System.TimeSpan timeout) -> Sotsera.Rafter.GitExecutable!
+Sotsera.Rafter.GitExecutable.WorkingDirectory(string! path) -> Sotsera.Rafter.GitExecutable!
+Sotsera.Rafter.GitExtensions
+Sotsera.Rafter.GitLogCommand
+Sotsera.Rafter.GitLogCommand.MaxCount(int count) -> Sotsera.Rafter.GitLogCommand!
+Sotsera.Rafter.GitLogCommand.Oneline() -> Sotsera.Rafter.GitLogCommand!
+Sotsera.Rafter.GitStatusCommand
+Sotsera.Rafter.GitStatusCommand.Branch() -> Sotsera.Rafter.GitStatusCommand!
+Sotsera.Rafter.GitStatusCommand.Porcelain() -> Sotsera.Rafter.GitStatusCommand!
+Sotsera.Rafter.GitStatusCommand.Short() -> Sotsera.Rafter.GitStatusCommand!
+Sotsera.Rafter.InputValidationContext
+Sotsera.Rafter.InputValidationContext.GetValue(Sotsera.Rafter.Option<string!>! option) -> string?
+Sotsera.Rafter.InputValidationContext.GetValue<T>(Sotsera.Rafter.Option<T>! option) -> T?
+Sotsera.Rafter.InputValidationContext.GetValue<T>(Sotsera.Rafter.ValueOption<T>! option) -> T
+Sotsera.Rafter.NpmCiCommand
+Sotsera.Rafter.NpmDependencyCommand<TCommand>
+Sotsera.Rafter.NpmDependencyCommand<TCommand>.IgnoreScripts() -> TCommand!
+Sotsera.Rafter.NpmDependencyCommand<TCommand>.NoAudit() -> TCommand!
+Sotsera.Rafter.NpmDependencyCommand<TCommand>.NoFund() -> TCommand!
+Sotsera.Rafter.NpmExecutable
+Sotsera.Rafter.NpmExecutable.Arguments(params string![]! arguments) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.NpmExecutable.Ci() -> Sotsera.Rafter.NpmCiCommand!
+Sotsera.Rafter.NpmExecutable.Environment(string! name, string! value) -> Sotsera.Rafter.NpmExecutable!
+Sotsera.Rafter.NpmExecutable.Install() -> Sotsera.Rafter.NpmInstallCommand!
+Sotsera.Rafter.NpmExecutable.RemoveEnvironment(params string![]! names) -> Sotsera.Rafter.NpmExecutable!
+Sotsera.Rafter.NpmExecutable.RunScript(string! name) -> Sotsera.Rafter.NpmRunScriptCommand!
+Sotsera.Rafter.NpmExecutable.Timeout(System.TimeSpan timeout) -> Sotsera.Rafter.NpmExecutable!
+Sotsera.Rafter.NpmExecutable.WorkingDirectory(string! path) -> Sotsera.Rafter.NpmExecutable!
+Sotsera.Rafter.NpmExtensions
+Sotsera.Rafter.NpmInstallCommand
+Sotsera.Rafter.NpmRunScriptCommand
+Sotsera.Rafter.NpmRunScriptCommand.IfPresent() -> Sotsera.Rafter.NpmRunScriptCommand!
+Sotsera.Rafter.NpmRunScriptCommand.ScriptArguments(params string![]! arguments) -> Sotsera.Rafter.NpmRunScriptCommand!
+Sotsera.Rafter.Option<T>
+Sotsera.Rafter.Option<T>.Aliases(params string![]! aliases) -> Sotsera.Rafter.Option<T>!
+Sotsera.Rafter.Option<T>.Default(T value) -> Sotsera.Rafter.ValueOption<T>!
+Sotsera.Rafter.Option<T>.FromEnvironment(string! name) -> Sotsera.Rafter.Option<T>!
+Sotsera.Rafter.Option<T>.Required() -> Sotsera.Rafter.ValueOption<T>!
+Sotsera.Rafter.Option<T>.Sensitive() -> Sotsera.Rafter.Option<T>!
+Sotsera.Rafter.Option<T>.Validate(string! description, System.Func<T, bool>! predicate) -> Sotsera.Rafter.Option<T>!
+Sotsera.Rafter.ProcessCaptureLimitException
+Sotsera.Rafter.ProcessCaptureLimitException.Executable.get -> string!
+Sotsera.Rafter.ProcessCaptureLimitException.Limit.get -> int
+Sotsera.Rafter.ProcessCaptureLimitException.ObservedExitCode.get -> int?
+Sotsera.Rafter.ProcessCaptureLimitException.PartialStandardError.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.ProcessCaptureLimitException.PartialStandardOutput.get -> Sotsera.Rafter.CapturedStream!
+Sotsera.Rafter.ProcessCaptureLimitException.Stream.get -> Sotsera.Rafter.ProcessOutputStream
+Sotsera.Rafter.ProcessCommand
+Sotsera.Rafter.ProcessCommand.AcceptExitCodes(params int[]! exitCodes) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.Arguments(params string![]! arguments) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.Environment(string! name, string! value) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.OnFailure(System.Func<Sotsera.Rafter.ProcessResult!, Sotsera.Rafter.ProcessFailureAction>! handler) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.RemoveEnvironment(params string![]! names) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.RunAndCaptureAsync(int maxCharactersPerStream, bool echo = false, System.Func<Sotsera.Rafter.CapturedProcessResult!, Sotsera.Rafter.ProcessFailureAction>? onFailure = null) -> System.Threading.Tasks.Task<Sotsera.Rafter.CapturedProcessResult!>!
+Sotsera.Rafter.ProcessCommand.RunAsync() -> System.Threading.Tasks.Task<Sotsera.Rafter.ProcessResult!>!
+Sotsera.Rafter.ProcessCommand.Timeout(System.TimeSpan timeout) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessCommand.WorkingDirectory(string! path) -> Sotsera.Rafter.ProcessCommand!
+Sotsera.Rafter.ProcessFailureAction
+Sotsera.Rafter.ProcessFailureAction.Continue = 0 -> Sotsera.Rafter.ProcessFailureAction
+Sotsera.Rafter.ProcessFailureAction.Fail = 1 -> Sotsera.Rafter.ProcessFailureAction
+Sotsera.Rafter.ProcessFailureAction.Throw = 2 -> Sotsera.Rafter.ProcessFailureAction
+Sotsera.Rafter.ProcessFailureException
+Sotsera.Rafter.ProcessFailureException.AcceptedExitCodes.get -> System.Collections.Generic.IReadOnlyList<int>!
+Sotsera.Rafter.ProcessFailureException.Executable.get -> string!
+Sotsera.Rafter.ProcessFailureException.Result.get -> Sotsera.Rafter.ProcessResult!
+Sotsera.Rafter.ProcessOutputStream
+Sotsera.Rafter.ProcessOutputStream.StandardError = 1 -> Sotsera.Rafter.ProcessOutputStream
+Sotsera.Rafter.ProcessOutputStream.StandardOutput = 0 -> Sotsera.Rafter.ProcessOutputStream
+Sotsera.Rafter.ProcessResult
+Sotsera.Rafter.ProcessResult.ExitCode.get -> int
+Sotsera.Rafter.ProcessResult.Succeeded.get -> bool
+Sotsera.Rafter.ProcessTimeoutException
+Sotsera.Rafter.ProcessTimeoutException.Elapsed.get -> System.TimeSpan
+Sotsera.Rafter.ProcessTimeoutException.Executable.get -> string!
+Sotsera.Rafter.ProcessTimeoutException.ObservedExitCode.get -> int?
+Sotsera.Rafter.ProcessTimeoutException.Timeout.get -> System.TimeSpan
+Sotsera.Rafter.Rafter
+Sotsera.Rafter.RafterContext
+Sotsera.Rafter.RafterContext.CancellationToken.get -> System.Threading.CancellationToken
+Sotsera.Rafter.RafterContext.Directory(params string![]! paths) -> Sotsera.Rafter.DirectoryPath!
+Sotsera.Rafter.RafterContext.Executable(string! executable) -> Sotsera.Rafter.Executable!
+Sotsera.Rafter.RafterContext.File(params string![]! paths) -> Sotsera.Rafter.FilePath!
+Sotsera.Rafter.RafterContext.GetState<T>(Sotsera.Rafter.State<T!>! state) -> T!
+Sotsera.Rafter.RafterContext.GetValue(Sotsera.Rafter.Option<string!>! option) -> string?
+Sotsera.Rafter.RafterContext.GetValue<T>(Sotsera.Rafter.Option<T>! option) -> T?
+Sotsera.Rafter.RafterContext.GetValue<T>(Sotsera.Rafter.ValueOption<T>! option) -> T
+Sotsera.Rafter.RafterContext.ResolvePath(string! path) -> string!
+Sotsera.Rafter.RafterContext.RootDirectory.get -> string!
+Sotsera.Rafter.RafterContext.WriteLine(string? text = null) -> void
+Sotsera.Rafter.State<T>
+Sotsera.Rafter.Target
+Sotsera.Rafter.Target.Cleanup(string! description, System.Action<Sotsera.Rafter.RafterContext!>! callback) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Target.Cleanup(string! description, System.Func<Sotsera.Rafter.RafterContext!, System.Threading.Tasks.Task!>! callback) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Target.DependsOn(params Sotsera.Rafter.Target![]! dependencies) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Target.Run(System.Action<Sotsera.Rafter.RafterContext!>! body) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Target.Run(System.Func<Sotsera.Rafter.RafterContext!, System.Threading.Tasks.Task!>! body) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.Target.When(string! description, System.Func<Sotsera.Rafter.RafterContext!, bool>! predicate) -> Sotsera.Rafter.Target!
+Sotsera.Rafter.ToolCommand<TCommand>
+Sotsera.Rafter.ToolCommand<TCommand>.AcceptExitCodes(params int[]! exitCodes) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.Arguments(params string![]! arguments) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.Environment(string! name, string! value) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.OnFailure(System.Func<Sotsera.Rafter.ProcessResult!, Sotsera.Rafter.ProcessFailureAction>! handler) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.RemoveEnvironment(params string![]! names) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.RunAndCaptureAsync(int maxCharactersPerStream, bool echo = false, System.Func<Sotsera.Rafter.CapturedProcessResult!, Sotsera.Rafter.ProcessFailureAction>? onFailure = null) -> System.Threading.Tasks.Task<Sotsera.Rafter.CapturedProcessResult!>!
+Sotsera.Rafter.ToolCommand<TCommand>.RunAsync() -> System.Threading.Tasks.Task<Sotsera.Rafter.ProcessResult!>!
+Sotsera.Rafter.ToolCommand<TCommand>.Timeout(System.TimeSpan timeout) -> TCommand!
+Sotsera.Rafter.ToolCommand<TCommand>.ToolCommand(Sotsera.Rafter.ProcessCommand! command) -> void
+Sotsera.Rafter.ToolCommand<TCommand>.WorkingDirectory(string! path) -> TCommand!
+Sotsera.Rafter.ValueOption<T>
+Sotsera.Rafter.ValueOption<T>.Aliases(params string![]! aliases) -> Sotsera.Rafter.ValueOption<T>!
+Sotsera.Rafter.ValueOption<T>.FromEnvironment(string! name) -> Sotsera.Rafter.ValueOption<T>!
+Sotsera.Rafter.ValueOption<T>.Sensitive() -> Sotsera.Rafter.ValueOption<T>!
+Sotsera.Rafter.ValueOption<T>.Validate(string! description, System.Func<T, bool>! predicate) -> Sotsera.Rafter.ValueOption<T>!
+static Sotsera.Rafter.DotnetExtensions.Dotnet(this Sotsera.Rafter.RafterContext! context) -> Sotsera.Rafter.DotnetExecutable!
+static Sotsera.Rafter.GitExtensions.Git(this Sotsera.Rafter.RafterContext! context) -> Sotsera.Rafter.GitExecutable!
+static Sotsera.Rafter.NpmExtensions.Npm(this Sotsera.Rafter.RafterContext! context) -> Sotsera.Rafter.NpmExecutable!
+static Sotsera.Rafter.NpmExtensions.Npm(this Sotsera.Rafter.RafterContext! context, string! nodePath, string! npmCliPath) -> Sotsera.Rafter.NpmExecutable!
+static Sotsera.Rafter.Rafter.Command(string! description) -> Sotsera.Rafter.Command!
