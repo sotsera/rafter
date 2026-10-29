@@ -81,9 +81,10 @@ environment values in any mode, including verbose, because they may contain sens
 diagnostics must not construct a full command line or environment dump as an implicit part of an error message.
 
 An explicit facility for exposing selected arguments with redaction is a future design topic, not an initial
-configuration API. This policy governs Rafter-authored process metadata; it does not promise to redact content authored
-by scripts or child tools. Exception details follow the agreed failure policy below, including full unexpected callback
-exception details. The policy is not a blanket guarantee that arbitrary exception messages contain no sensitive data.
+configuration API. The later [sensitive-input contract](../guides/sensitive-inputs.md) adds opt-in masking of known
+string values in Rafter-authored metadata, `context.WriteLine`, help, and rendered exception details. Direct writes and
+child output, including automatic capture echo, remain outside that boundary. Full unexpected exception details follow
+the failure policy below with known values masked; unknown or transformed secrets are not automatically discovered.
 These controls do not introduce a live renderer into the first milestone; animation remains deferred.
 
 During the renderer evaluation, we also agreed to respect a **nonempty `NO_COLOR` environment variable** by disabling

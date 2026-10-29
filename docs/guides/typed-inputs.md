@@ -51,9 +51,10 @@ space/equal values, explicit empty strings, bare/explicit Boolean flags, and no 
 presence, including empty strings, zero, and false. Declared options form value boundaries. Positional arguments,
 standalone `--`, colon separators, bundling, response-file expansion, and directives remain unsupported.
 
-Safe parsing diagnostics identify declared options without echoing rejected values or raw parser messages. This is
-not general secret redaction: author-provided descriptions/defaults appear in help, and unexpected callback exceptions
-retain their full details under the existing exception policy.
+Safe parsing diagnostics identify declared options without echoing rejected values or raw parser messages.
+String inputs can opt into [sensitive-value masking](sensitive-inputs.md) with `.Sensitive()`, including help defaults,
+`context.WriteLine`, and rendered exception details. Unmarked defaults/descriptions and unknown secrets in exception
+details retain their existing presentation; direct writes and child output remain outside that protection.
 
 Help permits missing required inputs but still rejects malformed supplied arguments. It displays primary names then
 aliases, type hints, presence/default policy, and individual/combined rules without running callbacks. Names are blue,

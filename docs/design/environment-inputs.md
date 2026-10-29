@@ -141,6 +141,8 @@ names; type hints keep their existing color. Plain/redirected help retains all w
 Source diagnostics do not automatically print resolved value contents. This extends the existing
 [output policy](output-design.md) without adding an environment dump. Script-authored output, declared defaults in
 help, and unexpected exception details retain their existing policies; this is not a general redaction feature.
+The later [sensitive-input increment](../guides/sensitive-inputs.md) adds explicit string-value masking at Rafter
+presentation boundaries; it leaves source selection and raw access intact.
 Plain/redirected presentation preserves the selected information without Rafter styling. Script results stay on stdout.
 
 ### Verbose source layout

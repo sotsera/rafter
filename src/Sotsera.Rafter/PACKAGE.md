@@ -33,6 +33,11 @@ External process ownership is implemented on Windows; native AOT remains unverif
 Typed options can use `.FromEnvironment("NAME")` before or after `.Required()` / `.Default(...)`. Command-line values
 take priority over environment values, then defaults. Help shows the mapping without reading values, and verbose
 source diagnostics identify where prepared inputs came from without automatically printing their contents.
+String inputs can use `.Sensitive()` before or after `.Required()` / `.Default(...)`. Value access remains raw;
+help defaults, `context.WriteLine`, Rafter-authored metadata, and rendered exceptions mask known exact values with
+`[REDACTED]`. Each invocation collects its own defaults, supplied CLI values, and considered environment fallbacks.
+Direct console/file writes, live child output, and automatic capture echo remain raw. Transformed, fragmented, and
+unregistered secrets are not discovered automatically; this is presentation masking, not a secret-storage facility.
 Named enum options use the same handles and source precedence, match member names case-insensitively after trimming
 surrounding whitespace, and show allowed choices in help. Numeric text, flags, ambiguous names/values, and undefined
 defaults are rejected during input or declaration validation.

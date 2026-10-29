@@ -47,8 +47,9 @@ After successful validation, `--verbose` writes one `Input sources` block to std
 It lists all options in declaration order using primary names, with `command line`, `environment NAME`, `default`, or
 `not supplied`. Zero-length environment values get `(empty)` without warning coloring. Resolved contents are not
 appended. Normal/quiet modes hide the block; failures retain grouped source-aware errors. Individual validator errors
-identify environment sources. Author-supplied messages and unexpected exceptions retain existing policies; this is not
-general secret redaction. Results stay on stdout; plain/redirected output preserves information without Rafter styling.
+identify environment sources. [Sensitive string inputs](sensitive-inputs.md) add opt-in masking of known values in
+Rafter presentation, including help defaults and rendered exceptions. Direct writes and child output remain outside
+that boundary. Results stay on stdout; plain/redirected output preserves information without Rafter styling.
 
 ## Verification
 

@@ -14,6 +14,15 @@ internal sealed class OptionDeclaration(object gate, string name, string descrip
     private int _environmentCalls;
     private string? _environmentVariable;
     private bool _nullAliases;
+    private bool _sensitive;
+
+    public void MarkSensitive()
+    {
+        lock (_gate)
+        {
+            _sensitive = true;
+        }
+    }
 
     public void AddAliases(string[]? aliases)
     {
@@ -69,7 +78,8 @@ internal sealed class OptionDeclaration(object gate, string name, string descrip
         lock (_gate)
         {
             return new(this, _name, _description, _valueType, [.. _aliases], [.. _rules],
-                _requiredCalls, _defaultCalls, _defaultValue, _nullAliases, _environmentCalls, _environmentVariable);
+                _requiredCalls, _defaultCalls, _defaultValue, _nullAliases, _environmentCalls, _environmentVariable,
+                _sensitive);
         }
     }
 }
@@ -89,7 +99,8 @@ internal sealed record OptionSnapshot(
     object? DefaultValue,
     bool NullAliases,
     int EnvironmentCalls,
-    string? EnvironmentVariable)
+    string? EnvironmentVariable,
+    bool Sensitive = false)
 {
     public string[] Spellings { get; private set; } = [];
     public EnumChoices? EnumChoices { get; private set; }
@@ -99,6 +110,10 @@ internal sealed record OptionSnapshot(
     public void ValidateDeclaration(int index, List<string> diagnostics, HashSet<string> ownedSpellings)
     {
         var location = $"Option declaration {index + 1}";
+        if (Sensitive && ValueType != typeof(string))
+        {
+            diagnostics.Add($"{location}: Sensitive inputs must use string values.");
+        }
         var spellings = new List<string>();
         foreach (var rawName in new[] { Name }.Concat(Aliases))
         {

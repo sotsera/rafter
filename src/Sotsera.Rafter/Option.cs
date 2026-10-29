@@ -12,6 +12,14 @@ public sealed class Option<T>
         Declaration = declaration;
     }
 
+    /// <summary>Masks known string values in Rafter output while preserving raw value access.
+    /// Other input types are rejected during declaration validation. Child output and direct writes are not masked.</summary>
+    public Option<T> Sensitive()
+    {
+        Declaration.MarkSensitive();
+        return this;
+    }
+
     /// <summary>Adds aliases in declaration order. Invalid configuration is reported by RunAsync.</summary>
     public Option<T> Aliases(params string[] aliases)
     {

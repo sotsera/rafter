@@ -9,8 +9,13 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
     public InputValues Values { get; init; } = new(new Dictionary<OptionDeclaration, object?>());
 
     public static InvocationArguments Parse(string[]? args, OptionSnapshot[] declarations,
-        Func<string, string?> readEnvironment)
+        Func<string, string?> readEnvironment, SensitiveValues? sensitiveValues = null)
     {
+        sensitiveValues ??= new();
+        foreach (var declaration in declarations.Where(declaration => declaration.Sensitive))
+        {
+            sensitiveValues.Add(declaration.DefaultValue as string);
+        }
         if (args is null || args.Any(argument => argument is null))
         {
             return new(false, false, false, false, ["Arguments must be a non-null array of non-null strings."]);
@@ -56,6 +61,16 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
         var isQuiet = IsPresent(result.GetResult(quiet));
         var isVerbose = IsPresent(result.GetResult(verbose));
         var isPlain = IsPresent(result.GetResult(plain));
+        foreach (var (option, declaration) in inputs.Where(input => input.Value.Sensitive))
+        {
+            if (result.GetResult(option) is { } parsed)
+            {
+                foreach (var token in parsed.Tokens)
+                {
+                    sensitiveValues.Add(token.Value);
+                }
+            }
+        }
         var invalidOptions = new HashSet<CliOption>();
         foreach (var option in command.Options)
         {
@@ -157,7 +172,7 @@ internal sealed record InvocationArguments(bool Help, bool Quiet, bool Verbose, 
         }
         if (!isHelp && diagnostics.Count == 0)
         {
-            EnvironmentInputs.Resolve(declarations, values, sources, readEnvironment, diagnostics);
+            EnvironmentInputs.Resolve(declarations, values, sources, readEnvironment, diagnostics, sensitiveValues);
         }
         return new(isHelp, isQuiet, isVerbose, isPlain, diagnostics.Distinct().ToArray())
         {

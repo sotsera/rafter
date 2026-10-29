@@ -27,7 +27,8 @@ The two short pages at the old diagnostic/package paths preserve links embedded 
 | Multi-segment file/directory handles and explicit I/O | [Filesystem authoring](guides/filesystem.md), [design record](design/filesystem-authoring.md) |
 | Sequential targets and dependencies | [Targets](guides/targets.md) |
 | Conditional targets (merged #67) | [When/skip guide](guides/targets.md#conditional-target-bodies) and [agreed build/test/optional-pack example](design/example-design-plan.md#conditional-targets--agreed-behavior-2026-10-28) |
-| Cleanup and invocation-local state (verified locally) | [State/cleanup guide](guides/targets.md#invocation-local-state-and-cleanup) and [full example/contract](design/example-design-plan.md#cleanup-and-shared-resources--agreed-behavior-2026-10-28) |
+| Cleanup and invocation-local state (merged #69) | [State/cleanup guide](guides/targets.md#invocation-local-state-and-cleanup) and [full example/contract](design/example-design-plan.md#cleanup-and-shared-resources--agreed-behavior-2026-10-28) |
+| Sensitive inputs and redaction (local implementation) | [Sensitive-input guide](guides/sensitive-inputs.md), [runnable example](../examples/redaction.cs), and [agreed protection boundaries](design/example-design-plan.md#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29) |
 | Windows processes, failures, cancellation, and ownership | [Process runtime](guides/process-runtime.md) |
 | Reusable executables, argument chunks, child overrides, and typed .NET build/publish/pack | [Executables and .NET](guides/executables-and-dotnet.md) |
 | Typed Git status/log, npm install/CI/scripts, and custom tool adapters | [Git and npm](guides/git-and-npm.md) |

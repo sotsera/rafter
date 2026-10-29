@@ -1,6 +1,6 @@
 # Rafter examples
 
-The eighteen implemented examples listed below run against the new runtime through project references. The process examples currently require
+The nineteen implemented examples listed below run against the new runtime through project references. The process examples currently require
 Windows; the target-only example prepares and prints a greeting without child processes. See the
 [design plan](../docs/design/example-design-plan.md) for accepted decisions and open topics.
 
@@ -17,6 +17,7 @@ use a package reference with a configured local feed, or supply equivalent proje
 | --- | --- |
 | [minimal.cs](minimal.cs), [options.cs](options.cs), [validation.cs](validation.cs), [targets.cs](targets.cs) | .NET 10 SDK; use `--help` for declared inputs. |
 | [environment.cs](environment.cs) | .NET 10 SDK; supply `--name` or `RAFTER_NAME`. Optional `RAFTER_REPEAT` and `RAFTER_UPPERCASE` provide fallbacks. See [environment inputs](../docs/guides/environment-inputs.md). |
+| [redaction.cs](redaction.cs) | .NET 10 SDK. Uses synthetic default/CLI/environment tokens and prepares an HTTP request without sending it. Optional `RAFTER_TOKEN`, `RAFTER_SECONDARY_TOKEN`, `--secondary-token`, and `--fail` demonstrate [sensitive-value presentation](../docs/guides/sensitive-inputs.md). Direct writes and child output are outside masking. |
 | [enums.cs](enums.cs) | .NET 10 SDK; optional `--configuration` or `RAFTER_CONFIGURATION` selects Debug/Release, defaulting to Release. See [enum inputs](../docs/guides/enum-inputs.md). |
 | [durations.cs](durations.cs) | .NET 10 SDK; optional `--delay` or `RAFTER_DELAY` supplies a nonnegative duration, defaulting to 30s; optional `--offset` accepts signed durations. See [duration inputs](../docs/guides/duration-inputs.md). |
 | [processes.cs](processes.cs) | Windows and `dotnet` on the script process's executable search path. |

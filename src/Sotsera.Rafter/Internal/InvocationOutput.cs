@@ -8,25 +8,28 @@ internal sealed class InvocationOutput
     private readonly RendererDestination _output;
     private readonly RendererDestination _error;
     private readonly InvocationArguments _arguments;
+    private readonly SensitiveValues _sensitiveValues;
     private bool _targetStarted;
 
     public Exception? Failure => _output.Failure ?? _error.Failure;
 
-    public InvocationOutput(InvocationHost host, InvocationArguments arguments)
+    public InvocationOutput(InvocationHost host, InvocationArguments arguments, SensitiveValues? sensitiveValues = null)
     {
+        _sensitiveValues = sensitiveValues ?? new();
         _arguments = arguments;
         // Both handles paint the same terminal. Keep each render/chunk together, including its ANSI prefix/reset.
         // Redirected destinations retain independent gates so a blocked pipe cannot hold the other stream's gate.
         var terminalState = !host.OutputRedirected && !host.ErrorRedirected ? new DestinationState() : null;
         _output = new(host.Output,
             DestinationPolicy.Detect(host.Output, host.OutputRedirected, arguments.Plain, host.NoColor), host.Width,
-            state: terminalState);
+            state: terminalState, sensitiveValues: _sensitiveValues);
         _error = new(host.Error,
             DestinationPolicy.Detect(host.Error, host.ErrorRedirected, arguments.Plain, host.NoColor), host.Width,
-            state: terminalState);
+            state: terminalState, sensitiveValues: _sensitiveValues);
     }
 
-    public void WriteLine(string? text) => _output.Literal((text ?? "") + Environment.NewLine, "  | ");
+    public void WriteLine(string? text) =>
+        _output.Literal(_sensitiveValues.Redact(text ?? "") + Environment.NewLine, "  | ");
 
     public void Help(string description, OptionSnapshot[] options, CombinedRule[] rules, TargetPlan? plan = null,
         CleanupDeclaration? cleanup = null)
@@ -36,7 +39,7 @@ internal sealed class InvocationOutput
         Section("Command options");
         if (options.Any(option => option.EnvironmentVariable is not null))
         {
-            _output.Layout(new Paragraph("Source order: command line, environment, default.")
+            _output.Layout(new PresentationParagraph(_sensitiveValues, "Source order: command line, environment, default.")
                 { Overflow = Overflow.Fold }, 2);
         }
         if (options.Length == 0)
@@ -63,14 +66,16 @@ internal sealed class InvocationOutput
         }
         if (cleanup is { Calls: > 0 })
         {
-            _output.Layout(new Paragraph("Command cleanup: " + cleanup.Description) { Overflow = Overflow.Fold }, 2);
+            _output.Layout(new PresentationParagraph(_sensitiveValues,
+                "Command cleanup: " + cleanup.Description) { Overflow = Overflow.Fold }, 2);
         }
         if (rules.Length > 0)
         {
             _output.Framework("  Combined input rules:", Style.Plain);
             foreach (var rule in rules)
             {
-                _output.Layout(new Paragraph("- " + rule.Description) { Overflow = Overflow.Fold }, 4);
+                _output.Layout(new PresentationParagraph(_sensitiveValues,
+                    "- " + rule.Description) { Overflow = Overflow.Fold }, 4);
             }
         }
         _output.Framework("", Style.Plain);
@@ -88,7 +93,8 @@ internal sealed class InvocationOutput
         {
             if (plan is not null)
             {
-                var heading = new Paragraph("> " + plan.EntryNames, new Style(decoration: Decoration.Bold));
+                var heading = new PresentationParagraph(_sensitiveValues,
+                    "> " + plan.EntryNames, new Style(decoration: Decoration.Bold));
                 if (plan.Entries.Length == 1)
                 {
                     heading.Append(plan.DependencySuffix(plan.Entries[0]), new Style(Color.Grey));
@@ -105,7 +111,7 @@ internal sealed class InvocationOutput
         _error.Framework(heading, new Style(Color.Red, decoration: Decoration.Bold));
         foreach (var diagnostic in diagnostics)
         {
-            _error.Layout(new Paragraph(diagnostic) { Overflow = Overflow.Fold }, 2);
+            _error.Layout(new PresentationParagraph(_sensitiveValues, diagnostic) { Overflow = Overflow.Fold }, 2);
         }
     }
 
@@ -119,7 +125,7 @@ internal sealed class InvocationOutput
         foreach (var option in options)
         {
             var source = values.Source(option.Declaration);
-            var row = new Paragraph(option.Spellings[0], new Style(new Color(173, 214, 240)))
+            var row = new PresentationParagraph(_sensitiveValues, option.Spellings[0], new Style(new Color(173, 214, 240)))
                 { Overflow = Overflow.Fold };
             row.Append(": ", Style.Plain);
             if (source.Kind == InputSourceKind.Environment)
@@ -189,7 +195,7 @@ internal sealed class InvocationOutput
         {
             _error.Framework("  " + handler.Message, new Style(Color.Red));
             ProcessExit(handler.Failure);
-            _error.Literal(handler.InnerException + Environment.NewLine, "  ");
+            _error.Literal(_sensitiveValues.Redact(handler.InnerException + Environment.NewLine), "  ");
             return;
         }
         if (exception is ProcessCompletionException completion)
@@ -215,7 +221,7 @@ internal sealed class InvocationOutput
             return;
         }
         _error.Framework($"  {scope} failed", new Style(Color.Red));
-        _error.Literal(exception.ToString() + Environment.NewLine, "  ");
+        _error.Literal(_sensitiveValues.Redact(exception.ToString()) + Environment.NewLine, "  ");
     }
 
     public void ProcessStarted(string executable, string directory)
@@ -296,7 +302,8 @@ internal sealed class InvocationOutput
 
     private void ProcessTimeout(TimeSpan timeout, TimeSpan elapsed)
     {
-        _error.Layout(new Paragraph($"Timeout: {DurationInputs.Format(timeout)} | elapsed: {DurationInputs.Format(elapsed)}")
+        _error.Layout(new PresentationParagraph(_sensitiveValues,
+            $"Timeout: {DurationInputs.Format(timeout)} | elapsed: {DurationInputs.Format(elapsed)}")
             { Overflow = Overflow.Fold }, 2);
     }
 
@@ -385,7 +392,8 @@ internal sealed class InvocationOutput
         }
         _targetStarted = true;
         var text = $"[{target.Name}] Skipped: condition not met ({target.ConditionDescription})";
-        _error.Layout(new Paragraph(text, new Style(Color.Grey)) { Overflow = Overflow.Fold }, 0);
+        _error.Layout(new PresentationParagraph(_sensitiveValues,
+            text, new Style(Color.Grey)) { Overflow = Overflow.Fold }, 0);
     }
 
     public void CleanupStarted(string owner, string description)
@@ -415,7 +423,7 @@ internal sealed class InvocationOutput
         var execution = plan.Order.Any(target => target.Condition is not null)
             ? "Each eligible target body runs once; conditions are checked after dependencies."
             : "Each target body runs once.";
-        _output.Layout(new Paragraph($"The script selects {plan.EntryNames}. {execution}")
+        _output.Layout(new PresentationParagraph(_sensitiveValues, $"The script selects {plan.EntryNames}. {execution}")
             { Overflow = Overflow.Fold }, 2);
         foreach (var target in plan.Entries.Where(target => target.Body is null).Concat(plan.Order)
             .DistinctBy(target => target.Target))
@@ -423,40 +431,45 @@ internal sealed class InvocationOutput
             _output.Framework("", Style.Plain);
             Heading(_output, target, plan.DependencySuffix(target), 2);
             var description = target.Description + (target.Body is null ? " (Group; no body.)" : "");
-            _output.Layout(new Paragraph(description) { Overflow = Overflow.Fold }, 4);
+            _output.Layout(new PresentationParagraph(_sensitiveValues, description) { Overflow = Overflow.Fold }, 4);
             if (target.ConditionDescription is { } conditionDescription)
             {
-                _output.Layout(new Paragraph("When: " + conditionDescription) { Overflow = Overflow.Fold }, 4);
+                _output.Layout(new PresentationParagraph(_sensitiveValues,
+                    "When: " + conditionDescription) { Overflow = Overflow.Fold }, 4);
             }
             if (target.Cleanup.Calls > 0)
             {
-                _output.Layout(new Paragraph("Cleanup: " + target.Cleanup.Description) { Overflow = Overflow.Fold }, 4);
+                _output.Layout(new PresentationParagraph(_sensitiveValues,
+                    "Cleanup: " + target.Cleanup.Description) { Overflow = Overflow.Fold }, 4);
             }
         }
         _output.Framework("", Style.Plain);
         var bodyOrder = string.Join(", ", plan.Order.Where(target => target.Body is not null).Select(target => target.Name));
-        _output.Layout(new Paragraph($"Body order: {bodyOrder}.") { Overflow = Overflow.Fold }, 2);
+        _output.Layout(new PresentationParagraph(_sensitiveValues,
+            $"Body order: {bodyOrder}.") { Overflow = Overflow.Fold }, 2);
     }
 
-    private static void Heading(RendererDestination destination, TargetSnapshot target, string suffix, int indent = 0)
+    private void Heading(RendererDestination destination, TargetSnapshot target, string suffix, int indent = 0)
     {
         var name = target.Body is null ? "> " + target.Name : $"[{target.Name}]";
-        var heading = new Paragraph(name, new Style(decoration: Decoration.Bold)) { Overflow = Overflow.Fold };
+        var heading = new PresentationParagraph(_sensitiveValues,
+            name, new Style(decoration: Decoration.Bold)) { Overflow = Overflow.Fold };
         heading.Append(suffix, new Style(Color.Grey));
         destination.Layout(heading, indent);
     }
 
-    private static string Duration(TimeSpan elapsed) => elapsed.TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture) + " ms";
+    private static string Duration(TimeSpan elapsed) =>
+        elapsed.TotalMilliseconds.ToString("0", CultureInfo.InvariantCulture) + " ms";
 
     private void Control(string name, string description)
     {
         _output.Framework("  " + name, new Style(Color.LightSkyBlue1));
-        _output.Layout(new Paragraph(description) { Overflow = Overflow.Fold }, 4);
+        _output.Layout(new PresentationParagraph(_sensitiveValues, description) { Overflow = Overflow.Fold }, 4);
     }
 
     private void Input(OptionSnapshot option)
     {
-        var paragraph = new Paragraph { Overflow = Overflow.Fold };
+        var paragraph = new PresentationParagraph(_sensitiveValues) { Overflow = Overflow.Fold };
         for (var index = 0; index < option.Spellings.Length; index++)
         {
             if (index > 0)
@@ -473,27 +486,38 @@ internal sealed class InvocationOutput
         _output.Layout(paragraph, 2);
         var policy = option.Required ? "Required." : option.HasDefault
             ? $"Default: {FormatDefault(option.DefaultValue)}." : "Optional; no default.";
-        _output.Layout(new Paragraph($"{option.Description} {policy}") { Overflow = Overflow.Fold }, 4);
+        var details = new PresentationParagraph(_sensitiveValues, option.Description + " ");
+        if (option.Sensitive && option.HasDefault)
+        {
+            details.Append("Sensitive. Default: ").AppendMask().Append(".");
+        }
+        else
+        {
+            details.Append((option.Sensitive ? "Sensitive. " : "") + policy);
+        }
+        _output.Layout(details, 4);
         if (option.EnumChoices is { } choices)
         {
-            _output.Layout(new Paragraph($"Allowed: {string.Join(", ", choices.Names)} (case-insensitive).")
+            _output.Layout(new PresentationParagraph(_sensitiveValues,
+                $"Allowed: {string.Join(", ", choices.Names)} (case-insensitive).")
                 { Overflow = Overflow.Fold }, 4);
         }
         if (option.ValueType == typeof(TimeSpan))
         {
-            _output.Layout(new Paragraph("Units: ms, s, m, h.") { Overflow = Overflow.Fold }, 4);
+            _output.Layout(new PresentationParagraph(_sensitiveValues,
+                "Units: ms, s, m, h.") { Overflow = Overflow.Fold }, 4);
         }
         if (option.ValueType == typeof(bool))
         {
             var flagHelp = option.EnvironmentVariable is null
                 ? "Bare flag means true; explicit true/false allowed."
                 : "Command line: bare flag means true; explicit true/false allowed.";
-            _output.Layout(new Paragraph(flagHelp)
+            _output.Layout(new PresentationParagraph(_sensitiveValues, flagHelp)
                 { Overflow = Overflow.Fold }, 4);
         }
         if (option.EnvironmentVariable is { } environment)
         {
-            var mapping = new Paragraph("Environment: ") { Overflow = Overflow.Fold };
+            var mapping = new PresentationParagraph(_sensitiveValues, "Environment: ") { Overflow = Overflow.Fold };
             mapping.Append(environment, new Style(new Color(173, 214, 240)));
             mapping.Append(option.ValueType == typeof(bool) ? "; requires true or false." : ".");
             _output.Layout(mapping, 4);
@@ -504,7 +528,8 @@ internal sealed class InvocationOutput
                 Style.Plain);
             foreach (var rule in option.Rules)
             {
-                _output.Layout(new Paragraph("- " + rule.Description) { Overflow = Overflow.Fold }, 6);
+                _output.Layout(new PresentationParagraph(_sensitiveValues,
+                    "- " + rule.Description) { Overflow = Overflow.Fold }, 6);
             }
         }
     }
