@@ -86,6 +86,10 @@ public sealed class PackageConsumerTests
             : "";
         const string valid = """
             var command = Rafter.Command("Package consumer.");
+            var sensitivePreview = args.Contains("--sensitive-preview");
+            args = args.Where(argument => argument != "--sensitive-preview").ToArray();
+            var token = command.Option<string>("token", "Packaged sensitive token.")
+                .Default("package-token-only").Sensitive();
             var name = command.Option<string>("name", "Name.").Default("Ada").FromEnvironment("RAFTER_PACKAGE_NAME");
             var configuration = command.Option<BuildConfiguration>("configuration", "Configuration.")
                 .Default(BuildConfiguration.Release).FromEnvironment("RAFTER_PACKAGE_CONFIGURATION");
@@ -124,6 +128,16 @@ public sealed class PackageConsumerTests
             }
             return await command.RunAsync(args, async context =>
             {
+                if (sensitivePreview)
+                {
+                    var raw = context.GetValue(token);
+                    if (raw != "package-token-only")
+                    {
+                        throw new InvalidOperationException("Packaged sensitive value was changed.");
+                    }
+                    context.WriteLine("Packaged token: " + raw);
+                    return;
+                }
                 var expectedRoot = Path.GetFullPath(context.GetValue(root), Directory.GetCurrentDirectory());
                 if (context.RootDirectory != expectedRoot || context.ResolvePath(".") != expectedRoot)
                 {
@@ -174,6 +188,10 @@ public sealed class PackageConsumerTests
         run.ExitCode.Should().Be(0);
         run.StandardOutput.Should().Be("Hello, Ada! Release. 300000000 ticks." + Environment.NewLine);
         run.StandardError.Should().BeEmpty();
+        var sensitive = await consumer.RunAsync("--sensitive-preview", "--quiet");
+        sensitive.ExitCode.Should().Be(0);
+        sensitive.StandardOutput.Should().Be("Packaged token: [REDACTED]" + Environment.NewLine);
+        sensitive.StandardError.Should().BeEmpty();
         var skipped = await consumer.RunAsync("--conditional-targets", "--quiet");
         skipped.ExitCode.Should().Be(0);
         skipped.StandardOutput.Should().BeEmpty();

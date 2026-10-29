@@ -232,7 +232,9 @@ regression confirming no work or cleanup is entered. No other blocking code find
 Windows suite passed **950 tests, 0 failures, 1 existing console-dependent skip**, across 951 cases (unit 773;
 integration 53; Windows 125). Release builds have no warnings/errors, and all 43 redirected runtime checks passed.
 Reports are under `artifacts/test-results/state-cleanup-review-full/`, with logs under
-`artifacts/evidence/state-cleanup/review-20261029/`. PR/main checks and user review remain delivery checkpoints;
+`artifacts/evidence/state-cleanup/review-20261029/`. [PR #69](https://github.com/sotsera/rafter/pull/69) subsequently
+merged after user review and all three PR checks passed; its
+[main evaluation](https://github.com/sotsera/rafter/actions/runs/40787693009) also passed for `4881223`.
 Linux-native ownership, attached-console/live-editor, macOS, and AOT are not established by these local results.
 
 ## Historical verification of the initial target slice

@@ -139,6 +139,7 @@ public sealed class Command
         var code = 1;
         var executed = false;
         var reported = new HashSet<Exception>(ReferenceEqualityComparer.Instance);
+        var sensitiveValues = new SensitiveValues();
         var elapsed = Stopwatch.StartNew();
 
         void Report(Exception exception, string scope)
@@ -157,7 +158,7 @@ public sealed class Command
                 else
                 {
                     var writer = host?.Error ?? Console.Error;
-                    writer.WriteLine($"{scope} failed{Environment.NewLine}{exception}");
+                    writer.WriteLine(sensitiveValues.Redact($"{scope} failed{Environment.NewLine}{exception}"));
                     writer.Flush();
                 }
             }
@@ -167,7 +168,7 @@ public sealed class Command
                 try
                 {
                     var writer = host?.Error ?? Console.Error;
-                    writer.WriteLine($"{scope} failed{Environment.NewLine}{exception}");
+                    writer.WriteLine(sensitiveValues.Redact($"{scope} failed{Environment.NewLine}{exception}"));
                     writer.Flush();
                 }
                 catch (Exception fallbackFailure) when (ExceptionPolicy.IsRecoverable(fallbackFailure))
@@ -202,6 +203,10 @@ public sealed class Command
                 }
             }
             var declarations = new List<string>();
+            foreach (var option in options.Where(option => option.Sensitive))
+            {
+                sensitiveValues.Add(option.DefaultValue as string);
+            }
             cleanup.Validate("Command", declarations);
             if (states.Any(state => state.Factory is null))
             {
@@ -243,9 +248,10 @@ public sealed class Command
             }
 
             // Honor an explicit presentation switch even when declaration validation prevents parsing.
-            var arguments = declarations.Count == 0 ? InvocationArguments.Parse(args, options, host.ReadEnvironment)
+            var arguments = declarations.Count == 0 ? InvocationArguments.Parse(args, options, host.ReadEnvironment,
+                sensitiveValues)
                 : new InvocationArguments(false, false, false, args?.Contains("--plain") == true, []);
-            output = new InvocationOutput(host, arguments);
+            output = new InvocationOutput(host, arguments, sensitiveValues);
             if (declarations.Count > 0)
             {
                 output.Invalid("Invalid command", declarations);

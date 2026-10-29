@@ -6,7 +6,7 @@ internal static class EnvironmentInputs
 {
     public static void Resolve(OptionSnapshot[] options, Dictionary<OptionDeclaration, object?> values,
         Dictionary<OptionDeclaration, InputSource> sources, Func<string, string?> readEnvironment,
-        List<string> diagnostics)
+        List<string> diagnostics, SensitiveValues? sensitiveValues = null)
     {
         // Capture each selected variable once, even when several options map the same name.
         var environment = new Dictionary<string, string?>(OperatingSystem.IsWindows()
@@ -27,6 +27,10 @@ internal static class EnvironmentInputs
                 }
                 if (text is not null)
                 {
+                    if (option.Sensitive)
+                    {
+                        sensitiveValues?.Add(text);
+                    }
                     sources[option.Declaration] = new(InputSourceKind.Environment, name, text.Length == 0);
                     if (TryConvert(text, option, out var value))
                     {

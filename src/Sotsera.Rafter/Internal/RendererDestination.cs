@@ -28,14 +28,17 @@ internal sealed class RendererDestination
     private readonly IAnsiConsole _console;
     private readonly AnsiWriter _ansi;
     private readonly DestinationState _state;
+    private readonly SensitiveValues? _sensitiveValues;
     private bool _completed;
     private Exception? _failure;
 
     public Exception? Failure => _failure;
 
     public RendererDestination(TextWriter writer, DestinationPolicy policy, int width = 80,
-        Dictionary<string, string>? environment = null, DestinationState? state = null)
+        Dictionary<string, string>? environment = null, DestinationState? state = null,
+        SensitiveValues? sensitiveValues = null)
     {
+        _sensitiveValues = sensitiveValues;
         _state = state ?? new DestinationState();
         _writer = writer;
         _policy = policy;
@@ -58,7 +61,7 @@ internal sealed class RendererDestination
 
     public void Framework(string text, Style style)
     {
-        Layout(new Paragraph(text, style) { Overflow = Overflow.Fold });
+        Layout(new Paragraph(_sensitiveValues?.Redact(text) ?? text, style) { Overflow = Overflow.Fold });
     }
 
     public void Layout(IRenderable content, int indentation = 0)

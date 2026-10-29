@@ -32,7 +32,8 @@ public sealed class RafterContext
         _resources = resources;
     }
 
-    /// <summary>Writes a literal result line to stdout, preserving embedded newlines and indentation.</summary>
+    /// <summary>Writes a literal result line to stdout, preserving embedded newlines and indentation.
+    /// Known sensitive input values are masked; direct writes and child output are outside this boundary.</summary>
     public void WriteLine(string? text = null) => _output.WriteLine(text);
 
     /// <summary>Resolves a relative path against this invocation's root, or normalizes a fully qualified path.

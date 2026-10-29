@@ -11,8 +11,8 @@ per-process timeouts, bounded capture, invocation roots, filesystem helpers, sep
 
 | Area | Implemented now | Remaining boundary |
 | --- | --- | --- |
-| Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation. | Further input types and asynchronous resolution remain separate design topics. |
-| Targets | Sequential graphs, groups, selected entries, failure/cancellation, and conditional bodies merged through #67; invocation-local state and cleanup are reviewed and verified locally under #68. | State/cleanup PR checks, user review, and delivery remain pending. |
+| Commands and inputs | Body callbacks, help, string/int/bool/enum/duration options, environment fallbacks, prepared values, and validation; sensitive string inputs and presentation masking implemented locally under #70. | Sensitive-input verification/review/delivery, further input types, and asynchronous resolution remain separate checkpoints. |
+| Targets | Sequential graphs, groups, selected entries, failure/cancellation, conditional bodies, invocation-local state, and target/command cleanup merged through #69. | Cleanup deadlines and child-process launch remain separate work. |
 | Processes | Windows ownership, descendant cleanup, concurrent awaited operations, failure actions, timeouts, capture, reusable executables, typed .NET build/publish/pack, opt-in SDK environment isolation, and first Git/npm helpers merged through #65. | Further typed commands, Linux-native ownership, and broader deadlines remain separate work. |
 | Paths and filesystem | Public roots, lexical resolution, multi-segment file/directory handles, explicit probes/directory creation/text writes, and child-directory overrides, merged through PRs #50/#51. | Source/repository discovery and broader filesystem operations remain separate work. |
 | Authoring and packaging | Four analyzer diagnostics, automatic imports, runnable examples, and fresh local-package consumers. | Preview distribution, packaged XML API documentation, and API compatibility policy remain release work. |
@@ -32,6 +32,13 @@ The focused delivery sequence is complete:
 | Reusable executables and typed .NET commands | Merged in [PR #61](https://github.com/sotsera/rafter/pull/61), closing #60; all three PR checks and main evaluation passed. | [Authoring and local verification](../guides/executables-and-dotnet.md). |
 | SDK environment isolation and typed Git/npm helpers | Merged in [PR #65](https://github.com/sotsera/rafter/pull/65), closing #62/#63/#64; all three PR checks passed. | [SDK policy](../guides/executables-and-dotnet.md#selecting-the-sdk-for-the-child-directory) and [Git/npm verification](../guides/git-and-npm.md#local-verification-2026-10-27). |
 | Conditional target bodies | Merged in [PR #67](https://github.com/sotsera/rafter/pull/67), closing #66; all three PR checks and main evaluation passed. | [When/skip guide](../guides/targets.md#conditional-target-bodies) and [agreed example](#conditional-targets--agreed-behavior-2026-10-28). |
+| Invocation-local state and cleanup | Merged in [PR #69](https://github.com/sotsera/rafter/pull/69), closing #68; all three PR checks and main evaluation passed. | [State/cleanup guide](../guides/targets.md#invocation-local-state-and-cleanup) and [agreed behavior](#cleanup-and-shared-resources--agreed-behavior-2026-10-28). |
+
+PR #69 merged as `4881223` on 2026-10-29 (Europe/Rome), closing #68. Its
+[PR evaluation](https://github.com/sotsera/rafter/actions/runs/40787006506) passed all three checks. The
+[post-merge main evaluation](https://github.com/sotsera/rafter/actions/runs/40787693009) also passed for `4881223`.
+The reviewed local revision passed **950 tests, 0 failures, 1 console-dependent skip** across 951
+cases, plus **43 redirected runtime cases**. These local results do not substitute for the merged-revision checks.
 
 PR #67 merged as `a4bf05f` on 2026-10-28. Its
 [PR evaluation](https://github.com/sotsera/rafter/actions/runs/40770128830) passed Linux portable, Windows portable,
@@ -60,13 +67,14 @@ commands, run IDs, the initial deadline-consumer failure, and the scheduling adj
 
 ## Next steps
 
-**Deliver the reviewed and locally verified state/cleanup increment below through a PR.** Review on 2026-10-29
-found and fixed a validation gap: Task values returned through object-typed factories now fail initialization before
-work/cleanup. The user approved retaining invocation-local
-state and authorized implementation on 2026-10-28. [Issue #68](https://github.com/sotsera/rafter/issues/68) was created
-before shipping-code changes. Conditional targets merged through #67 with all PR/main checks passing; SDK/Git/npm
-#65 and the complete workflow/deferred #46/#47 acceptance are also merged. PR/main checks and user review remain
-delivery checkpoints; independent cleanup deadlines and child-process launch remain separate work.
+**Deliver the [reviewed sensitive-input/redaction implementation](#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29)
+under issue #70 through a PR.**
+State/cleanup merged through #69 after user review; all three PR checks and its main evaluation passed.
+Review also fixed Task results hidden behind object-typed state factories. Conditional targets through #67,
+SDK/Git/npm through #65, and the complete workflow/deferred #46/#47 acceptance are merged. Sensitive-value syntax
+and guarantees below are agreed: preserve raw access while masking defaults, known output values and diagnostics, with explicit
+boundaries around direct writes and child output.
+Independent cleanup deadlines and child-process launch remain separate work.
 
 CI trigger/concurrency changes merged through [PR #55](https://github.com/sotsera/rafter/pull/55), closing #54;
 its post-merge main evaluation passed. The cache-placement measurement under
@@ -89,11 +97,9 @@ Remote archive caching and later product topics remain proposals.
 
 | Order | Work | Intended outcome |
 | --- | --- | --- |
-| 1 | Deliver the [reviewed cleanup/shared-resource increment](#cleanup-and-shared-resources--agreed-behavior-2026-10-28), issue #68. | Local validation passed, including the review regression; applicable PR/main checks and user review remain pending. |
-| 2 | Reconcile the cleanup delivery after merging. | Record the merged revision and applicable PR/main results before marking delivery complete. |
-| 3 | Define sensitive-value behavior before credential-heavy workflows. | Specify protection for defaults in help and framework diagnostics, and limits around script/child output and exception details. |
-| 4 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
-| 5 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
+| 1 | Deliver the [reviewed sensitive-input/redaction increment](#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29). | Local code review and verification passed; user review and PR/main checks remain delivery checkpoints. |
+| 2 | Prepare a usable preview package and onboarding path. | Ship XML API documentation, choose preview versioning/release notes and compatibility checks, and verify a fresh consumer outside the checkout. |
+| 3 | Plan Linux-native process ownership as a separate milestone. | Establish platform-specific launch, descendant, cancellation, timeout, capture, and settlement guarantees with real Linux tests. |
 
 The CI review found duplicate fork-push/upstream-PR evaluations for #49. The merged change removes `build/**` push
 evaluations and uses a workflow/event/PR concurrency group for PR runs. Main pushes and manual runs each use their
@@ -653,10 +659,10 @@ hook and does not use skipped work as cleanup.
 **Status: invocation-local state and cleanup syntax/behavior agreed; implementation authorized on 2026-10-28.**
 The user explicitly retained the typed invocation-local state facility after reviewing its purpose. Issue
 [#68](https://github.com/sotsera/rafter/issues/68) was created before shipping-code changes. `Command.State(...)`,
-`context.GetState(...)`, and command/target `.Cleanup(...)` are implemented and verified locally.
+`context.GetState(...)`, and command/target `.Cleanup(...)` merged through [PR #69](https://github.com/sotsera/rafter/pull/69).
 [cleanup.cs](../../examples/cleanup.cs) is the runnable version of the full example below. Review on 2026-10-29
-added runtime Task-result validation for object-typed factories; applicable PR/main checks and user review remain
-delivery checkpoints.
+added runtime Task-result validation for object-typed factories. User review and all three PR checks are complete;
+the post-merge main evaluation also passed.
 
 The scenario has three targets. `prepare` creates a disposable workspace containing one shared input and one local
 preparation file. Its cleanup removes the local file before another target starts. `verify` uses the shared input and
@@ -910,7 +916,201 @@ unit 773, integration 53, Windows 125 (124 passed, 1 skipped). Release solution/
 warnings or errors, and all **43 redirected runtime cases** passed. This includes the actual example as a file app
 and ordinary project, fresh package consumers, and both real owned-child cleanup cases. Reports are under
 `artifacts/test-results/state-cleanup-review-full/`; review logs are under
-`artifacts/evidence/state-cleanup/review-20261029/`. Hosted PR/main checks and user review remain delivery checkpoints.
+`artifacts/evidence/state-cleanup/review-20261029/`. User review and all three PR checks subsequently passed; #69
+merged as `4881223`, closing #68. Its post-merge main evaluation passed, as recorded in the current position above.
+
+### Sensitive inputs and redaction — agreed behavior, 2026-10-29
+
+**Status: syntax and behavior agreed; implementation authorized on 2026-10-29.** The user approved this
+full example and the behavior below. [Issue #70](https://github.com/sotsera/rafter/issues/70) was created before
+shipping-code changes. `.Sensitive()` and presentation masking are now implemented locally, with the runnable
+[redaction.cs example](../../examples/redaction.cs). Local verification below passed; user review and hosted delivery
+remain separate checkpoints.
+The historical [redaction reference](../../reference/examples/redaction.cs) supplies a use case, without establishing
+requirements for the new implementation. The [sensitive-input guide](../guides/sensitive-inputs.md) describes the
+implemented API and its explicit output boundaries.
+
+The script prepares an HTTP request locally and prints a redacted preview. It sends no network request and needs no
+service, credential, child process, or disposable workspace. Its default token is deliberately synthetic. A second,
+optional token demonstrates registering several sensitive values. Supplying `--fail` demonstrates Rafter rendering
+an exception whose original message contains the raw authorization header.
+
+#### Full agreed example
+
+The agreed `examples/redaction.cs` consumer:
+
+```csharp
+#!/usr/bin/env dotnet
+#:project ../src/Sotsera.Rafter/Sotsera.Rafter.csproj
+#:property PublishAot=false
+
+using System.Net.Http;
+using System.Net.Http.Headers;
+
+var command = Rafter.Command("Preview a request using disposable example tokens and redacted output.");
+
+var token = command.Option<string>("token", "Example bearer token; use synthetic values for this demonstration.")
+    .Aliases("t")
+    .FromEnvironment("RAFTER_TOKEN")
+    .Sensitive()
+    .Validate("Use at least eight characters.", value => value.Length >= 8)
+    .Default("demo-token-only");
+
+var secondaryToken = command.Option<string>("secondary-token", "An optional second example token.")
+    .FromEnvironment("RAFTER_SECONDARY_TOKEN")
+    .Sensitive()
+    .Validate("Use at least eight characters when supplied.", value => value.Length >= 8);
+
+var fail = command.Option<bool>("fail", "Throw an example exception containing the raw authorization header.")
+    .Default(false);
+
+var preview = command.Target("preview", "Prepare the request and show its redacted headers.")
+    .Run(context =>
+    {
+        // GetValue returns the original string for the API that actually needs it.
+        var rawToken = context.GetValue(token);
+        var rawSecondaryToken = context.GetValue(secondaryToken);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://example.invalid/api/check");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", rawToken);
+
+        if (rawSecondaryToken is not null)
+        {
+            request.Headers.Add("X-Secondary-Token", rawSecondaryToken);
+        }
+
+        // Rafter masks registered values at this output boundary.
+        context.WriteLine($"Authorization: {request.Headers.Authorization}");
+
+        if (rawSecondaryToken is not null)
+        {
+            context.WriteLine($"X-Secondary-Token: {rawSecondaryToken}");
+        }
+
+        if (context.GetValue(fail))
+        {
+            // The exception object stays unchanged; Rafter masks its rendered details.
+            throw new InvalidOperationException($"Example request failed for {request.Headers.Authorization}.");
+        }
+
+        context.WriteLine("Request prepared; no network request was sent.");
+    });
+
+return await command.RunAsync(args, preview);
+```
+
+#### Agreed authoring contract
+
+- `.Sensitive()` marks a string input as sensitive and returns the same fluent handle type. It works on both
+  `Option<string>` and `ValueOption<string>`, so either `.Sensitive().Default(...)` or `.Default(...).Sensitive()`
+  works; `.Required().Sensitive()` works too. Repeating it is harmless. The first increment covers string
+  inputs only; applying it to other input types is a declaration error, including help. Broader typed sensitivity
+  needs separate examples rather than automatically treating values such as `false` or `0` as global text patterns.
+- Presence, aliases, source precedence, conversion, and validation remain unchanged. `GetValue(...)` returns the
+  original string, or null for an omitted optional string. Validators, target conditions, bodies, cleanup, and APIs
+  called by the script continue to receive raw values. Sensitivity adds presentation metadata;
+  it introduces no secret wrapper type, separate reveal method, encryption, or automatic disposal.
+- Snapshot sensitivity with the existing input declaration before callbacks. Build an invocation-local redaction
+  set; reusing the command, overlapping runs, and later declaration edits must not share mutable secret state.
+  Keep that set alive through entered cleanup and final diagnostics, then release the invocation's references.
+  This does not promise that managed strings are erased from memory.
+- Register every nonempty sensitive default, even when another source overrides it, plus recognized supplied CLI
+  values and environment fallback values actually considered by normal resolution. Register candidates before
+  any input-validation callback or work can produce output. Rejected supplied values must not leak through an
+  exception from validation. Existing parser diagnostics must continue to avoid echoing malformed/raw arguments.
+  Help masks defaults and recognizes supplied sensitive CLI values without reading environment fallbacks or running
+  validators, state factories, target predicates, bodies, or cleanup. Omitted optional values and empty strings add
+  no replacement pattern; an empty sensitive default is still described as redacted in help.
+
+#### Agreed presentation and protection boundary
+
+| Surface | Agreed behavior |
+| --- | --- |
+| Help for a sensitive input | Show `Sensitive.` and its existing presence/source/rule information. Show `Default: [REDACTED].` for every sensitive default; do not reveal its contents or length. Required/optional inputs have no invented default. |
+| Verbose input sources | Continue showing source kind and mapped environment-variable name, without the value. Verbose never reveals a sensitive value. |
+| Input rejection | Keep identifying the option/source and failed rule without echoing its value. Apply redaction to rendered callback-exception details too. |
+| `context.WriteLine(...)` | Replace exact known sensitive substrings with `[REDACTED]` before styling or wrapping. Retain literal text, whitespace, stdout routing, and quiet-mode behavior otherwise. This deliberately extends the current literal-output contract only where registered values match. |
+| Rafter-authored lifecycle, help, and process metadata | Apply the same masking, including working-directory/executable text if it happens to contain a registered value. Do not start displaying process arguments or environment values. Actual paths and process configuration remain raw. |
+| Exceptions displayed by Rafter | Mask rendered messages, inner-exception details, and stack-trace text consistently, including validation, work, process handlers, state initialization, and cleanup. Keep the actual exception objects unchanged and preserve existing failure scopes and exit precedence. |
+| `GetValue`, HTTP headers, filesystem writes, process arguments/environment, captured result objects | Preserve raw values for actual use. Captured text is still raw when the script reads it; writing that text through `context.WriteLine` applies the presentation filter at that point. |
+| Direct `Console`/`TextWriter` writes, external logging, files, debugger inspection | Outside Rafter's presentation boundary. A plain string returned by `GetValue` can still be exposed by script code. |
+| Live child stdout/stderr, automatic capture echo | Preserve existing child-output behavior. This increment does not add streaming redaction across arbitrary chunks or streams. A child may print its input/environment; passing a sensitive value to it does not make its output protected. |
+
+Use ordinal, case-sensitive, exact substring matching against each complete Rafter message. Select the earliest match, then the longest
+value starting there, against original text without remasking replacement markers. Protect values before
+clipping, wrapping, or styling so a display transformation cannot split a known match. Empty values never match;
+nonempty short or whitespace-only values can over-mask unrelated text because sensitivity is explicit. Duplicate
+values need only one pattern. A value occurring multiple times in one message is masked each time.
+
+This is known-value masking, not data-flow tracking. Encoded, hashed, case-changed, truncated, or otherwise transformed
+values are not recognized unless they independently equal a registered value. Separate writes containing only
+fragments of a value are not reassembled. Descriptions and arbitrary exceptions can contain unrelated secrets that
+were never registered; those are not discovered automatically. No global environment scan, OS command-line/history
+protection, CI-provider masking commands, process argument disclosure, analyzer additions, or external secret-store
+integration is included. Use synthetic tokens in this demonstration.
+
+#### Illustrative output and acceptance matrix
+
+Default invocation, stdout only (lifecycle remains on stderr):
+
+```text
+Authorization: Bearer [REDACTED]
+Request prepared; no network request was sent.
+```
+
+With an optional second token, stdout also contains `X-Secondary-Token: [REDACTED]`. A sensitive help entry includes
+`Sensitive. Default: [REDACTED].` and `Environment: RAFTER_TOKEN.`; exact wrapping follows the existing help
+renderer. With `--fail`, the rendered exception includes `Example request failed for Bearer [REDACTED].`; stack details
+may follow under the existing exception policy, with the same masking. These transcripts illustrate the agreed output; verification results are recorded separately.
+
+| Acceptance scenario | Expected observation | Outcome |
+| --- | --- | --- |
+| No flags or environment fallbacks | Raw synthetic default reaches the request header; stdout masks it. | `0` |
+| `RAFTER_TOKEN` supplies a synthetic token | Environment value reaches the header; displayed value is masked. | `0` |
+| Environment token plus `--token another-demo-token` (or `-t`) | CLI still wins. Both declared sensitive default and selected CLI text are protected wherever presented; unused environment values are not collected. | `0` |
+| Optional `--secondary-token second-demo-token` | Both raw headers are usable; both displayed values are masked. | `0` |
+| `--token short` or explicit empty token | Input rejected before target entry; no rejected value in diagnostics. | `2` |
+| `--fail`, including `--verbose` or `--quiet` | Original exception contains the raw header; Rafter's failure rendering masks it. Quiet retains failure details and script stdout. | `1` |
+| `--help`, also with missing required inputs in a required-token variant | Mask defaults; show sensitivity/source/rules without running input validators or work. | `0` for otherwise valid help |
+| Repeated or overlapping invocation with different tokens | Each invocation masks its own candidates; no cross-invocation registry. | Normal outcome |
+| Known value in validation/state/target/command cleanup exception | Mask wherever Rafter renders it, including before work entry and after cleanup. | Existing `1`/`2` precedence, according to failure kind |
+| Overlapping patterns, repeated occurrences, empty/short/multiline strings, narrow help, plain/quiet/verbose | Deterministic masking before formatting, with stream/mode contracts retained. | Normal outcome |
+| Raw `Console`/file write, child echo, transformed value, split writes | Outside the agreed matching boundary; no claim of automatic protection. | Existing behavior |
+
+The user approved automatic masking of `context.WriteLine` and Rafter-rendered exceptions, with the explicit
+child-output boundary above. Implementation proceeds under #70. Local verification and hosted delivery are tracked
+separately; no PR, new hosted checks, or merged capability is claimed for this increment yet.
+
+#### Local verification, 2026-10-29
+
+The full Windows regression passed **994 tests, 0 failures, 1 existing console-dependent skip**, across **995 total**:
+unit 811, integration 55, Windows 129 (128 passed, 1 skipped). Release solution/runtime-consumer builds have no
+warnings or errors. All **43 redirected runtime cases** passed. There are 914 ordinary and 81 long-running cases.
+
+Thirty-eight new unit cases cover API order and type validation, raw access, protected help/default markers, source
+selection, pre-validation registration, original exceptions, fallback error reporting, state/cleanup diagnostics,
+declaration snapshots, overlapping invocation isolation, styled-message boundaries, and exact matching. Two real
+consumers run the actual offline request-preview example as a file app and ordinary project, each exercising nine
+input/mode combinations plus help. Fresh package consumers verify raw access and masked stdout. Four real Windows
+child cases verify raw arguments/environment, raw capture, optional raw echo, and masked explicit script output.
+
+Reports are under `artifacts/test-results/sensitive-inputs-full/`; commands, initial compiler errors, and later clean
+build/test logs remain under `artifacts/evidence/sensitive-inputs/`. After the full run started, only documentation,
+an XML comment, and whitespace changed; the formatting pass was checked against retained source for identical
+non-whitespace content, then followed by a clean build. No dependencies, SDK pins, CI, solution/test-project wiring,
+shared consumer supervisor, or native ownership algorithms changed. New hosted Linux CI, attached-console/live-editor,
+macOS, and AOT checks are not claimed. These results describe the implementation before the review below.
+
+#### Code review, 2026-10-29
+
+Review found no blocking runtime issues. Two additional regression rows verify that repeated sensitive arguments,
+using either the primary option or alias, still mask all recognized values appearing in diagnostics despite invalid
+input. All **813 unit cases passed**, including all 40 sensitive-input cases. The review build has no warnings/errors;
+documentation/link and whitespace checks passed. Shipping runtime/example/consumer/native code is unchanged from the
+full 995-case run and 43 redirected checks above. The current inventory is 916 ordinary / 81 long-running / 997 full
+cases; the earlier full-run count remains a record of its tested revision. Review logs are under
+`artifacts/evidence/sensitive-inputs/review/` and reports under `artifacts/test-results/sensitive-inputs-review-all-unit/`.
+The increment is reviewed for PR delivery; hosted checks and user review remain separate checkpoints.
 
 ## Design approach and references
 
@@ -996,13 +1196,13 @@ into smaller scopes when needed; agreement on basic inputs, for example, does no
 | SDK environment isolation | [Selected #62 policy](#sdk-isolation-and-gitnpm-helpers--selected-increment-2026-10-27) | Explicit child-directory SDK selection without changing generic inheritance. | Opt-in policy and workflow migration merged #65, closing #62. | Cross-SDK reproduction/fix and workflow checks passed locally; all PR/main checks passed. |
 | Captured output | ✓ | ✓ | ✓ | ✓ |
 | Cancellation and timeouts | Partial | Partial | Partial | Partial |
-| Cleanup and shared resources | [Full prepare/verify/finish example](#cleanup-and-shared-resources--agreed-behavior-2026-10-28) | Agreed invocation-local state and target/command cleanup with explicit settlement, cancellation, and failure rules. | Implemented locally under #68; uncommitted. | Full local 949 passed/0 failed/1 console skip; actual consumers and 43 redirected cases passed. New hosted checks pending delivery. |
-| Sensitive values | — | — | — | — |
+| Cleanup and shared resources | [Full prepare/verify/finish example](#cleanup-and-shared-resources--agreed-behavior-2026-10-28) | Agreed invocation-local state and target/command cleanup with explicit settlement, cancellation, and failure rules. | Merged #69, closing #68. | Full local 950 passed/0 failed/1 console skip; actual consumers, 43 redirected cases, and all PR/main checks passed. |
+| Sensitive values | [Full request-preview example](#sensitive-inputs-and-redaction--agreed-behavior-2026-10-29) | Agreed `.Sensitive()` and invocation-local presentation masking. | Implemented and reviewed under #70. | Full local 994 passed/0 failed/1 console skip; actual consumers, four native boundary cases, and 43 redirected checks passed. All 813 units passed after two review regression additions. Hosted checks pending delivery. |
 | Complete workflow | ✓ | Existing API; agreed scenario | Merged #53, closing #52 | Windows consumers and actual repository; see guide |
 
-Failure handling is partially delivered through exception containment, process failure actions, timeout/capture
-exceptions, exit codes, and stopping later targets. Broader expected-failure APIs and combined cleanup failures remain
-open. Completed cells describe delivered feature scope; the fix backlog above tracks defects within that scope.
+Failure handling is delivered through exception containment, process failure actions, timeout/capture exceptions,
+exit codes, stopping later targets, and separate work/cleanup diagnostics. Broader expected-failure APIs remain open.
+Completed cells describe delivered feature scope; the fix backlog above tracks defects within that scope.
 
 ## Topic inventory
 
